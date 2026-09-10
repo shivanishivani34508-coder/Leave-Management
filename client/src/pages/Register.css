@@ -1,0 +1,750 @@
+/* =========================================================
+   REGISTER.CSS
+   Leave Management System
+   All styles are scoped under .register-page
+========================================================= */
+
+.register-page {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px 20px;
+
+  background:
+    radial-gradient(circle at 12% 18%, rgba(96, 165, 250, 0.22), transparent 28%),
+    radial-gradient(circle at 88% 82%, rgba(139, 92, 246, 0.2), transparent 30%),
+    linear-gradient(135deg, #eef6ff 0%, #f8f7ff 48%, #eef2ff 100%);
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   DECORATIVE BACKGROUND
+========================================================= */
+
+.register-page::before {
+  content: "";
+  position: absolute;
+
+  width: 420px;
+  height: 420px;
+
+  top: -180px;
+  left: -150px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.18),
+    rgba(99, 102, 241, 0.08)
+  );
+
+  pointer-events: none;
+}
+
+
+.register-page::after {
+  content: "";
+  position: absolute;
+
+  width: 500px;
+  height: 500px;
+
+  right: -220px;
+  bottom: -250px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.17),
+    rgba(59, 130, 246, 0.08)
+  );
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   REGISTER CONTAINER
+========================================================= */
+
+.register-page .register-container {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  max-width: 1100px;
+  min-height: 650px;
+
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+
+  overflow: hidden;
+
+  border-radius: 30px;
+
+  background: rgba(255, 255, 255, 0.76);
+
+  border: 1px solid rgba(255, 255, 255, 0.9);
+
+  box-shadow:
+    0 30px 80px rgba(30, 64, 175, 0.14),
+    0 8px 30px rgba(15, 23, 42, 0.08);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+
+/* =========================================================
+   LEFT BRAND SECTION
+========================================================= */
+
+.register-page .register-brand-section {
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 55px 48px;
+
+  color: #ffffff;
+
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.14), transparent 30%),
+    radial-gradient(circle at 80% 75%, rgba(129, 140, 248, 0.32), transparent 35%),
+    linear-gradient(145deg, #0f172a 0%, #172554 42%, #1e3a8a 100%);
+}
+
+
+.register-page .register-brand-section::before {
+  content: "";
+  position: absolute;
+
+  width: 260px;
+  height: 260px;
+
+  right: -100px;
+  top: -100px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  border-radius: 50%;
+}
+
+
+.register-page .register-brand-section::after {
+  content: "";
+  position: absolute;
+
+  width: 340px;
+  height: 340px;
+
+  left: -190px;
+  bottom: -190px;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  border-radius: 50%;
+}
+
+
+/* =========================================================
+   BRAND CONTENT
+========================================================= */
+
+.register-page .register-brand-content {
+  position: relative;
+  z-index: 2;
+}
+
+
+.register-page .register-logo {
+  width: 62px;
+  height: 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 34px;
+
+  border-radius: 19px;
+
+  background: linear-gradient(135deg, #60a5fa, #8b5cf6);
+
+  color: #ffffff;
+
+  font-size: 24px;
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+  box-shadow: 0 14px 32px rgba(59, 130, 246, 0.34);
+}
+
+
+.register-page .register-brand-title {
+  margin: 0 0 18px;
+
+  max-width: 430px;
+
+  font-size: 43px;
+  line-height: 1.12;
+  font-weight: 800;
+
+  letter-spacing: -1.4px;
+}
+
+
+.register-page .register-brand-description {
+  max-width: 420px;
+
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.72);
+
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+
+/* =========================================================
+   FEATURE LIST
+========================================================= */
+
+.register-page .register-features {
+  position: relative;
+  z-index: 2;
+
+  display: grid;
+  gap: 13px;
+
+  margin-top: 40px;
+}
+
+
+.register-page .register-feature-item {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  color: rgba(255, 255, 255, 0.82);
+
+  font-size: 13px;
+  font-weight: 500;
+}
+
+
+.register-page .register-feature-icon {
+  width: 31px;
+  height: 31px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.1);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+
+/* =========================================================
+   BRAND FOOTER
+========================================================= */
+
+.register-page .register-brand-footer {
+  position: relative;
+  z-index: 2;
+
+  color: rgba(255, 255, 255, 0.48);
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   RIGHT FORM SECTION
+========================================================= */
+
+.register-page .register-form-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 48px 55px;
+
+  background: rgba(255, 255, 255, 0.74);
+}
+
+
+.register-page .register-form-wrapper {
+  width: 100%;
+  max-width: 450px;
+}
+
+
+/* =========================================================
+   FORM HEADER
+========================================================= */
+
+.register-page .register-form-header {
+  margin-bottom: 28px;
+}
+
+
+.register-page .register-form-header h2 {
+  margin: 0 0 9px;
+
+  color: #0f172a;
+
+  font-size: 31px;
+  font-weight: 800;
+
+  letter-spacing: -0.7px;
+}
+
+
+.register-page .register-form-header p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.register-page .register-form {
+  width: 100%;
+}
+
+
+.register-page .register-form-group {
+  margin-bottom: 17px;
+}
+
+
+.register-page .register-form-group label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #334155;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   INPUT WRAPPER
+========================================================= */
+
+.register-page .register-input-wrapper {
+  position: relative;
+
+  width: 100%;
+}
+
+
+.register-page .register-input-icon {
+  position: absolute;
+
+  left: 15px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #94a3b8;
+
+  font-size: 17px;
+
+  pointer-events: none;
+}
+
+
+.register-page .register-input-wrapper input,
+.register-page .register-input-wrapper select {
+  width: 100%;
+  height: 50px;
+
+  padding: 0 45px;
+
+  border: 1px solid #dbe3ef;
+
+  border-radius: 13px;
+
+  outline: none;
+
+  background: #f8fafc;
+
+  color: #0f172a;
+
+  font-size: 14px;
+
+  box-sizing: border-box;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.register-page .register-input-wrapper select {
+  cursor: pointer;
+}
+
+
+.register-page .register-input-wrapper input::placeholder {
+  color: #a1aec0;
+}
+
+
+.register-page .register-input-wrapper input:focus,
+.register-page .register-input-wrapper select:focus {
+  border-color: #3b82f6;
+
+  background: #ffffff;
+
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+
+/* =========================================================
+   PASSWORD BUTTON
+========================================================= */
+
+.register-page .register-password-toggle {
+  position: absolute;
+
+  right: 10px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #64748b;
+
+  cursor: pointer;
+
+  font-size: 16px;
+}
+
+
+.register-page .register-password-toggle:hover {
+  background: #eaf0f8;
+
+  color: #2563eb;
+}
+
+
+/* =========================================================
+   TWO COLUMN FORM ROW
+========================================================= */
+
+.register-page .register-form-row {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 14px;
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.register-page .register-message {
+  margin-bottom: 17px;
+
+  padding: 11px 13px;
+
+  border-radius: 10px;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+.register-page .register-message.error {
+  color: #b91c1c;
+
+  background: #fef2f2;
+
+  border: 1px solid #fecaca;
+}
+
+
+.register-page .register-message.success {
+  color: #166534;
+
+  background: #f0fdf4;
+
+  border: 1px solid #bbf7d0;
+}
+
+
+/* =========================================================
+   REGISTER BUTTON
+========================================================= */
+
+.register-page .register-submit-btn {
+  width: 100%;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 9px;
+
+  margin-top: 5px;
+
+  border: none;
+
+  border-radius: 13px;
+
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 12px 25px rgba(37, 99, 235, 0.25);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.register-page .register-submit-btn:hover {
+  transform: translateY(-1px);
+
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.3);
+}
+
+
+.register-page .register-submit-btn:active {
+  transform: translateY(0);
+}
+
+
+.register-page .register-submit-btn:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.65;
+
+  transform: none;
+}
+
+
+/* =========================================================
+   LOGIN SECTION
+========================================================= */
+
+.register-page .register-login-section {
+  margin-top: 22px;
+
+  text-align: center;
+
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+
+.register-page .register-login-link {
+  margin-left: 5px;
+
+  color: #2563eb;
+
+  font-weight: 700;
+
+  text-decoration: none;
+}
+
+
+.register-page .register-login-link:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media screen and (max-width: 900px) {
+  .register-page {
+    padding: 25px 16px;
+  }
+
+  .register-page .register-container {
+    max-width: 680px;
+
+    grid-template-columns: 1fr;
+  }
+
+  .register-page .register-brand-section {
+    min-height: 300px;
+
+    padding: 38px 40px;
+  }
+
+  .register-page .register-brand-title {
+    font-size: 35px;
+  }
+
+  .register-page .register-features {
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 10px;
+  }
+
+  .register-page .register-feature-item {
+    align-items: flex-start;
+
+    font-size: 11px;
+  }
+
+  .register-page .register-brand-footer {
+    margin-top: 35px;
+  }
+
+  .register-page .register-form-section {
+    padding: 48px 40px;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media screen and (max-width: 600px) {
+  .register-page {
+    align-items: flex-start;
+
+    padding: 16px 12px;
+
+    overflow-y: auto;
+  }
+
+  .register-page .register-container {
+    border-radius: 22px;
+  }
+
+  .register-page .register-brand-section {
+    min-height: auto;
+
+    padding: 32px 25px;
+  }
+
+  .register-page .register-logo {
+    width: 52px;
+    height: 52px;
+
+    margin-bottom: 24px;
+
+    border-radius: 15px;
+
+    font-size: 20px;
+  }
+
+  .register-page .register-brand-title {
+    font-size: 29px;
+  }
+
+  .register-page .register-brand-description {
+    font-size: 13px;
+  }
+
+  .register-page .register-features {
+    grid-template-columns: 1fr;
+
+    margin-top: 28px;
+  }
+
+  .register-page .register-brand-footer {
+    display: none;
+  }
+
+  .register-page .register-form-section {
+    padding: 38px 24px;
+  }
+
+  .register-page .register-form-header {
+    margin-bottom: 25px;
+  }
+
+  .register-page .register-form-header h2 {
+    font-size: 27px;
+  }
+
+  .register-page .register-form-row {
+    grid-template-columns: 1fr;
+
+    gap: 0;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media screen and (max-width: 380px) {
+  .register-page .register-form-section {
+    padding: 32px 18px;
+  }
+
+  .register-page .register-brand-section {
+    padding: 28px 20px;
+  }
+
+  .register-page .register-brand-title {
+    font-size: 26px;
+  }
+}

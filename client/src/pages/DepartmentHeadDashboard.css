@@ -1,0 +1,803 @@
+/* =========================================================
+   DEPARTMENT HEAD DASHBOARD - MAIN
+========================================================= */
+
+.department-dashboard {
+  min-height: 100vh;
+  background: #f4f7fb;
+  padding: 30px 28px 50px;
+  box-sizing: border-box;
+}
+
+.department-container {
+  width: 100%;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   WELCOME BANNER
+========================================================= */
+
+.department-welcome-banner {
+  min-height: 140px;
+  padding: 28px 38px;
+  margin-bottom: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+
+  background: linear-gradient(135deg, #33496f, #526ba8);
+  border-radius: 26px;
+
+  box-sizing: border-box;
+  overflow: hidden;
+
+  box-shadow: 0 12px 30px rgba(38, 57, 88, 0.15);
+}
+
+.department-welcome-content {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.department-welcome-icon {
+  width: 62px;
+  height: 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+
+  font-size: 32px;
+}
+
+.department-welcome-content h1 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.department-welcome-content p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+}
+
+.department-refresh-btn,
+.department-refresh-small {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.25s ease;
+}
+
+.department-refresh-btn {
+  padding: 14px 24px;
+
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+
+  border-radius: 14px;
+}
+
+.department-refresh-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+
+/* =========================================================
+   STATISTICS GRID
+========================================================= */
+
+.department-stats-grid {
+  width: 100%;
+
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 22px !important;
+
+  margin-bottom: 30px;
+}
+
+
+/* =========================================================
+   STAT CARDS
+========================================================= */
+
+.department-stat-card {
+  min-height: 150px;
+  padding: 22px;
+
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 18px;
+
+  background: #ffffff;
+  border: 1px solid #e1e7ef;
+  border-radius: 22px;
+
+  box-sizing: border-box;
+
+  box-shadow: 0 10px 28px rgba(34, 51, 75, 0.08);
+
+  transition: transform 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+.department-stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 35px rgba(34, 51, 75, 0.13);
+}
+
+.department-stat-icon {
+  width: 72px;
+  height: 72px;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  flex-shrink: 0;
+
+  border-radius: 20px;
+  font-size: 30px;
+}
+
+.department-stat-content {
+  min-width: 0;
+
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.department-stat-content span {
+  margin-bottom: 8px;
+
+  font-size: 15px;
+  font-weight: 600;
+  color: #647489;
+}
+
+.department-stat-content h2 {
+  margin: 0 0 8px;
+
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 700;
+  color: #263950;
+}
+
+.department-stat-content p {
+  margin: 0;
+
+  font-size: 13px;
+  color: #7c8b9d;
+}
+
+
+/* =========================================================
+   TOTAL CARD
+========================================================= */
+
+.department-total-card {
+  background: linear-gradient(135deg, #456fcb, #3159b2);
+  border: none;
+
+  box-shadow: 0 12px 30px rgba(49, 89, 178, 0.25);
+}
+
+.department-total-card .department-stat-content span,
+.department-total-card .department-stat-content h2,
+.department-total-card .department-stat-content p {
+  color: #ffffff;
+}
+
+.department-total-card .department-stat-content p {
+  opacity: 0.78;
+}
+
+.total-icon {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   PENDING CARD
+========================================================= */
+
+.department-pending-card {
+  border-top: 4px solid #e4a129;
+}
+
+.pending-icon {
+  background: #fff2dc;
+  color: #e59a15;
+}
+
+
+/* =========================================================
+   APPROVED CARD
+========================================================= */
+
+.department-approved-card {
+  border-top: 4px solid #398467;
+}
+
+.approved-icon {
+  background: #e2f4eb;
+  color: #398467;
+}
+
+
+/* =========================================================
+   REJECTED CARD
+========================================================= */
+
+.department-rejected-card {
+  border-top: 4px solid #d8585f;
+}
+
+.rejected-icon {
+  background: #ffe7e9;
+  color: #d8585f;
+}
+
+
+/* =========================================================
+   REQUESTED DAYS CARD
+========================================================= */
+
+.department-days-card {
+  border-top: 4px solid #7359c7;
+}
+
+.days-icon {
+  background: #eeeaff;
+  color: #7359c7;
+}
+
+
+/* =========================================================
+   INSIGHTS GRID
+========================================================= */
+
+.department-insights-grid {
+  width: 100%;
+
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 24px !important;
+
+  margin-bottom: 30px;
+}
+
+
+/* =========================================================
+   INSIGHT CARD
+========================================================= */
+
+.department-insight-card {
+  min-height: 390px;
+  padding: 30px;
+
+  background: #ffffff;
+  border: 1px solid #e0e6ef;
+  border-radius: 22px;
+
+  box-sizing: border-box;
+
+  box-shadow: 0 10px 28px rgba(34, 51, 75, 0.07);
+}
+
+
+/* =========================================================
+   SECTION HEADING
+========================================================= */
+
+.department-section-heading {
+  margin-bottom: 28px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.department-section-heading h2 {
+  margin: 0 0 7px;
+
+  color: #2b3e56;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.department-section-heading p {
+  margin: 0;
+
+  color: #7a899c;
+  font-size: 14px;
+}
+
+.department-total-badge {
+  padding: 7px 12px;
+
+  background: #edf2ff;
+  color: #4166bb;
+
+  border-radius: 20px;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   PROGRESS OVERVIEW
+========================================================= */
+
+.department-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.department-progress-item {
+  width: 100%;
+}
+
+.department-progress-top {
+  margin-bottom: 10px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  color: #526176;
+  font-size: 15px;
+}
+
+.department-progress-top strong {
+  color: #2a3c53;
+  font-size: 16px;
+}
+
+.department-progress-track {
+  width: 100%;
+  height: 10px;
+
+  background: #e8edf4;
+  border-radius: 20px;
+
+  overflow: hidden;
+}
+
+.department-progress-fill {
+  height: 100%;
+  min-width: 0;
+
+  border-radius: 20px;
+
+  transition: width 0.5s ease;
+}
+
+.pending-fill {
+  background: #e8a126;
+}
+
+.approved-fill {
+  background: #398467;
+}
+
+.rejected-fill {
+  background: #d8585f;
+}
+
+
+/* =========================================================
+   STATUS / DONUT SECTION
+========================================================= */
+
+.department-status-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.department-status-content {
+  flex: 1;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.department-donut-wrapper {
+  margin-bottom: 25px;
+
+  display: flex;
+  justify-content: center;
+}
+
+.department-donut {
+  width: 165px;
+  height: 165px;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border-radius: 50%;
+  position: relative;
+}
+
+.department-donut::before {
+  content: "";
+
+  width: 115px;
+  height: 115px;
+
+  position: absolute;
+
+  background: #ffffff;
+  border-radius: 50%;
+}
+
+.department-donut-center {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.department-donut-center strong {
+  color: #2a3c53;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.department-donut-center span {
+  margin-top: 6px;
+
+  color: #7d8b9c;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   STATUS LEGEND
+========================================================= */
+
+.department-status-legend {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.department-status-legend > div {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: center;
+  gap: 10px;
+
+  color: #5c6c80;
+  font-size: 15px;
+}
+
+.department-status-legend strong {
+  color: #2b3e56;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+
+  display: block;
+
+  border-radius: 50%;
+}
+
+.approved-dot {
+  background: #398467;
+}
+
+.pending-dot {
+  background: #e8a126;
+}
+
+.rejected-dot {
+  background: #d8585f;
+}
+
+
+/* =========================================================
+   TOP LEAVE TYPES
+========================================================= */
+
+.department-leave-types {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.department-leave-type-item {
+  width: 100%;
+}
+
+.department-leave-type-fill {
+  height: 100%;
+
+  background: linear-gradient(90deg, #456fcb, #7359c7);
+
+  border-radius: 20px;
+
+  transition: width 0.5s ease;
+}
+
+.department-empty-text {
+  margin: 40px 0;
+
+  text-align: center;
+  color: #8491a2;
+}
+
+
+/* =========================================================
+   RECENT REQUESTS
+========================================================= */
+
+.department-recent-card {
+  width: 100%;
+  padding: 30px;
+
+  background: #ffffff;
+  border: 1px solid #e0e6ef;
+  border-radius: 22px;
+
+  box-sizing: border-box;
+
+  box-shadow: 0 10px 28px rgba(34, 51, 75, 0.07);
+}
+
+.department-refresh-small {
+  padding: 9px 16px;
+
+  background: #eef3ff;
+  color: #4568bc;
+
+  border: 1px solid #dce6ff;
+  border-radius: 10px;
+}
+
+.department-refresh-small:hover {
+  background: #e2ebff;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.department-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.department-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.department-table th {
+  padding: 15px;
+
+  background: #f5f7fb;
+
+  color: #68778a;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.department-table th:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.department-table th:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+.department-table td {
+  padding: 17px 15px;
+
+  border-bottom: 1px solid #edf0f4;
+
+  color: #4e5f73;
+  font-size: 14px;
+}
+
+.department-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.department-table tbody tr:hover {
+  background: #fafbfe;
+}
+
+
+/* =========================================================
+   EMPLOYEE CELL
+========================================================= */
+
+.department-employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.department-avatar {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  background: linear-gradient(135deg, #4a72cf, #765dcc);
+  color: #ffffff;
+
+  border-radius: 50%;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+.department-status-badge {
+  display: inline-block;
+
+  padding: 7px 12px;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.department-status-badge.pending {
+  background: #fff3dc;
+  color: #d68a0d;
+}
+
+.department-status-badge.approved {
+  background: #e4f5ec;
+  color: #287854;
+}
+
+.department-status-badge.rejected {
+  background: #ffe8ea;
+  color: #c94851;
+}
+
+.department-no-data {
+  padding: 40px !important;
+
+  text-align: center;
+  color: #8491a2;
+}
+
+
+/* =========================================================
+   RESPONSIVE - LAPTOP
+========================================================= */
+
+@media (max-width: 1500px) {
+  .department-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .department-insights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .department-dashboard {
+    padding: 25px 20px;
+  }
+
+  .department-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .department-insights-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .department-welcome-banner {
+    padding: 25px;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .department-dashboard {
+    padding: 18px 14px;
+  }
+
+  .department-welcome-banner {
+    flex-direction: column;
+    align-items: flex-start;
+
+    padding: 22px;
+  }
+
+  .department-welcome-content {
+    align-items: flex-start;
+  }
+
+  .department-welcome-content h1 {
+    font-size: 25px;
+  }
+
+  .department-welcome-icon {
+    width: 50px;
+    height: 50px;
+
+    font-size: 25px;
+  }
+
+  .department-stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .department-stat-card {
+    min-height: 125px;
+  }
+
+  .department-insights-grid {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  .department-insight-card,
+  .department-recent-card {
+    padding: 20px;
+  }
+
+  .department-section-heading {
+    flex-direction: column;
+  }
+}

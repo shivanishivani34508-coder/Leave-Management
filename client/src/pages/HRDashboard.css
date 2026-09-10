@@ -1,0 +1,731 @@
+.hr-dashboard {
+  min-height: 100vh;
+  padding: 28px;
+  background: #edf2f8;
+}
+
+.hr-container {
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   WELCOME BANNER
+========================================================= */
+
+.hr-welcome-banner {
+  position: relative;
+  overflow: hidden;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 34px 40px;
+  margin-bottom: 28px;
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #263b63,
+      #40598d
+    );
+
+  color: white;
+
+  box-shadow:
+    0 12px 30px rgba(31, 49, 84, 0.18);
+}
+
+.hr-welcome-banner::after {
+  content: "";
+
+  position: absolute;
+
+  width: 260px;
+  height: 260px;
+
+  right: -70px;
+  top: -160px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+}
+
+.hr-welcome-banner h1 {
+  position: relative;
+  z-index: 1;
+
+  margin: 0;
+
+  font-size: 34px;
+  font-weight: 800;
+
+  letter-spacing: 1px;
+}
+
+.hr-welcome-banner p {
+  position: relative;
+  z-index: 1;
+
+  margin: 10px 0 0;
+
+  font-size: 16px;
+
+  color: #d9e2f1;
+}
+
+
+/* =========================================================
+   REFRESH BUTTON
+========================================================= */
+
+.hr-refresh-button {
+  position: relative;
+  z-index: 1;
+
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  padding: 14px 22px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  color: white;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.hr-refresh-button:hover {
+  transform: translateY(-2px);
+
+  background:
+    rgba(255, 255, 255, 0.16);
+}
+
+
+/* =========================================================
+   STATISTICS CARDS
+========================================================= */
+
+.hr-stats-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(5, 1fr);
+
+  gap: 22px;
+
+  margin-bottom: 30px;
+}
+
+.hr-stat-card {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  gap: 18px;
+
+  min-height: 145px;
+
+  padding: 24px;
+
+  background: white;
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 12px 30px rgba(36, 53, 83, 0.08);
+
+  border:
+    1px solid #dbe3ee;
+
+  overflow: hidden;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hr-stat-card:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 18px 35px rgba(36, 53, 83, 0.12);
+}
+
+.hr-stat-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 76px;
+  height: 76px;
+
+  flex-shrink: 0;
+
+  border-radius: 20px;
+
+  font-size: 35px;
+}
+
+.hr-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.hr-stat-content span {
+  color: #617087;
+
+  font-size: 15px;
+
+  font-weight: 600;
+}
+
+.hr-stat-content h2 {
+  margin: 8px 0 5px;
+
+  color: #24344c;
+
+  font-size: 34px;
+
+  font-weight: 800;
+}
+
+.hr-stat-content small {
+  color: #7a8799;
+
+  font-size: 13px;
+}
+
+
+/* TOTAL CARD */
+
+.total-card {
+  border-top: 4px solid #4a6fc4;
+}
+
+.total-card .hr-stat-icon {
+  background: #e7edfb;
+}
+
+
+/* PENDING CARD */
+
+.pending-card {
+  border-top: 4px solid #e5a42d;
+}
+
+.pending-card .hr-stat-icon {
+  background: #fff3d8;
+}
+
+
+/* APPROVED CARD */
+
+.approved-card {
+  border-top: 4px solid #43836d;
+}
+
+.approved-card .hr-stat-icon {
+  background: #e2f0eb;
+}
+
+
+/* REJECTED CARD */
+
+.rejected-card {
+  border-top: 4px solid #d45454;
+}
+
+.rejected-card .hr-stat-icon {
+  background: #fae5e5;
+}
+
+
+/* DAYS CARD */
+
+.days-card {
+  border-top: 4px solid #7457c7;
+}
+
+.days-card .hr-stat-icon {
+  background: #ece8fb;
+}
+
+
+/* =========================================================
+   ANALYTICS GRID
+========================================================= */
+
+.hr-analytics-grid {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr 1fr;
+
+  gap: 24px;
+
+  margin-bottom: 30px;
+}
+
+
+/* =========================================================
+   COMMON PANEL
+========================================================= */
+
+.hr-panel,
+.hr-recent-panel {
+  background: white;
+
+  border:
+    1px solid #dbe3ee;
+
+  border-radius: 24px;
+
+  box-shadow:
+    0 12px 30px rgba(36, 53, 83, 0.08);
+}
+
+.hr-panel {
+  min-height: 380px;
+
+  padding: 28px;
+}
+
+.hr-recent-panel {
+  padding: 28px;
+}
+
+.hr-panel-header {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  margin-bottom: 28px;
+}
+
+.hr-panel-header h2 {
+  margin: 0 0 8px;
+
+  color: #2c3e56;
+
+  font-size: 23px;
+
+  font-weight: 750;
+}
+
+.hr-panel-header p {
+  margin: 0;
+
+  color: #78869a;
+
+  font-size: 14px;
+}
+
+.hr-total-badge {
+  padding: 8px 14px;
+
+  border-radius: 20px;
+
+  background: #eef3fb;
+
+  color: #4a6391;
+
+  font-size: 13px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   PROGRESS BARS
+========================================================= */
+
+.hr-progress-item {
+  margin-bottom: 28px;
+}
+
+.hr-progress-label {
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 10px;
+
+  color: #58677b;
+
+  font-size: 15px;
+}
+
+.hr-progress-label strong {
+  color: #293b52;
+}
+
+.hr-progress-track {
+  width: 100%;
+
+  height: 10px;
+
+  background: #e8edf4;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+}
+
+.hr-progress-fill {
+  height: 100%;
+
+  border-radius: 20px;
+
+  min-width: 0;
+
+  transition:
+    width 0.5s ease;
+}
+
+.pending-fill {
+  background:
+    #e7a72c;
+}
+
+.approved-fill {
+  background:
+    #43836d;
+}
+
+.rejected-fill {
+  background:
+    #d45454;
+}
+
+.leave-type-fill {
+  background:
+    linear-gradient(
+      90deg,
+      #4d68b7,
+      #7962c9
+    );
+}
+
+
+/* =========================================================
+   DONUT CHART
+========================================================= */
+
+.hr-status-content {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+}
+
+.hr-donut-chart {
+  position: relative;
+
+  width: 165px;
+  height: 165px;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  margin: 5px 0 25px;
+}
+
+.hr-donut-center {
+  width: 115px;
+  height: 115px;
+
+  border-radius: 50%;
+
+  background: white;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: center;
+}
+
+.hr-donut-center strong {
+  color: #2b3d55;
+
+  font-size: 32px;
+}
+
+.hr-donut-center span {
+  margin-top: 4px;
+
+  color: #77869a;
+
+  font-size: 13px;
+}
+
+.hr-status-list {
+  width: 100%;
+}
+
+.hr-status-row {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 10px 0;
+
+  color: #647287;
+}
+
+.hr-status-row > div {
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+
+  border-radius: 50%;
+}
+
+.approved-dot {
+  background: #43836d;
+}
+
+.pending-dot {
+  background: #e7a72c;
+}
+
+.rejected-dot {
+  background: #d45454;
+}
+
+
+/* =========================================================
+   TOP LEAVE TYPES
+========================================================= */
+
+.hr-leave-type {
+  margin-bottom: 24px;
+}
+
+.hr-empty-data {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  height: 210px;
+
+  color: #8490a1;
+
+  font-size: 16px;
+}
+
+
+/* =========================================================
+   RECENT REQUESTS
+========================================================= */
+
+.small-refresh {
+  background: #eef3fb;
+
+  border: 1px solid #d8e1ef;
+
+  color: #4a6391;
+}
+
+.small-refresh:hover {
+  background: #e2eaf7;
+}
+
+.hr-table-wrapper {
+  overflow-x: auto;
+}
+
+.hr-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  min-width: 750px;
+}
+
+.hr-table th {
+  text-align: left;
+
+  padding: 16px;
+
+  background: #f3f6fa;
+
+  color: #526176;
+
+  font-size: 14px;
+}
+
+.hr-table th:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.hr-table th:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.hr-table td {
+  padding: 18px 16px;
+
+  border-bottom:
+    1px solid #edf0f5;
+
+  color: #4d5d72;
+
+  font-size: 14px;
+}
+
+.hr-table tr:last-child td {
+  border-bottom: none;
+}
+
+.hr-status-badge {
+  display: inline-block;
+
+  padding: 7px 12px;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.status-approved {
+  background: #e0f0e9;
+
+  color: #31755f;
+}
+
+.status-pending {
+  background: #fff1d4;
+
+  color: #b87810;
+}
+
+.status-rejected {
+  background: #f9e2e2;
+
+  color: #bd4242;
+}
+
+.hr-no-requests {
+  padding: 45px;
+
+  text-align: center;
+
+  color: #8490a1;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.hr-loading {
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  min-height: 70vh;
+
+  font-size: 22px;
+
+  color: #3d5688;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1400px) {
+  .hr-stats-grid {
+    grid-template-columns:
+      repeat(3, 1fr);
+  }
+
+  .hr-analytics-grid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+}
+
+
+@media (max-width: 900px) {
+  .hr-dashboard {
+    padding: 18px;
+  }
+
+  .hr-welcome-banner {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 20px;
+  }
+
+  .hr-stats-grid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+  .hr-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 600px) {
+  .hr-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-welcome-banner h1 {
+    font-size: 25px;
+  }
+
+  .hr-stat-card {
+    min-height: 125px;
+  }
+}

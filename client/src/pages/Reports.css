@@ -1,0 +1,417 @@
+/* =========================================================
+   REPORTS PAGE
+========================================================= */
+
+.reports-page {
+  padding: 35px;
+  background: #f4f7fb;
+  min-height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.reports-header h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.reports-header p {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+.reports-refresh-btn {
+  padding: 12px 24px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 17px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.reports-refresh-btn:hover {
+  background: #1d4ed8;
+}
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.reports-message {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.reports-loading {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.reports-loading h2 {
+  font-size: 34px;
+  color: #2563eb;
+}
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.reports-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.summary-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  background: #2563eb;
+}
+
+.summary-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card h3 {
+  font-size: 20px;
+  color: #6b7280;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.summary-card h2 {
+  font-size: 42px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Approved */
+
+.summary-card.approved::before {
+  background: #10b981;
+}
+
+.summary-card.approved h2 {
+  color: #10b981;
+}
+
+/* Pending */
+
+.summary-card.pending::before {
+  background: #f59e0b;
+}
+
+.summary-card.pending h2 {
+  color: #f59e0b;
+}
+
+/* Rejected */
+
+.summary-card.rejected::before {
+  background: #ef4444;
+}
+
+.summary-card.rejected h2 {
+  color: #ef4444;
+}
+/* =========================================================
+   SEARCH & FILTER
+========================================================= */
+
+.reports-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.reports-search {
+  flex: 1;
+  min-width: 280px;
+  padding: 14px 18px;
+  font-size: 17px;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.reports-search:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.2);
+}
+
+.reports-filter {
+  width: 220px;
+  padding: 14px;
+  font-size: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+}
+
+.reports-filter:focus {
+  border-color: #2563eb;
+  outline: none;
+}
+
+/* =========================================================
+   REPORT TABLE
+========================================================= */
+
+.reports-table-container {
+  background: white;
+  border-radius: 18px;
+  overflow-x: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1100px;
+}
+
+.reports-table thead {
+  background: #2563eb;
+}
+
+.reports-table thead th {
+  color: white;
+  padding: 18px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.reports-table tbody td {
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 16px;
+  color: #374151;
+}
+
+.reports-table tbody tr:hover {
+  background: #f8fafc;
+  transition: 0.3s;
+}
+
+/* =========================================================
+   STATUS BADGES
+========================================================= */
+
+.status {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+}
+
+.status.approved {
+  background: #10b981;
+}
+
+.status.pending {
+  background: #f59e0b;
+}
+
+.status.rejected {
+  background: #ef4444;
+}
+
+/* =========================================================
+   NO DATA
+========================================================= */
+
+.no-data {
+  padding: 40px;
+  text-align: center;
+  font-size: 18px;
+  color: #6b7280;
+  font-weight: 600;
+}
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+
+.reports-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 35px;
+}
+
+.export-btn,
+.back-btn {
+  padding: 14px 28px;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Excel Button */
+
+.excel-btn {
+  background: #16a34a;
+  color: white;
+}
+
+.excel-btn:hover {
+  background: #15803d;
+  transform: translateY(-3px);
+}
+
+/* PDF Button */
+
+.pdf-btn {
+  background: #dc2626;
+  color: white;
+}
+
+.pdf-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-3px);
+}
+
+/* Back Button */
+
+.back-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.back-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-3px);
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+========================================================= */
+
+@media (max-width: 992px) {
+
+  .reports-page {
+    padding: 20px;
+  }
+
+  .reports-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .reports-header h1 {
+    font-size: 30px;
+  }
+
+  .reports-header p {
+    font-size: 16px;
+  }
+
+  .reports-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reports-search,
+  .reports-filter {
+    width: 100%;
+  }
+
+  .reports-actions {
+    flex-direction: column;
+  }
+
+  .export-btn,
+  .back-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .summary-card h2 {
+    font-size: 34px;
+  }
+
+  .summary-card h3 {
+    font-size: 18px;
+  }
+
+  .reports-table thead th,
+  .reports-table tbody td {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .status {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+}
+
+/* =========================================================
+   SMOOTH ANIMATIONS
+========================================================= */
+
+.summary-card,
+.export-btn,
+.back-btn,
+.reports-refresh-btn,
+.reports-search,
+.reports-filter {
+  transition: all 0.3s ease;
+}

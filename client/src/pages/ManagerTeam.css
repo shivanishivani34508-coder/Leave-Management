@@ -1,0 +1,632 @@
+.manager-team-page{
+    min-height:100vh;
+    padding:35px;
+    background:
+        linear-gradient(135deg,#eef5ff 0%,#f8fbff 40%,#ffffff 100%);
+}
+/* ==========================================================
+   HEADER
+========================================================== */
+
+.team-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:30px;
+  border-radius:20px;
+  background:linear-gradient(135deg,#2563eb,#1e3a8a);
+  color:white;
+  margin-bottom:30px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+.team-header h1{
+  margin:0;
+  font-size:36px;
+}
+
+.team-header p{
+  margin-top:10px;
+  opacity:.9;
+  font-size:18px;
+}.team-search input{
+
+    width:330px;
+
+    padding:16px 20px;
+
+    border:none;
+
+    border-radius:15px;
+
+    background:white;
+
+    font-size:16px;
+
+    outline:none;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.10);
+
+}
+/* ==========================================================
+   HEADER
+========================================================== */
+.team-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:35px;
+    border-radius:25px;
+    margin-bottom:35px;
+
+    background:
+    linear-gradient(135deg,#2563eb,#1e3a8a);
+
+    color:white;
+
+    box-shadow:
+    0 20px 45px rgba(37,99,235,.25);
+}
+/* ======================================
+TABLE CONTAINER
+====================================== */
+
+.team-table-container{
+
+    background:#fff;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+
+    overflow-x:auto;
+
+}
+
+/* ======================================
+TABLE
+====================================== */
+
+.team-table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+.team-table thead{
+
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+
+    color:white;
+
+}
+
+.team-table th{
+
+    padding:18px;
+
+    text-align:left;
+
+    font-size:16px;
+
+}
+
+.team-table td{
+
+    padding:18px;
+
+    border-bottom:1px solid #edf2f7;
+
+}
+
+.team-table tbody tr{
+
+    transition:.3s;
+
+}
+
+.team-table tbody tr:hover{
+
+    background:#f8fbff;
+
+    transform:scale(1.01);
+
+}
+/* ======================================
+EMPLOYEE INFO
+====================================== */
+
+.employee-info{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+}
+.employee-avatar{
+
+    width:80px;
+
+    height:80px;
+
+    border-radius:50%;
+
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    color:white;
+
+    font-size:34px;
+
+    font-weight:bold;
+
+    box-shadow:0 12px 30px rgba(37,99,235,.35);
+
+    border:4px solid white;
+
+    transition:.3s;
+
+}
+
+.employee-card:hover .employee-avatar{
+
+    transform:scale(1.08) rotate(5deg);
+
+}
+
+.employee-details h4{
+
+    margin:0;
+
+    color:#1e3a8a;
+
+    font-size:17px;
+
+}
+
+.employee-details p{
+
+    margin-top:4px;
+
+    color:#777;
+
+    font-size:13px;
+
+}
+/* ======================================
+STATUS BADGE
+====================================== */
+
+.status-badge{
+
+    display:inline-block;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+.status-badge.active{
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+}
+
+.status-badge.pending{
+
+    background:#fef3c7;
+
+    color:#b45309;
+
+}
+
+.status-badge.inactive{
+
+    background:#fee2e2;
+
+    color:#b91c1c;
+
+}
+
+/* ======================================
+ROLE BADGE
+====================================== */
+
+.role-badge{
+
+    background:#dbeafe;
+
+    color:#1d4ed8;
+
+    padding:8px 18px;
+
+    border-radius:30px;
+
+    font-weight:600;
+
+    font-size:14px;
+
+}
+.role-badge{
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    min-width:95px;
+    height:36px;
+
+    padding:0 18px;
+
+    background:#dbeafe;
+
+    color:#2563eb;
+
+    border-radius:50px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+/* ======================================
+VIEW BUTTON
+====================================== */
+.view-btn{
+
+    width:100%;
+
+    margin-top:25px;
+
+    padding:14px 20px;
+
+    border:none;
+
+    border-radius:14px;
+
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+    color:white;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:all .3s ease;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:10px;
+
+    box-shadow:0 10px 20px rgba(37,99,235,.25);
+
+}
+.view-btn:hover{
+
+    transform:translateY(-3px);
+
+    background:linear-gradient(135deg,#1d4ed8,#1e3a8a);
+
+    box-shadow:0 18px 35px rgba(37,99,235,.35);
+
+}
+/* ==========================================================
+   EMPLOYEE CARD GRID
+========================================================== */
+
+.employee-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(350px,1fr));
+    gap:25px;
+}
+
+/* ==========================================================
+   EMPLOYEE CARD
+========================================================== */
+
+.employee-card{
+    background:white;
+    border-left:6px solid #2563eb;
+    border-radius:22px;
+    padding:25px;
+    box-shadow:0 15px 35px rgba(0,0,0,.08);
+    transition:.35s;
+    border:1px solid #eef2ff;
+    position:relative;
+    overflow:hidden;
+}
+
+.employee-card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:5px;
+    background:linear-gradient(90deg,#2563eb,#60a5fa);
+}
+
+.employee-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 40px rgba(37,99,235,.18);
+}
+
+/* ==========================================================
+   TOP SECTION
+========================================================== */
+
+.employee-top{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-bottom:20px;
+}
+
+.employee-avatar{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:28px;
+    font-weight:bold;
+    box-shadow:0 8px 20px rgba(37,99,235,.25);
+}
+
+.employee-name h3{
+    margin:0;
+    color:#1e3a8a;
+    font-size:22px;
+}
+
+.employee-name p{
+    margin-top:6px;
+    color:#6b7280;
+    font-size:14px;
+}
+
+/* ==========================================================
+   DETAILS
+========================================================== */
+
+.employee-body{
+    margin:20px 0;
+}
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 0;
+    border-bottom:1px solid #edf2ff;
+}
+.info-row:last-child{
+    border-bottom:none;
+}
+
+.info-row span:first-child{
+    color:#64748b;
+    font-weight:500;
+}
+
+/* ==========================================================
+   BUTTON
+========================================================== */
+
+.view-btn{
+    width:100%;
+    margin-top:20px;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    color:white;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.view-btn:hover{
+    transform:scale(1.03);
+}
+/* ===========================================
+CARD RIBBON
+=========================================== */
+
+.employee-ribbon{
+
+    position:absolute;
+
+    top:18px;
+
+    right:-38px;
+
+background:linear-gradient(135deg,#2563eb,#1e3a8a);    color:white;
+
+    padding:8px 45px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    transform:rotate(45deg);
+
+    letter-spacing:1px;
+
+    box-shadow:0 8px 20px rgba(37,99,235,.25);
+
+}
+/* ===========================================
+NEW INFO BOX
+=========================================== */
+
+.info-box{
+
+    margin-top:20px;
+
+}
+
+.info-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    padding:15px;
+
+    margin-bottom:12px;
+
+    background:#f8fbff;
+
+    border-radius:15px;
+
+    transition:.3s;
+
+}
+
+.info-item:hover{
+
+    background:#eef5ff;
+
+}
+
+.info-icon{
+
+    width:45px;
+
+    height:45px;
+
+    border-radius:12px;
+
+    background:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:22px;
+
+    box-shadow:0 6px 15px rgba(0,0,0,.08);
+
+}
+
+.info-item small{
+
+    color:#777;
+
+    display:block;
+
+}
+
+.info-item h4{
+
+    margin-top:5px;
+
+    color:#1e3a8a;
+
+}.employee-card{
+    background:#ffffff !important;
+    border-left:6px solid #2563eb;
+    border-radius:22px;
+    box-shadow:0 15px 35px rgba(37,99,235,.12);
+}   
+/* ===========================================
+   MODERN DASHBOARD CARDS
+=========================================== */
+
+.team-stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:25px;
+    margin:35px 0;
+}
+
+.stat-card{
+    background:#ffffff;
+    border-radius:20px;
+    padding:25px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    box-shadow:0 12px 30px rgba(37,99,235,.08);
+    border:1px solid #edf2ff;
+    transition:.35s;
+}
+
+.stat-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 40px rgba(37,99,235,.18);
+}
+
+.stat-icon{
+    width:70px;
+    height:70px;
+    border-radius:18px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:30px;
+    color:white;
+    flex-shrink:0;
+}
+
+.stat-icon.blue{
+    background:linear-gradient(135deg,#2563eb,#60a5fa);
+}
+
+.stat-icon.purple{
+    background:linear-gradient(135deg,#7c3aed,#a855f7);
+}
+
+.stat-icon.green{
+    background:linear-gradient(135deg,#16a34a,#4ade80);
+}
+
+.stat-icon.orange{
+    background:linear-gradient(135deg,#ea580c,#fb923c);
+}
+
+.stat-content h2{
+    margin:0;
+    font-size:34px;
+    color:#1e3a8a;
+    font-weight:700;
+}
+
+.stat-content p{
+    margin-top:8px;
+    color:#64748b;
+    font-size:15px;
+    font-weight:600;
+}

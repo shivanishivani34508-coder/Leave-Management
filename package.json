@@ -1,0 +1,9 @@
+{
+  "name": "leave-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "client": "npm start --prefix client",
+    "server": "npm run dev --prefix server"
+  }
+}

@@ -1,0 +1,229 @@
+/* ==========================================
+   HOLIDAYS PAGE
+========================================== */
+
+.holidays-page {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.holidays-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.holidays-header h1 {
+  font-size: 38px;
+  color: #1e3c72;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.holidays-header p {
+  color: #666;
+  font-size: 17px;
+}
+
+/* ==========================================
+   HOLIDAY GRID
+========================================== */
+
+.holiday-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 25px;
+}
+/*=========================================
+  HOLIDAY CARDS
+=========================================*/
+
+.holiday-card{
+    background:white;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.holiday-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 18px 35px rgba(37,99,235,.15);
+}
+
+.holiday-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.holiday-top h2{
+    color:#1f2937;
+}
+
+.holiday-type{
+    padding:8px 18px;
+    border-radius:40px;
+    background:#dbeafe;
+    color:#2563eb;
+    font-weight:600;
+}
+
+.holiday-countdown{
+    color:#ef4444;
+    font-weight:600;
+}
+
+.holiday-card strong {
+  color: #1e3c72;
+}
+
+/* ==========================================
+   EMPTY / LOADING
+========================================== */
+
+.no-holidays {
+  background: white;
+  border-radius: 15px;
+  padding: 60px;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.no-holidays h3 {
+  color: #1e3c72;
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.no-holidays p {
+  color: #777;
+  font-size: 16px;
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 768px) {
+  .holidays-page {
+    padding: 15px;
+  }
+
+  .holidays-header h1 {
+    font-size: 30px;
+  }
+
+  .holiday-list {
+    grid-template-columns: 1fr;
+  }
+
+  .holiday-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .holiday-top h2 {
+    font-size: 22px;
+  }
+
+  .holiday-card {
+    padding: 18px;
+  }
+}
+.holiday-countdown {
+  margin: 8px 0;
+  color: #e67e22;
+  font-weight: 600;
+  font-size: 15px;
+}
+/*=========================================
+  HOLIDAY STATISTICS
+=========================================*/
+
+.holiday-stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:25px;
+    margin:30px 0;
+}
+
+.holiday-stat-card{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:25px;
+    border-radius:18px;
+    color:white;
+    transition:.3s;
+    box-shadow:0 12px 30px rgba(0,0,0,.12);
+    cursor:pointer;
+}
+
+.holiday-stat-card:hover{
+    transform:translateY(-6px);
+}
+
+.total-card{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+.national-card{
+    background:linear-gradient(135deg,#10b981,#059669);
+}
+
+.festival-card{
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+}
+
+.company-card{
+    background:linear-gradient(135deg,#8b5cf6,#7c3aed);
+}
+
+.holiday-stat-icon{
+    width:65px;
+    height:65px;
+    border-radius:15px;
+    background:rgba(255,255,255,.2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+}
+
+.holiday-stat-card h2{
+    margin:0;
+    font-size:30px;
+}
+
+.holiday-stat-card p{
+    margin-top:6px;
+    font-size:15px;
+}
+/*=========================================
+  SEARCH
+=========================================*/
+
+.holiday-search{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:30px;
+}
+
+.holiday-search input{
+    width:360px;
+    padding:14px 18px;
+    border:none;
+    outline:none;
+    border-radius:14px;
+    font-size:15px;
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.holiday-search input:focus{
+    width:430px;
+    box-shadow:0 10px 25px rgba(37,99,235,.25);
+}

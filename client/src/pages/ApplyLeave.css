@@ -1,0 +1,1116 @@
+/* =========================================================
+   APPLY LEAVE PAGE
+========================================================= */
+
+.apply-leave-page {
+  min-height: 100vh;
+  padding: 110px 32px 50px;
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(99, 102, 241, 0.12),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(14, 165, 233, 0.1),
+      transparent 30%
+    ),
+    linear-gradient(135deg, #f8fafc, #eef2ff);
+
+  color: #172033;
+  box-sizing: border-box;
+}
+
+.apply-leave-page *,
+.apply-leave-page *::before,
+.apply-leave-page *::after {
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.apply-leave-container {
+  width: 100%;
+  max-width: 1380px;
+  margin: 0 auto;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.apply-leave-header {
+  position: relative;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+
+  padding: 32px 34px;
+  margin-bottom: 28px;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 26px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(248, 250, 252, 0.9)
+    );
+
+  box-shadow:
+    0 20px 55px rgba(15, 23, 42, 0.08);
+}
+
+.apply-leave-header::before {
+  content: "";
+
+  position: absolute;
+  top: -100px;
+  right: -80px;
+
+  width: 260px;
+  height: 260px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(79, 70, 229, 0.18),
+      transparent 70%
+    );
+
+  pointer-events: none;
+}
+
+.apply-leave-header::after {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  bottom: 0;
+
+  width: 190px;
+  height: 4px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #4f46e5,
+      #0ea5e9
+    );
+}
+
+.apply-leave-header-content {
+  position: relative;
+  z-index: 1;
+
+  max-width: 760px;
+}
+
+.apply-leave-label {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 8px 13px;
+  margin-bottom: 14px;
+
+  border-radius: 999px;
+
+  background: rgba(79, 70, 229, 0.09);
+
+  color: #4338ca;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.apply-leave-title {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: clamp(32px, 4vw, 50px);
+  line-height: 1.05;
+  font-weight: 850;
+  letter-spacing: -0.045em;
+}
+
+.apply-leave-description {
+  max-width: 720px;
+
+  margin: 14px 0 0;
+
+  color: #64748b;
+
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.apply-leave-back-btn {
+  position: relative;
+  z-index: 1;
+
+  flex-shrink: 0;
+
+  min-height: 46px;
+
+  padding: 0 19px;
+
+  border: 1px solid rgba(79, 70, 229, 0.18);
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  color: #4338ca;
+
+  font-size: 14px;
+  font-weight: 750;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 20px rgba(15, 23, 42, 0.06);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.apply-leave-back-btn:hover {
+  transform: translateY(-2px);
+
+  border-color: rgba(79, 70, 229, 0.4);
+
+  box-shadow:
+    0 12px 28px rgba(79, 70, 229, 0.13);
+}
+
+
+/* =========================================================
+   MAIN GRID
+========================================================= */
+
+.apply-leave-grid {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1.65fr)
+    minmax(320px, 0.75fr);
+
+  gap: 28px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   GENERAL PANEL
+========================================================= */
+
+.apply-leave-panel {
+  overflow: hidden;
+
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 24px;
+
+  background:
+    rgba(255, 255, 255, 0.94);
+
+  box-shadow:
+    0 18px 50px rgba(15, 23, 42, 0.07);
+}
+
+.apply-leave-panel-header {
+  padding: 24px 26px 20px;
+
+  border-bottom:
+    1px solid rgba(226, 232, 240, 0.95);
+}
+
+.apply-leave-panel-title {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.apply-leave-panel-subtitle {
+  margin: 7px 0 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.apply-leave-form {
+  padding: 27px 26px 28px;
+}
+
+.apply-leave-form-group {
+  margin-bottom: 22px;
+}
+
+.apply-leave-form-group label {
+  display: inline-block;
+
+  margin-bottom: 9px;
+
+  color: #334155;
+
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.apply-leave-required {
+  margin-left: 4px;
+
+  color: #ef4444;
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.apply-leave-message {
+  padding: 13px 15px;
+  margin-bottom: 22px;
+
+  border: 1px solid transparent;
+  border-radius: 13px;
+
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.apply-leave-message.success {
+  border-color: rgba(22, 163, 74, 0.22);
+
+  background: rgba(240, 253, 244, 0.95);
+
+  color: #15803d;
+}
+
+.apply-leave-message.error {
+  border-color: rgba(220, 38, 38, 0.2);
+
+  background: rgba(254, 242, 242, 0.95);
+
+  color: #b91c1c;
+}
+
+
+/* =========================================================
+   INPUT WRAPPER
+========================================================= */
+
+.apply-leave-input-wrapper {
+  position: relative;
+}
+
+.apply-leave-input-icon {
+  position: absolute;
+
+  top: 50%;
+  left: 15px;
+
+  z-index: 2;
+
+  transform: translateY(-50%);
+
+  font-size: 16px;
+
+  pointer-events: none;
+}
+
+.apply-leave-input-wrapper select,
+.apply-leave-input-wrapper input {
+  width: 100%;
+  min-height: 50px;
+
+  padding: 0 15px 0 45px;
+
+  outline: none;
+
+  border:
+    1px solid rgba(148, 163, 184, 0.34);
+
+  border-radius: 14px;
+
+  background: #f8fafc;
+
+  color: #172033;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 550;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.apply-leave-input-wrapper select {
+  cursor: pointer;
+}
+
+.apply-leave-input-wrapper input:focus,
+.apply-leave-input-wrapper select:focus {
+  border-color: rgba(79, 70, 229, 0.7);
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+.apply-leave-input-wrapper input:disabled,
+.apply-leave-input-wrapper select:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.65;
+}
+
+
+/* =========================================================
+   DATE ROW
+========================================================= */
+
+.apply-leave-form-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+
+/* =========================================================
+   DURATION BOX
+========================================================= */
+
+.apply-leave-duration-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  min-height: 68px;
+
+  padding: 15px 18px;
+  margin-bottom: 18px;
+
+  border:
+    1px solid rgba(79, 70, 229, 0.16);
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(238, 242, 255, 0.95),
+      rgba(239, 246, 255, 0.9)
+    );
+}
+
+.apply-leave-duration-label {
+  color: #475569;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.apply-leave-duration-value {
+  color: #4338ca;
+
+  font-size: 17px;
+  font-weight: 850;
+}
+
+
+/* =========================================================
+   LEAVE BALANCE PREVIEW
+========================================================= */
+
+.apply-leave-balance-preview {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 13px;
+
+  margin-bottom: 12px;
+}
+
+.apply-leave-preview-item {
+  position: relative;
+
+  min-height: 105px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+
+  padding: 16px;
+
+  overflow: hidden;
+
+  border:
+    1px solid rgba(148, 163, 184, 0.22);
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f8fafc
+    );
+
+  box-shadow:
+    0 8px 20px rgba(15, 23, 42, 0.045);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.apply-leave-preview-item::after {
+  content: "";
+
+  position: absolute;
+
+  right: -35px;
+  bottom: -45px;
+
+  width: 100px;
+  height: 100px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(79, 70, 229, 0.045);
+}
+
+.apply-leave-preview-item:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 28px rgba(15, 23, 42, 0.07);
+}
+
+.apply-leave-preview-label {
+  position: relative;
+  z-index: 1;
+
+  color: #64748b;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.apply-leave-preview-value {
+  position: relative;
+  z-index: 1;
+
+  color: #4338ca;
+
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.apply-leave-preview-value.paid {
+  color: #15803d;
+}
+
+.apply-leave-preview-value.unpaid {
+  color: #c2410c;
+}
+
+.apply-leave-preview-note {
+  margin:
+    0
+    0
+    22px;
+
+  padding: 11px 13px;
+
+  border-left:
+    3px solid rgba(14, 165, 233, 0.7);
+
+  border-radius:
+    0
+    10px
+    10px
+    0;
+
+  background:
+    rgba(240, 249, 255, 0.75);
+
+  color: #64748b;
+
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.apply-leave-textarea-wrapper {
+  position: relative;
+}
+
+.apply-leave-textarea-icon {
+  position: absolute;
+
+  top: 15px;
+  left: 15px;
+
+  z-index: 2;
+
+  font-size: 16px;
+
+  pointer-events: none;
+}
+
+.apply-leave-textarea-wrapper textarea {
+  display: block;
+
+  width: 100%;
+  min-height: 145px;
+
+  padding:
+    14px
+    15px
+    14px
+    45px;
+
+  resize: vertical;
+
+  outline: none;
+
+  border:
+    1px solid rgba(148, 163, 184, 0.34);
+
+  border-radius: 14px;
+
+  background: #f8fafc;
+
+  color: #172033;
+
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.65;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.apply-leave-textarea-wrapper textarea:focus {
+  border-color: rgba(79, 70, 229, 0.7);
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+.apply-leave-textarea-wrapper textarea::placeholder {
+  color: #94a3b8;
+}
+
+.apply-leave-textarea-wrapper textarea:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.65;
+}
+
+.apply-leave-character-count {
+  display: block;
+
+  margin-top: 7px;
+
+  text-align: right;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   FORM ACTION BUTTONS
+========================================================= */
+
+.apply-leave-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+
+  padding-top: 5px;
+}
+
+.apply-leave-cancel-btn,
+.apply-leave-submit-btn {
+  min-height: 48px;
+
+  padding: 0 20px;
+
+  border-radius: 14px;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.apply-leave-cancel-btn {
+  border:
+    1px solid rgba(148, 163, 184, 0.35);
+
+  background: #ffffff;
+
+  color: #475569;
+}
+
+.apply-leave-cancel-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 20px rgba(15, 23, 42, 0.07);
+}
+
+.apply-leave-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  min-width: 190px;
+
+  border: none;
+
+  background:
+    linear-gradient(
+      135deg,
+      #4f46e5,
+      #2563eb
+    );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 10px 24px rgba(79, 70, 229, 0.24);
+}
+
+.apply-leave-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 15px 30px rgba(79, 70, 229, 0.32);
+}
+
+.apply-leave-cancel-btn:disabled,
+.apply-leave-submit-btn:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.58;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+
+/* =========================================================
+   RIGHT SIDEBAR
+========================================================= */
+
+.apply-leave-sidebar {
+  display: grid;
+
+  gap: 22px;
+}
+
+
+/* =========================================================
+   USER INFORMATION
+========================================================= */
+
+.apply-leave-user-content {
+  padding: 24px;
+}
+
+.apply-leave-user-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding-bottom: 20px;
+
+  border-bottom:
+    1px solid rgba(226, 232, 240, 0.9);
+}
+
+.apply-leave-user-avatar {
+  width: 52px;
+  height: 52px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #4f46e5,
+      #0ea5e9
+    );
+
+  color: #ffffff;
+
+  font-size: 17px;
+  font-weight: 850;
+
+  box-shadow:
+    0 10px 25px rgba(79, 70, 229, 0.2);
+}
+
+.apply-leave-user-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.apply-leave-user-name {
+  overflow: hidden;
+
+  color: #172033;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.apply-leave-user-email {
+  overflow: hidden;
+
+  color: #64748b;
+
+  font-size: 12px;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.apply-leave-user-details {
+  display: grid;
+
+  gap: 12px;
+
+  padding-top: 19px;
+}
+
+.apply-leave-user-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+
+  min-height: 40px;
+
+  padding: 8px 11px;
+
+  border-radius: 11px;
+
+  background: #f8fafc;
+}
+
+.apply-leave-user-detail-label {
+  color: #64748b;
+
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.apply-leave-user-detail-value {
+  max-width: 58%;
+
+  overflow: hidden;
+
+  color: #334155;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  text-align: right;
+  text-transform: capitalize;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   GUIDELINES
+========================================================= */
+
+.apply-leave-guidelines {
+  display: grid;
+
+  gap: 17px;
+
+  padding: 23px 24px 25px;
+}
+
+.apply-leave-guideline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.apply-leave-guideline-icon {
+  width: 30px;
+  height: 30px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background:
+    rgba(79, 70, 229, 0.1);
+
+  color: #4338ca;
+
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.apply-leave-guideline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.apply-leave-guideline-title {
+  color: #334155;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.apply-leave-guideline-description {
+  color: #64748b;
+
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   RESPONSIVE - TABLETS
+========================================================= */
+
+@media (max-width: 1080px) {
+  .apply-leave-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .apply-leave-sidebar {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE - SMALL TABLETS
+========================================================= */
+
+@media (max-width: 760px) {
+  .apply-leave-page {
+    padding:
+      95px
+      18px
+      35px;
+  }
+
+  .apply-leave-header {
+    flex-direction: column;
+    align-items: stretch;
+
+    padding: 26px 23px;
+  }
+
+  .apply-leave-back-btn {
+    align-self: flex-start;
+  }
+
+  .apply-leave-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .apply-leave-balance-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .apply-leave-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+========================================================= */
+
+@media (max-width: 520px) {
+  .apply-leave-page {
+    padding:
+      85px
+      12px
+      25px;
+  }
+
+  .apply-leave-header {
+    padding: 22px 18px;
+
+    border-radius: 20px;
+  }
+
+  .apply-leave-title {
+    font-size: 31px;
+  }
+
+  .apply-leave-panel {
+    border-radius: 19px;
+  }
+
+  .apply-leave-panel-header {
+    padding: 20px 18px 17px;
+  }
+
+  .apply-leave-form {
+    padding: 22px 18px;
+  }
+
+  .apply-leave-duration-box {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 7px;
+  }
+
+  .apply-leave-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .apply-leave-cancel-btn,
+  .apply-leave-submit-btn {
+    width: 100%;
+  }
+
+  .apply-leave-user-content,
+  .apply-leave-guidelines {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+/* =========================================================
+   NO LEAVE BALANCE WARNING
+========================================================= */
+
+.apply-leave-warning{
+
+    margin-top:20px;
+
+    padding:18px;
+
+    border-radius:14px;
+
+    background:#fef2f2;
+
+    border:2px solid #fecaca;
+
+    color:#b91c1c;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    line-height:1.7;
+
+    animation:warningFade .4s ease;
+}
+
+@keyframes warningFade{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-10px);
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+    }
+
+}

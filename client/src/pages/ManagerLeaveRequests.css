@@ -1,0 +1,100 @@
+.manager-leaves-page{
+    padding:40px;
+}
+
+.manager-leaves-container{
+    max-width:1200px;
+    margin:auto;
+}
+
+.manager-leaves-container h1{
+    font-size:34px;
+    color:#0f172a;
+    margin-bottom:10px;
+}
+
+.manager-leaves-container p{
+    color:#64748b;
+    font-size:18px;
+}
+.manager-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:30px;
+    background:#fff;
+}
+
+.manager-table th{
+    background:#1e3a8a;
+    color:white;
+    padding:14px;
+    text-align:left;
+}
+
+.manager-table td{
+    padding:14px;
+    border-bottom:1px solid #ddd;
+}
+
+.manager-table tr:hover{
+    background:#f8fafc;
+}
+.approve-btn{
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:8px 16px;
+    border-radius:6px;
+    cursor:pointer;
+    margin-right:10px;
+}
+
+.reject-btn{
+    background:#dc2626;
+    color:white;
+    border:none;
+    padding:8px 16px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.approve-btn:hover{
+    background:#15803d;
+}
+
+.reject-btn:hover{
+    background:#b91c1c;
+}
+.approval-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.stage {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stage.pending {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.stage.approved {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.stage.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}

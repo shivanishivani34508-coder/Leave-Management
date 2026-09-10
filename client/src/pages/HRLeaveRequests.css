@@ -1,0 +1,65 @@
+.page-container {
+  padding: 30px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.page-container h1 {
+  font-size: 34px;
+  color: #1e3a8a;
+  margin-bottom: 25px;
+}
+
+.hr-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,.08);
+}
+
+.hr-table thead {
+  background: #1e3a8a;
+  color: white;
+}
+
+.hr-table th,
+.hr-table td {
+  padding: 16px;
+  text-align: center;
+}
+
+.hr-table tbody tr:nth-child(even) {
+  background: #f7f9fc;
+}
+
+.hr-table tbody tr:hover {
+  background: #eef4ff;
+}
+
+.hr-table button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 3px;
+}
+
+.approve-btn {
+  background: #16a34a;
+}
+
+.reject-btn {
+  background: #dc2626;
+}
+
+.approve-btn:hover {
+  background: #15803d;
+}
+
+.reject-btn:hover {
+  background: #b91c1c;
+}

@@ -1,0 +1,367 @@
+/* =========================================================
+   PAGE
+========================================================= */
+
+.edit-employee-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef5ff, #f8fbff);
+  padding: 35px;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.edit-header {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  border-radius: 22px;
+  padding: 30px 40px;
+  margin-bottom: 30px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  box-shadow: 0 15px 35px rgba(37, 99, 235, .35);
+}
+
+.edit-header h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.edit-header p {
+  margin-top: 10px;
+  color: rgba(255,255,255,.9);
+  font-size: 15px;
+}
+
+.back-btn{
+  background:white;
+  color:#2563eb;
+  border:none;
+  padding:13px 26px;
+  border-radius:12px;
+  cursor:pointer;
+  font-weight:700;
+  transition:.3s;
+}
+
+.back-btn:hover{
+  transform:translateY(-3px);
+}
+
+/* =========================================================
+   PROFILE CARD
+========================================================= */
+
+.employee-profile-card{
+
+  background:white;
+
+  border-radius:22px;
+
+  padding:30px;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:25px;
+
+  margin-bottom:30px;
+
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
+
+}
+
+.employee-avatar{
+
+  width:120px;
+
+  height:120px;
+
+  border-radius:50%;
+
+  background:linear-gradient(135deg,#2563eb,#60a5fa);
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  font-size:45px;
+
+  color:white;
+
+  font-weight:bold;
+
+}
+
+.employee-profile-info h2{
+
+  margin:0;
+
+  color:#1e3a8a;
+
+  font-size:30px;
+
+}
+
+.employee-profile-info p{
+
+  margin-top:8px;
+
+  color:#64748b;
+
+}
+
+.employee-badges{
+
+  display:flex;
+
+  gap:15px;
+
+  margin-top:18px;
+
+}
+
+.role-badge,
+.department-badge{
+
+  padding:9px 20px;
+
+  border-radius:30px;
+
+  font-size:14px;
+
+  font-weight:700;
+
+}
+
+.role-badge{
+
+  background:#dbeafe;
+
+  color:#2563eb;
+
+}
+
+.department-badge{
+
+  background:#dcfce7;
+
+  color:#15803d;
+
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.edit-form{
+
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:25px;
+
+}
+
+.form-card{
+
+  background:white;
+
+  border-radius:20px;
+
+  padding:30px;
+
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
+
+}
+
+.form-card h2{
+
+  margin-bottom:25px;
+
+  color:#1e3a8a;
+
+}
+
+.form-grid{
+
+  display:grid;
+
+  grid-template-columns:1fr;
+
+  gap:20px;
+
+}
+
+.form-field{
+
+  display:flex;
+
+  flex-direction:column;
+
+}
+
+.form-field label{
+
+  margin-bottom:10px;
+
+  font-weight:700;
+
+  color:#334155;
+
+}
+
+.form-field input,
+.form-field select{
+
+  padding:14px;
+
+  border-radius:12px;
+
+  border:2px solid #dbeafe;
+
+  background:#f8fbff;
+
+  font-size:15px;
+
+  transition:.3s;
+
+}
+
+.form-field input:focus,
+.form-field select:focus{
+
+  outline:none;
+
+  border-color:#2563eb;
+
+  background:white;
+
+  box-shadow:0 0 0 4px rgba(37,99,235,.12);
+
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.edit-actions{
+
+  grid-column:1/-1;
+
+  display:flex;
+
+  justify-content:flex-end;
+
+  gap:15px;
+
+}
+
+.cancel-btn{
+
+  padding:14px 28px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:#e2e8f0;
+
+  cursor:pointer;
+
+  font-size:15px;
+
+  font-weight:700;
+
+}
+
+.cancel-btn:hover{
+
+  background:#cbd5e1;
+
+}
+
+.save-btn{
+
+  padding:14px 34px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+
+  color:white;
+
+  cursor:pointer;
+
+  font-size:15px;
+
+  font-weight:700;
+
+  box-shadow:0 12px 25px rgba(37,99,235,.30);
+
+  transition:.3s;
+
+}
+
+.save-btn:hover{
+
+  transform:translateY(-3px);
+
+  box-shadow:0 15px 35px rgba(37,99,235,.45);
+
+}
+
+.save-btn:disabled{
+
+  opacity:.6;
+
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:900px){
+
+.edit-form{
+
+grid-template-columns:1fr;
+
+}
+
+.edit-header{
+
+flex-direction:column;
+
+gap:20px;
+
+text-align:center;
+
+}
+
+.employee-profile-card{
+
+flex-direction:column;
+
+text-align:center;
+
+}
+
+.edit-actions{
+
+justify-content:center;
+
+}
+
+}

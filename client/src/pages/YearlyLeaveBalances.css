@@ -1,0 +1,561 @@
+/* =========================================================
+   YEARLY LEAVE BALANCES PAGE
+========================================================= */
+
+.yearly-leave-page {
+  min-height: 100vh;
+  padding: 30px;
+  background: #f5f7fb;
+  color: #172554;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.yearly-leave-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.yearly-leave-title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.yearly-leave-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ede9fe;
+  font-size: 28px;
+}
+
+.yearly-leave-title-section h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #172554;
+}
+
+.yearly-leave-title-section p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.yearly-refresh-button {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  background: #5b3df5;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.yearly-refresh-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+.yearly-refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   FILTER CARD
+========================================================= */
+
+.yearly-filter-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 25px;
+  padding: 22px;
+  margin-bottom: 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+}
+
+.yearly-filter-group,
+.yearly-search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yearly-filter-group label,
+.yearly-search-group label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.yearly-filter-group select {
+  min-width: 150px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #172554;
+  font-size: 14px;
+  outline: none;
+}
+
+.yearly-filter-group select:focus {
+  border-color: #5b3df5;
+}
+
+.yearly-search-group {
+  flex: 1;
+}
+
+.yearly-search-box {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.yearly-search-box span {
+  margin-right: 8px;
+  font-size: 20px;
+  color: #64748b;
+}
+
+.yearly-search-box input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #172554;
+  font-size: 14px;
+}
+
+.yearly-search-box input::placeholder {
+  color: #94a3b8;
+}
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.yearly-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 25px;
+}
+
+.yearly-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 17px;
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+}
+
+.yearly-summary-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: #ede9fe;
+  color: #5b3df5;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.yearly-summary-icon.carry {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.yearly-summary-icon.available {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.yearly-summary-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.yearly-summary-card strong {
+  color: #172554;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.yearly-error {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.yearly-error strong {
+  font-size: 14px;
+}
+
+.yearly-error span {
+  flex: 1;
+  font-size: 13px;
+}
+
+.yearly-error button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: #dc2626;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.yearly-loading {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 18px;
+}
+
+.yearly-spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #5b3df5;
+  border-radius: 50%;
+  animation: yearlySpin 0.8s linear infinite;
+}
+
+.yearly-loading p {
+  margin-top: 14px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+@keyframes yearlySpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   TABLE CARD
+========================================================= */
+
+.yearly-table-card {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+}
+
+.yearly-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.yearly-table-header h2 {
+  margin: 0;
+  color: #172554;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.yearly-table-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.yearly-policy-badge {
+  padding: 9px 13px;
+  border-radius: 20px;
+  background: #ecfdf5;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.yearly-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.yearly-balance-table {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+}
+
+.yearly-balance-table th {
+  padding: 15px 18px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.yearly-balance-table td {
+  padding: 17px 18px;
+  border-top: 1px solid #eef2f7;
+  color: #334155;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.yearly-balance-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.yearly-balance-table tbody tr:hover {
+  background: #fafbff;
+}
+
+/* =========================================================
+   EMPLOYEE
+========================================================= */
+
+.employee-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 190px;
+}
+
+.employee-avatar {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #5b3df5;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.employee-info strong {
+  display: block;
+  color: #172554;
+  font-size: 14px;
+}
+
+.employee-info small {
+  display: block;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* =========================================================
+   DEPARTMENT
+========================================================= */
+
+.department-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   LEAVE CELLS
+========================================================= */
+
+.leave-cell strong {
+  display: block;
+  color: #172554;
+  font-size: 13px;
+}
+
+.leave-cell small {
+  display: block;
+  margin-top: 4px;
+  color: #16a34a;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.carry-value {
+  display: inline-block;
+  padding: 7px 11px;
+  border-radius: 9px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.carry-value.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.total-available-value {
+  color: #5b3df5;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.yearly-empty {
+  padding: 70px 25px;
+  text-align: center;
+}
+
+.yearly-empty-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.yearly-empty h3 {
+  margin: 0;
+  color: #172554;
+  font-size: 20px;
+}
+
+.yearly-empty p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* =========================================================
+   POLICY CARD
+========================================================= */
+
+.yearly-policy-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-top: 22px;
+  padding: 18px 20px;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  background: #f0fdf4;
+}
+
+.yearly-policy-icon {
+  font-size: 23px;
+}
+
+.yearly-policy-card h3 {
+  margin: 0;
+  color: #166534;
+  font-size: 15px;
+}
+
+.yearly-policy-card p {
+  margin: 6px 0 0;
+  color: #15803d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+  .yearly-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .yearly-filter-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .yearly-filter-group select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .yearly-leave-page {
+    padding: 18px;
+  }
+
+  .yearly-leave-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .yearly-leave-title-section h1 {
+    font-size: 24px;
+  }
+
+  .yearly-refresh-button {
+    width: 100%;
+  }
+
+  .yearly-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
