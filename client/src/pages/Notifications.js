@@ -97,7 +97,7 @@ function Notifications() {
   try {
     await api.delete("/notifications/clear-all", {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
       },
     });
 

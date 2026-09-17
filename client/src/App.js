@@ -30,7 +30,8 @@ import Holidays from "./pages/Holidays";
 import HolidayCalendar from "./pages/HolidayCalendar";
 import Managers from "./pages/Managers";
 import DepartmentHeads from "./pages/DepartmentHeads";
-import HR from "./pages/HR";import HRDashboard from "./pages/HRDashboard";
+import HR from "./pages/HR";
+import HRDashboard from "./pages/HRDashboard";
 import ManagerLeaveRequests from "./pages/ManagerLeaveRequests";
 import DepartmentHeadDashboard from "./pages/DepartmentHeadDashboard";
 import DepartmentHeadLeaveRequests from "./pages/DepartmentHeadLeaveRequests";
@@ -41,9 +42,14 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import YearlyLeaveBalances from "./pages/YearlyLeaveBalances";
 
+
+/* =========================================================
+   GET USER FROM LOCAL STORAGE
+========================================================= */
+
 function getStoredUser() {
   try {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("user");
 
     if (!storedUser) {
       return null;
@@ -53,18 +59,23 @@ function getStoredUser() {
   } catch (error) {
     console.error("INVALID STORED USER:", error);
 
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
 
     return null;
   }
 }
 
 
+/* =========================================================
+   PUBLIC ROUTE
+========================================================= */
+
 function PublicRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const user = getStoredUser();
 
   if (token && user) {
+
     if (user.role === "admin") {
       return (
         <Navigate
@@ -82,53 +93,99 @@ function PublicRoute({ children }) {
         />
       );
     }
+
   }
 
   return children;
 }
 
+
+/* =========================================================
+   EMPLOYEE ROUTE
+========================================================= */
+
 function EmployeeRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const user = getStoredUser();
 
   if (!token || !user) {
-    return <Navigate to="/" replace />;
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
   }
 
   if (user.role === "employee") {
-    return children; 
+    return children;
   }
 
   if (user.role === "admin") {
-    return <Navigate to="/admin-dashboard" replace />;
+    return (
+      <Navigate
+        to="/admin-dashboard"
+        replace
+      />
+    );
   }
 
   if (user.role === "manager") {
-    return <Navigate to="/manager-dashboard" replace />;
+    return (
+      <Navigate
+        to="/manager-dashboard"
+        replace
+      />
+    );
   }
 
   if (user.role === "departmentHead") {
-    return <Navigate to="/department-head-dashboard" replace />;
+    return (
+      <Navigate
+        to="/department-head-dashboard"
+        replace
+      />
+    );
   }
 
   if (user.role === "hr") {
-    return <Navigate to="/hr-dashboard" replace />;
+    return (
+      <Navigate
+        to="/hr-dashboard"
+        replace
+      />
+    );
   }
 
-  return <Navigate to="/" replace />;
+  return (
+    <Navigate
+      to="/"
+      replace
+    />
+  );
 }
 
+
+/* =========================================================
+   ADMIN ROUTE
+========================================================= */
+
 function AdminRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const user = getStoredUser();
 
   console.log("AdminRoute:", {
-  token: !!token,
-  role: user?.role,
-});
+    token: !!token,
+    role: user?.role,
+  });
 
   if (!token || !user) {
-    return <Navigate to="/" replace />;
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
   }
 
   if (user.role === "admin") {
@@ -136,26 +193,56 @@ function AdminRoute({ children }) {
   }
 
   if (user.role === "employee") {
-    return <Navigate to="/dashboard" replace />;
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
   }
 
   if (user.role === "manager") {
-    return <Navigate to="/manager-dashboard" replace />;
+    return (
+      <Navigate
+        to="/manager-dashboard"
+        replace
+      />
+    );
   }
 
   if (user.role === "departmentHead") {
-    return <Navigate to="/department-head-dashboard" replace />;
+    return (
+      <Navigate
+        to="/department-head-dashboard"
+        replace
+      />
+    );
   }
 
   if (user.role === "hr") {
-    return <Navigate to="/hr-dashboard" replace />;
+    return (
+      <Navigate
+        to="/hr-dashboard"
+        replace
+      />
+    );
   }
 
-  return <Navigate to="/" replace />;
+  return (
+    <Navigate
+      to="/"
+      replace
+    />
+  );
 }
 
+
+/* =========================================================
+   MANAGER ROUTE
+========================================================= */
+
 function ManagerRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const user = getStoredUser();
 
   if (!token || !user) {
@@ -178,31 +265,62 @@ function ManagerRoute({ children }) {
 
   return children;
 }
+
+
+/* =========================================================
+   DEPARTMENT HEAD ROUTE
+========================================================= */
+
 function DepartmentHeadRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const user = getStoredUser();
 
-  console.log("TOKEN:", token);
-  console.log("USER:", user);
+  console.log("========== DEPARTMENT HEAD ROUTE ==========");
+  console.log("Token:", !!token);
+  console.log("User:", user);
+  console.log("Role:", user?.role);
 
   if (!token || !user) {
-    console.log("Redirecting because token or user is missing");
-    return <Navigate to="/" replace />;
-  }
+    console.log(
+      "Department Head Route: token or user missing"
+    );
 
-  console.log("USER ROLE:", user.role);
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+  }
 
   if (user.role !== "departmentHead") {
-    console.log("Redirecting because role is not departmentHead");
-    return <Navigate to="/dashboard" replace />;
+    console.log(
+      "Department Head Route: wrong role:",
+      user.role
+    );
+
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
   }
 
-  console.log("DepartmentHeadRoute passed");
+  console.log(
+    "Department Head Route Passed"
+  );
 
   return children;
 }
+
+
+/* =========================================================
+   HR ROUTE
+========================================================= */
+
 function HRRoute({ children }) {
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   const user = getStoredUser();
 
   console.log("========== HR ROUTE ==========");
@@ -211,35 +329,111 @@ function HRRoute({ children }) {
   console.log("Role:", user?.role);
 
   if (!token || !user) {
-    console.log("Redirecting because token or user is missing");
-    return <Navigate to="/" replace />;
+    console.log(
+      "Redirecting because token or user is missing"
+    );
+
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
   }
 
   if (user.role !== "hr") {
-    console.log("Role is not hr:", user.role);
-    return <Navigate to="/dashboard" replace />;
+    console.log(
+      "Role is not hr:",
+      user.role
+    );
+
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
   }
 
   console.log("HR Route Passed");
 
   return children;
 }
+
+/* =========================================================
+   LEAVE HISTORY ROUTE
+   Available for:
+   Employee
+   Manager
+   Department Head
+   HR
+========================================================= */
+function LeaveHistoryRoute({ children }) {
+  const token = sessionStorage.getItem("token");
+  const user = getStoredUser();
+
+  if (!token || !user) {
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+  }
+
+  const allowedRoles = [
+    "employee",
+    "manager",
+    "departmentHead",
+    "hr",
+  ];
+
+  if (!allowedRoles.includes(user.role)) {
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
+  }
+
+  return children;
+}
+
+
+/* =========================================================
+   PROTECTED LAYOUT
+========================================================= */
+
 function ProtectedLayout({ children }) {
   return (
     <>
       <Navbar />
 
-      <main>{children}</main>
+      <main>
+        {children}
+      </main>
     </>
   );
 }
 
 
+/* =========================================================
+   APP
+========================================================= */
+
 function App() {
   return (
     <BrowserRouter>
+
       <div className="App">
+
         <Routes>
+
+
+          {/* =================================================
+              LOGIN
+          ================================================= */}
 
           <Route
             path="/"
@@ -250,6 +444,11 @@ function App() {
             }
           />
 
+
+          {/* =================================================
+              REGISTER
+          ================================================= */}
+
           <Route
             path="/register"
             element={
@@ -258,6 +457,11 @@ function App() {
               </PublicRoute>
             }
           />
+
+
+          {/* =================================================
+              EMPLOYEE DASHBOARD
+          ================================================= */}
 
           <Route
             path="/dashboard"
@@ -270,82 +474,136 @@ function App() {
             }
           />
 
+
+          {/* =================================================
+              APPLY LEAVE
+              
+              Available for:
+              Employee
+              Manager
+              Department Head
+              HR
+              Admin
+          ================================================= */}
+
           <Route
             path="/apply-leave"
             element={
-              <EmployeeRoute>
-                <ProtectedLayout>
-                  <ApplyLeave />
-                </ProtectedLayout>
-              </EmployeeRoute>
+              <ProtectedLayout>
+                <ApplyLeave />
+              </ProtectedLayout>
             }
           />
+
+
+          {/* =================================================
+              LEAVE HISTORY
+              
+              Employee route remains unchanged.
+          ================================================= */}
+
+               <Route
+                  path="/leave-history"
+                  element={
+                    <LeaveHistoryRoute>
+                      <ProtectedLayout>
+                        <LeaveHistory />
+                      </ProtectedLayout>
+                    </LeaveHistoryRoute>
+                  }
+                />
+
+          {/* =================================================
+              ADMIN DASHBOARD
+          ================================================= */}
 
           <Route
-            path="/leave-history"
+            path="/admin-dashboard"
             element={
-              <EmployeeRoute>
+              <AdminRoute>
                 <ProtectedLayout>
-                  <LeaveHistory />
+                  <AdminDashboard />
                 </ProtectedLayout>
-              </EmployeeRoute>
+              </AdminRoute>
             }
           />
-<Route
-  path="/admin-dashboard"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <AdminDashboard />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
 
-<Route
-  path="/admin/holiday-calendar"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <HolidayCalendar />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
 
-<Route
-  path="/forgot-password"
-  element={<ForgotPassword />}
-/>
+          {/* =================================================
+              ADMIN HOLIDAY CALENDAR
+          ================================================= */}
 
-<Route
-  path="/reset-password/:token"
-  element={<ResetPassword />}
-/>
+          <Route
+            path="/admin/holiday-calendar"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <HolidayCalendar />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
 
-         
-        
-         <Route
-  path="/manager-dashboard"
-  element={
-    <ManagerRoute>
-      <ProtectedLayout>
-        <ManagerDashboard />
-      </ProtectedLayout>
-    </ManagerRoute>
-  }
-/>
 
-<Route
-  path="/manager-team"
-  element={
-    <ManagerRoute>
-      <ProtectedLayout>
-        <ManagerTeam />
-      </ProtectedLayout>
-    </ManagerRoute>
-  }
-/>
+          {/* =================================================
+              FORGOT PASSWORD
+          ================================================= */}
+
+          <Route
+            path="/forgot-password"
+            element={
+              <ForgotPassword />
+            }
+          />
+
+
+          {/* =================================================
+              RESET PASSWORD
+          ================================================= */}
+
+          <Route
+            path="/reset-password/:token"
+            element={
+              <ResetPassword />
+            }
+          />
+
+
+          {/* =================================================
+              MANAGER DASHBOARD
+          ================================================= */}
+
+          <Route
+            path="/manager-dashboard"
+            element={
+              <ManagerRoute>
+                <ProtectedLayout>
+                  <ManagerDashboard />
+                </ProtectedLayout>
+              </ManagerRoute>
+            }
+          />
+
+
+          {/* =================================================
+              MANAGER TEAM
+          ================================================= */}
+
+          <Route
+            path="/manager-team"
+            element={
+              <ManagerRoute>
+                <ProtectedLayout>
+                  <ManagerTeam />
+                </ProtectedLayout>
+              </ManagerRoute>
+            }
+          />
+
+
+          {/* =================================================
+              ADMIN MANAGE LEAVES
+          ================================================= */}
 
           <Route
             path="/manage-leaves"
@@ -357,65 +615,110 @@ function App() {
               </AdminRoute>
             }
           />
-<Route
-  path="/departments"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <Departments />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
 
-         <Route
-  path="/manager/leave-requests"
-  element={
-    <ManagerRoute>
-      <ProtectedLayout>
-        <ManagerLeaveRequests />
-      </ProtectedLayout>
-    </ManagerRoute>
-  }
-/>
-<Route
-  path="/department-head-dashboard"
-  element={
-    <ProtectedLayout>
-      <DepartmentHeadDashboard />
-    </ProtectedLayout>
-  }
-/>
 
-<Route
-  path="/department-head/leave-requests"
-  element={
-    <ProtectedLayout>
-      <DepartmentHeadLeaveRequests />
-    </ProtectedLayout>
-  }
-/>
-<Route
-  path="/hr-dashboard"
-  element={
-    <HRRoute>
-      <ProtectedLayout>
-        <HRDashboard />
-      </ProtectedLayout>
-    </HRRoute>
-  }
-/>
+          {/* =================================================
+              ADMIN DEPARTMENTS
+          ================================================= */}
 
-<Route
-  path="/hr/leave-requests"
-  element={
-    <HRRoute>
-      <ProtectedLayout>
-        <HRLeaveRequests />
-      </ProtectedLayout>
-    </HRRoute>
-  }
-/>
+          <Route
+            path="/departments"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <Departments />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
+
+
+          {/* =================================================
+              MANAGER LEAVE REQUESTS
+          ================================================= */}
+
+          <Route
+            path="/manager/leave-requests"
+            element={
+              <ManagerRoute>
+                <ProtectedLayout>
+                  <ManagerLeaveRequests />
+                </ProtectedLayout>
+              </ManagerRoute>
+            }
+          />
+
+
+          {/* =================================================
+              DEPARTMENT HEAD DASHBOARD
+
+              FIXED:
+              DepartmentHeadRoute added
+          ================================================= */}
+
+          <Route
+            path="/department-head-dashboard"
+            element={
+              <DepartmentHeadRoute>
+                <ProtectedLayout>
+                  <DepartmentHeadDashboard />
+                </ProtectedLayout>
+              </DepartmentHeadRoute>
+            }
+          />
+
+
+          {/* =================================================
+              DEPARTMENT HEAD LEAVE REQUESTS
+
+              FIXED:
+              DepartmentHeadRoute added
+          ================================================= */}
+              <Route
+                path="/department-head/leave-requests"
+                element={
+                  <DepartmentHeadRoute>
+                    <ProtectedLayout>
+                      <DepartmentHeadLeaveRequests />
+                    </ProtectedLayout>
+                  </DepartmentHeadRoute>
+                }
+              />
+          {/* =================================================
+              HR DASHBOARD
+          ================================================= */}
+
+          <Route
+            path="/hr-dashboard"
+            element={
+              <HRRoute>
+                <ProtectedLayout>
+                  <HRDashboard />
+                </ProtectedLayout>
+              </HRRoute>
+            }
+          />
+
+
+          {/* =================================================
+              HR LEAVE REQUESTS
+          ================================================= */}
+
+          <Route
+            path="/hr/leave-requests"
+            element={
+              <HRRoute>
+                <ProtectedLayout>
+                  <HRLeaveRequests />
+                </ProtectedLayout>
+              </HRRoute>
+            }
+          />
+
+
+          {/* =================================================
+              EMPLOYEES
+          ================================================= */}
 
           <Route
             path="/employees"
@@ -428,123 +731,206 @@ function App() {
             }
           />
 
-          <Route path="/admin/managers" element={<Managers />} />
 
-<Route
-  path="/admin/department-heads"
-  element={<DepartmentHeads />}
-/>
-
-<Route path="/admin/hr" element={<HR />} />
+          {/* =================================================
+              ADMIN MANAGERS
+          ================================================= */}
 
           <Route
-  path="/add-employee"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <AddEmployee />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/edit-employee/:id"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <EditEmployee />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
+            path="/admin/managers"
+            element={
+              <Managers />
+            }
+          />
+
+
+          {/* =================================================
+              ADMIN DEPARTMENT HEADS
+          ================================================= */}
+
           <Route
-  path="/reports"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <Reports />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
-
-<Route
-  path="/notifications"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <Notifications />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/yearly-leave-balances"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <YearlyLeaveBalances />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/holiday-management"
-  element={
-    <AdminRoute>
-      <ProtectedLayout>
-        <HolidayManagement />
-      </ProtectedLayout>
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/holidays"
-  element={
-    <EmployeeRoute>
-      <ProtectedLayout>
-        <Holidays />
-      </ProtectedLayout>
-    </EmployeeRoute>
-  }
-/>
-
-<Route
-  path="/holiday-calendar"
-  element={
-    <EmployeeRoute>
-      <ProtectedLayout>
-        <HolidayCalendar />
-      </ProtectedLayout>
-    </EmployeeRoute>
-  }
-/>
+            path="/admin/department-heads"
+            element={
+              <DepartmentHeads />
+            }
+          />
 
 
-          {/* OLD EMPLOYEE DETAILS URLs GO BACK TO EMPLOYEES */}
+          {/* =================================================
+              ADMIN HR
+          ================================================= */}
+
+          <Route
+            path="/admin/hr"
+            element={
+              <HR />
+            }
+          />
+
+
+          {/* =================================================
+              ADD EMPLOYEE
+          ================================================= */}
+
+          <Route
+            path="/add-employee"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <AddEmployee />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
+
+
+          {/* =================================================
+              EDIT EMPLOYEE
+          ================================================= */}
+
+          <Route
+            path="/edit-employee/:id"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <EditEmployee />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
+
+
+          {/* =================================================
+              REPORTS
+          ================================================= */}
+
+          <Route
+            path="/reports"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <Reports />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
+
+
+          {/* =================================================
+              NOTIFICATIONS
+          ================================================= */}
+
+          <Route
+            path="/notifications"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <Notifications />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
+
+
+          {/* =================================================
+              YEARLY LEAVE BALANCES
+          ================================================= */}
+
+          <Route
+            path="/yearly-leave-balances"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <YearlyLeaveBalances />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
+
+
+          {/* =================================================
+              HOLIDAY MANAGEMENT
+          ================================================= */}
+
+          <Route
+            path="/holiday-management"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <HolidayManagement />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
+
+
+          {/* =================================================
+              HOLIDAYS
+          ================================================= */}
+
+          <Route
+            path="/holidays"
+            element={
+              <EmployeeRoute>
+                <ProtectedLayout>
+                  <Holidays />
+                </ProtectedLayout>
+              </EmployeeRoute>
+            }
+          />
+
+
+          {/* =================================================
+              HOLIDAY CALENDAR
+          ================================================= */}
+
+          <Route
+            path="/holiday-calendar"
+            element={
+              <EmployeeRoute>
+                <ProtectedLayout>
+                  <HolidayCalendar />
+                </ProtectedLayout>
+              </EmployeeRoute>
+            }
+          />
+
+
+          {/* =================================================
+              EMPLOYEE DETAILS
+          ================================================= */}
 
           <Route
             path="/employees/:id"
             element={
               <AdminRoute>
                 <ProtectedLayout>
-                  <EmployeeDetails/>
+                  <EmployeeDetails />
                 </ProtectedLayout>
-               </AdminRoute> 
-      
+              </AdminRoute>
             }
           />
 
+
+          {/* =================================================
+              MANAGER EMPLOYEE DETAILS
+          ================================================= */}
+
           <Route
-  path="/manager/employees/:id"
-  element={
-    <ManagerRoute>
-      <ProtectedLayout>
-        <EmployeeDetails />
-      </ProtectedLayout>
-    </ManagerRoute>
-  }
-/>
+            path="/manager/employees/:id"
+            element={
+              <ManagerRoute>
+                <ProtectedLayout>
+                  <EmployeeDetails />
+                </ProtectedLayout>
+              </ManagerRoute>
+            }
+          />
+
+
+          {/* =================================================
+              UNKNOWN URL
+          ================================================= */}
 
           <Route
             path="*"
@@ -557,9 +943,12 @@ function App() {
           />
 
         </Routes>
+
       </div>
+
     </BrowserRouter>
   );
 }
+
 
 export default App;

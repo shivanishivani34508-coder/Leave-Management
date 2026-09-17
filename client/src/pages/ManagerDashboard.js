@@ -24,7 +24,7 @@ function ManagerDashboard() {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const config = {
         headers: {

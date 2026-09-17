@@ -1,2376 +1,1140 @@
-/* =========================================================
-   LEAVEFLOW - ADMIN MANAGE LEAVES
-   PREMIUM / INNOVATIVE ADMIN UI
-   ---------------------------------------------------------
-   UI ONLY
-   No API / backend / React functionality changes
-========================================================= */
-
-
-/* =========================================================
-   GLOBAL PAGE
-========================================================= */
-
-.manage-leaves-page,
-.manage-leaves-page * {
-  box-sizing: border-box;
-}
+/* ============================================================
+   LEAVEFLOW — MANAGE LEAVES
+   MODERN HR ADMIN DESIGN
+============================================================ */
 
 .manage-leaves-page {
+  min-height: 100vh;
   width: 100%;
-  min-height: calc(100vh - 72px);
-
-  position: relative;
-
-  padding: 32px;
-
-  overflow-x: hidden;
-
-  color: #0f172a;
-
+  padding: 28px 32px 50px;
   background:
-    radial-gradient(
-      circle at 8% 5%,
-      rgba(59, 130, 246, 0.10),
-      transparent 24%
-    ),
-    radial-gradient(
-      circle at 94% 88%,
-      rgba(124, 58, 237, 0.08),
-      transparent 25%
-    ),
-    linear-gradient(
-      135deg,
-      #f8fbff 0%,
-      #f8fafc 52%,
-      #faf8ff 100%
-    );
+    radial-gradient(circle at 10% 5%, rgba(99, 102, 241, 0.10), transparent 25%),
+    radial-gradient(circle at 90% 85%, rgba(37, 99, 235, 0.08), transparent 28%),
+    #f4f7fc;
+  color: #172033;
+  overflow-x: hidden;
 }
 
-
-/* =========================================================
-   BACKGROUND DECORATION
-========================================================= */
-
-.manage-leaves-page::before,
-.manage-leaves-page::after {
-  content: "";
-
-  position: absolute;
-
-  border-radius: 50%;
-
-  pointer-events: none;
-}
-
-.manage-leaves-page::before {
-  width: 420px;
-  height: 420px;
-
-  top: -250px;
-  right: -180px;
-
-  background: rgba(59, 130, 246, 0.07);
-}
-
-.manage-leaves-page::after {
-  width: 360px;
-  height: 360px;
-
-  left: -230px;
-  bottom: -220px;
-
-  background: rgba(124, 58, 237, 0.06);
-}
-
-
-/* =========================================================
-   MAIN CONTAINER
-========================================================= */
-
-.manage-leaves-page .manage-leaves-container {
+.manage-leaves-container {
   width: 100%;
   max-width: 1700px;
-
   margin: 0 auto;
-
-  position: relative;
-
-  z-index: 2;
 }
 
 
-/* =========================================================
+/* ============================================================
    HEADER
-========================================================= */
+============================================================ */
 
-.manage-leaves-page .manage-leaves-header {
+.manage-leaves-header {
   display: flex;
-
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-end;
-
-  gap: 24px;
-
-  margin-bottom: 28px;
-}
-
-.manage-leaves-page .manage-leaves-header-content {
-  min-width: 0;
-}
-
-.manage-leaves-page .manage-leaves-label {
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 7px;
-
-  margin-bottom: 9px;
-
-  color: #4f46e5;
-
-  font-size: 12px;
-
-  font-weight: 800;
-
-  letter-spacing: 1px;
-
-  text-transform: uppercase;
-}
-
-.manage-leaves-page .manage-leaves-title {
-  margin: 0;
-
-  color: #0f172a;
-
-  font-size: 40px;
-
-  font-weight: 850;
-
-  line-height: 1.12;
-
-  letter-spacing: -1.3px;
-}
-
-.manage-leaves-page .manage-leaves-description {
-  max-width: 800px;
-
-  margin: 10px 0 0;
-
-  color: #64748b;
-
-  font-size: 15px;
-
-  line-height: 1.7;
-}
-
-
-/* =========================================================
-   BACK BUTTON
-========================================================= */
-
-.manage-leaves-page .manage-leaves-back-btn {
-  flex-shrink: 0;
-
-  min-height: 45px;
-
-  display: inline-flex;
-
-  justify-content: center;
-  align-items: center;
-
-  padding: 0 17px;
-
-  border: 1px solid #dbe3ef;
-
-  border-radius: 12px;
-
-  background: rgba(255, 255, 255, 0.95);
-
-  color: #475569;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  font-weight: 750;
-
-  cursor: pointer;
-
-  box-shadow:
-    0 8px 22px rgba(15, 23, 42, 0.05);
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.manage-leaves-page .manage-leaves-back-btn:hover {
-  transform: translateY(-2px);
-
-  color: #2563eb;
-
-  border-color: #bfdbfe;
-
-  box-shadow:
-    0 12px 25px rgba(37, 99, 235, 0.10);
-}
-
-
-/* =========================================================
-   MESSAGE
-========================================================= */
-
-.manage-leaves-page .manage-leaves-message {
-  margin-bottom: 18px;
-
-  padding: 14px 17px;
-
-  border-radius: 13px;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  line-height: 1.5;
-}
-
-.manage-leaves-page .manage-leaves-message.error {
-  border: 1px solid #fecaca;
-
-  background: #fff5f5;
-
-  color: #b91c1c;
-}
-
-.manage-leaves-page .manage-leaves-message.success {
-  border: 1px solid #bbf7d0;
-
-  background: #f1fff6;
-
-  color: #15803d;
-}
-
-
-/* =========================================================
-   REQUEST STATISTICS
-========================================================= */
-
-.manage-leaves-page .manage-leaves-stats-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 17px;
-
-  margin-bottom: 17px;
-}
-
-.manage-leaves-page .manage-leaves-stat-card {
-  min-height: 110px;
-
-  position: relative;
-
-  overflow: hidden;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 16px;
-
-  padding: 21px;
-
-  border: 1px solid #e5ebf4;
-
-  border-radius: 20px;
-
-  background:
-    rgba(255, 255, 255, 0.96);
-
-  box-shadow:
-    0 10px 28px rgba(15, 23, 42, 0.055);
-
-  transition:
-    transform 0.22s ease,
-    box-shadow 0.22s ease,
-    border-color 0.22s ease;
-}
-
-.manage-leaves-page .manage-leaves-stat-card::after {
-  content: "";
-
-  position: absolute;
-
-  width: 115px;
-  height: 115px;
-
-  right: -50px;
-  bottom: -55px;
-
-  border-radius: 50%;
-
-  background: rgba(59, 130, 246, 0.06);
-}
-
-.manage-leaves-page .manage-leaves-stat-card:hover {
-  transform: translateY(-4px);
-
-  border-color: #cddcf4;
-
-  box-shadow:
-    0 17px 34px rgba(15, 23, 42, 0.09);
-}
-
-
-/* =========================================================
-   STAT ICON
-========================================================= */
-
-.manage-leaves-page .manage-leaves-stat-icon {
-  width: 54px;
-  height: 54px;
-
-  flex: 0 0 54px;
-
-  display: flex;
-
-  justify-content: center;
-  align-items: center;
-
-  border-radius: 16px;
-
-  font-size: 22px;
-}
-
-.manage-leaves-page .manage-leaves-stat-icon.total {
-  background: #eff6ff;
-
-  color: #2563eb;
-}
-
-.manage-leaves-page .manage-leaves-stat-icon.pending {
-  background: #fff7ed;
-
-  color: #ea580c;
-}
-
-.manage-leaves-page .manage-leaves-stat-icon.approved {
-  background: #ecfdf5;
-
-  color: #16a34a;
-}
-
-.manage-leaves-page .manage-leaves-stat-icon.rejected {
-  background: #fff1f2;
-
-  color: #dc2626;
-}
-
-
-/* =========================================================
-   STAT CONTENT
-========================================================= */
-
-.manage-leaves-page .manage-leaves-stat-content {
-  position: relative;
-
-  z-index: 1;
-}
-
-.manage-leaves-page .manage-leaves-stat-label {
-  display: block;
-
-  margin-bottom: 7px;
-
-  color: #64748b;
-
-  font-size: 12px;
-
-  font-weight: 700;
-}
-
-.manage-leaves-page .manage-leaves-stat-value {
-  margin: 0;
-
-  color: #0f172a;
-
-  font-size: 30px;
-
-  font-weight: 850;
-
-  line-height: 1;
-}
-
-
-/* =========================================================
-   DAY STATISTICS
-========================================================= */
-
-.manage-leaves-page .manage-leaves-days-grid {
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 17px;
-
   margin-bottom: 25px;
 }
 
-.manage-leaves-page .manage-leaves-day-card {
-  position: relative;
-
-  overflow: hidden;
-
-  min-height: 96px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-
-  gap: 6px;
-
-  padding: 20px 22px;
-
-  border: 1px solid #dbeafe;
-
-  border-radius: 19px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #eff6ff,
-      #ffffff
-    );
-
-  box-shadow:
-    0 9px 23px rgba(37, 99, 235, 0.06);
+.manage-leaves-header-content {
+  flex: 1;
 }
 
-.manage-leaves-page .manage-leaves-day-card.paid {
-  border-color: #bbf7d0;
-
-  background:
-    linear-gradient(
-      135deg,
-      #f0fdf4,
-      #ffffff
-    );
-}
-
-.manage-leaves-page .manage-leaves-day-card.unpaid {
-  border-color: #fed7aa;
-
-  background:
-    linear-gradient(
-      135deg,
-      #fff7ed,
-      #ffffff
-    );
-}
-
-.manage-leaves-page .manage-leaves-day-label {
-  color: #64748b;
-
-  font-size: 12px;
-
-  font-weight: 750;
-}
-
-.manage-leaves-page .manage-leaves-day-value {
-  color: #2563eb;
-
-  font-size: 27px;
-
-  font-weight: 850;
-}
-
-.manage-leaves-page
-.manage-leaves-day-card.paid
-.manage-leaves-day-value {
-  color: #15803d;
-}
-
-.manage-leaves-page
-.manage-leaves-day-card.unpaid
-.manage-leaves-day-value {
-  color: #c2410c;
-}
-
-
-/* =========================================================
-   MAIN LEAVE SECTION
-========================================================= */
-
-.manage-leaves-page .manage-leaves-section {
-  width: 100%;
-
-  margin-top: 25px;
-
-  overflow: hidden;
-
-  border: 1px solid #e4eaf3;
-
-  border-radius: 24px;
-
-  background:
-    rgba(255, 255, 255, 0.97);
-
-  box-shadow:
-    0 18px 45px rgba(15, 23, 42, 0.065);
-}
-
-
-/* =========================================================
-   SECTION HEADER
-========================================================= */
-
-.manage-leaves-page .manage-leaves-section-header {
-  display: flex;
-
-  justify-content: space-between;
-
+.manage-leaves-label {
+  display: inline-flex;
   align-items: center;
-
-  gap: 22px;
-
-  padding: 25px 27px;
-
-  border-bottom: 1px solid #edf1f6;
-
-  background:
-    linear-gradient(
-      135deg,
-      #fbfdff,
-      #ffffff
-    );
+  gap: 7px;
+  margin-bottom: 6px;
+  color: #4f46e5;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
 }
 
-.manage-leaves-page .manage-leaves-section-title {
+.manage-leaves-label::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
+.manage-leaves-title {
   margin: 0;
-
-  color: #0f172a;
-
-  font-size: 24px;
-
+  color: #101828;
+  font-size: 31px;
   font-weight: 850;
-
-  letter-spacing: -0.5px;
+  letter-spacing: -0.8px;
 }
 
-.manage-leaves-page .manage-leaves-section-subtitle {
+.manage-leaves-description {
   margin: 7px 0 0;
-
-  color: #94a3b8;
-
-  font-size: 13px;
-
+  color: #667085;
+  font-size: 12px;
   line-height: 1.6;
 }
 
-
-/* =========================================================
-   TOOLBAR
-========================================================= */
-
-.manage-leaves-page .manage-leaves-toolbar {
-  display: flex;
-
-  align-items: center;
-
-  gap: 9px;
-
-  flex-shrink: 0;
-}
-
-
-/* =========================================================
-   EXPORT BUTTON
-========================================================= */
-
-.manage-leaves-page .manage-leaves-export-btn {
-  height: 45px;
-
+.manage-leaves-back-btn {
+  height: 42px;
   padding: 0 16px;
-
-  border: 1px solid #c7d7ff;
-
-  border-radius: 12px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #eff6ff,
-      #ffffff
-    );
-
-  color: #2563eb;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  font-weight: 800;
-
-  cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.manage-leaves-page
-.manage-leaves-export-btn:hover {
-  transform: translateY(-2px);
-
-  border-color: #93b4ff;
-
-  box-shadow:
-    0 9px 20px rgba(37, 99, 235, 0.13);
-}
-
-
-/* =========================================================
-   SEARCH
-========================================================= */
-
-.manage-leaves-page .manage-leaves-search,
-.manage-leaves-page .manage-leaves-search-input {
-  width: 250px;
-
-  height: 45px;
-
-  padding: 0 14px;
-
-  border: 1px solid #dbe3ef;
-
-  border-radius: 12px;
-
-  outline: none;
-
-  background: #f8fafc;
-
-  color: #0f172a;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.manage-leaves-page
-.manage-leaves-search::placeholder,
-.manage-leaves-page
-.manage-leaves-search-input::placeholder {
-  color: #9aa8bb;
-}
-
-.manage-leaves-page
-.manage-leaves-search:focus,
-.manage-leaves-page
-.manage-leaves-search-input:focus {
-  border-color: #4f7cff;
-
+  border: 1px solid #d9e1ec;
+  border-radius: 11px;
   background: #ffffff;
-
-  box-shadow:
-    0 0 0 4px rgba(79, 124, 255, 0.10);
-}
-
-
-/* =========================================================
-   STATUS FILTER
-========================================================= */
-
-.manage-leaves-page
-.manage-leaves-status-filter,
-.manage-leaves-page
-.manage-leaves-filter-select {
-  min-width: 135px;
-
-  height: 45px;
-
-  padding: 0 13px;
-
-  border: 1px solid #dbe3ef;
-
-  border-radius: 12px;
-
-  outline: none;
-
-  background: #f8fafc;
-
-  color: #334155;
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  font-weight: 750;
-
-  cursor: pointer;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.manage-leaves-page
-.manage-leaves-status-filter:focus,
-.manage-leaves-page
-.manage-leaves-filter-select:focus {
-  border-color: #4f7cff;
-
-  box-shadow:
-    0 0 0 4px rgba(79, 124, 255, 0.10);
-}
-
-
-/* =========================================================
-   ADMIN FINAL SUMMARY
-========================================================= */
-
-.manage-leaves-page .admin-final-summary {
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 16px;
-
-  margin: 23px 27px 0;
-}
-
-.manage-leaves-page .admin-final-summary-card {
-  min-height: 86px;
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 15px;
-
-  padding: 18px 20px;
-
-  border: 1px solid #e5eaf3;
-
-  border-radius: 18px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 8px 22px rgba(15, 23, 42, 0.045);
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.manage-leaves-page
-.admin-final-summary-card:hover {
-  transform: translateY(-3px);
-
-  box-shadow:
-    0 13px 28px rgba(15, 23, 42, 0.08);
-}
-
-.manage-leaves-page .admin-final-summary-icon {
-  width: 48px;
-  height: 48px;
-
-  flex: 0 0 48px;
-
-  display: flex;
-
-  justify-content: center;
-  align-items: center;
-
-  border-radius: 14px;
-
-  background: #eff6ff;
-
-  color: #2563eb;
-
-  font-size: 21px;
-}
-
-.manage-leaves-page
-.admin-final-summary-card:nth-child(2)
-.admin-final-summary-icon {
-  background: #ecfdf5;
-
-  color: #16a34a;
-}
-
-.manage-leaves-page
-.admin-final-summary-card:nth-child(3)
-.admin-final-summary-icon {
-  background: #fff1f2;
-
-  color: #dc2626;
-}
-
-.manage-leaves-page
-.admin-final-summary-card strong {
-  display: block;
-
-  color: #0f172a;
-
-  font-size: 26px;
-
-  font-weight: 850;
-
-  line-height: 1;
-}
-
-.manage-leaves-page
-.admin-final-summary-card
-span:not(.admin-final-summary-icon) {
-  display: block;
-
-  margin-top: 6px;
-
-  color: #64748b;
-
+  color: #475467;
   font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
 
+.manage-leaves-back-btn:hover {
+  border-color: #8ca9e8;
+  color: #315ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.10);
+}
+
+
+/* ============================================================
+   MESSAGE
+============================================================ */
+
+.manage-leaves-message {
+  padding: 13px 16px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 700;
 }
 
+.manage-leaves-message.success {
+  background: #ecfdf3;
+  border: 1px solid #b7ebc8;
+  color: #087443;
+}
 
-/* =========================================================
-   TABLE WRAPPER
-========================================================= */
+.manage-leaves-message.error {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+}
 
-.manage-leaves-page
+
+/* ============================================================
+   TOP STAT CARDS
+============================================================ */
+
+.manage-leaves-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.manage-leaves-stat-card {
+  position: relative;
+  min-height: 108px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e1e7f0;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 7px 24px rgba(16, 24, 40, 0.055);
+  overflow: hidden;
+  transition: 0.22s ease;
+}
+
+.manage-leaves-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 13px 30px rgba(16, 24, 40, 0.09);
+}
+
+.manage-leaves-stat-card::after {
+  content: "";
+  position: absolute;
+  width: 95px;
+  height: 95px;
+  right: -45px;
+  bottom: -45px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.055);
+}
+
+.manage-leaves-stat-icon {
+  position: relative;
+  z-index: 1;
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-size: 21px;
+}
+
+.manage-leaves-stat-icon.total {
+  background: #eef4ff;
+}
+
+.manage-leaves-stat-icon.pending {
+  background: #fff7e8;
+}
+
+.manage-leaves-stat-icon.approved {
+  background: #eafaf1;
+}
+
+.manage-leaves-stat-icon.rejected {
+  background: #fff0f2;
+}
+
+.manage-leaves-stat-content {
+  position: relative;
+  z-index: 2;
+}
+
+.manage-leaves-stat-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.manage-leaves-stat-value {
+  margin: 0;
+  color: #111827;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+
+/* ============================================================
+   DAYS SUMMARY
+============================================================ */
+
+.manage-leaves-days-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 15px !important;
+  width: 100% !important;
+  margin: 0 0 20px !important;
+}
+
+.manage-leaves-day-card {
+  min-height: 91px !important;
+  padding: 17px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  border: 1px solid #e0e6ef !important;
+  border-left: 4px solid #367cff !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.045) !important;
+}
+
+.manage-leaves-day-card:nth-child(2) {
+  border-left-color: #16b364 !important;
+}
+
+.manage-leaves-day-card:nth-child(3) {
+  border-left-color: #f59e0b !important;
+}
+
+.manage-leaves-day-label {
+  margin-bottom: 7px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.manage-leaves-day-value {
+  color: #2769db;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.manage-leaves-day-card:nth-child(2) .manage-leaves-day-value {
+  color: #129453;
+}
+
+.manage-leaves-day-card:nth-child(3) .manage-leaves-day-value {
+  color: #d97706;
+}
+
+
+/* ============================================================
+   REQUEST SECTION
+============================================================ */
+
+/* ============================================================
+   APPROVAL WORKFLOW GUIDE
+============================================================ */
+
+.admin-final-summary {
+  position: relative;
+  margin: 0 0 20px;
+  padding: 20px;
+  border: 1px solid #dfe5f5;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 94% 12%, rgba(99, 102, 241, 0.13), transparent 24%),
+    linear-gradient(135deg, #ffffff 0%, #f7f8ff 100%);
+  box-shadow: 0 10px 28px rgba(31, 41, 55, 0.055);
+  overflow: hidden;
+}
+
+.admin-final-summary::before {
+  content: "APPROVAL GUIDE  \00B7  BASED ON LEAVE DURATION";
+  display: block;
+  margin: 0 0 16px;
+  color: #5362c9;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.1px;
+}
+
+.admin-final-summary::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 68px;
+  right: 9%;
+  left: 9%;
+  height: 1px;
+  background: linear-gradient(90deg, #cfd7fb, #9db2f9, #cfd7fb);
+}
+
+.admin-final-summary-card {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  vertical-align: top;
+  align-items: flex-start;
+  gap: 11px;
+  width: calc(25% - 12px);
+  min-height: 97px;
+  margin-right: 12px;
+  padding: 15px 13px;
+  border: 1px solid #e2e7f4;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.93);
+  box-shadow: 0 5px 15px rgba(34, 50, 98, 0.055);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.admin-final-summary-card:last-child {
+  margin-right: 0;
+}
+
+.admin-final-summary-card:hover {
+  z-index: 2;
+  transform: translateY(-4px);
+  border-color: #aebdf4;
+  box-shadow: 0 12px 24px rgba(51, 65, 143, 0.12);
+}
+
+.admin-final-summary-icon {
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #5967db, #7c72ea);
+  box-shadow: 0 4px 10px rgba(91, 103, 219, 0.28);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.admin-final-summary-card:nth-child(2) .admin-final-summary-icon {
+  background: linear-gradient(135deg, #157fb8, #37a7ca);
+}
+
+.admin-final-summary-card:nth-child(3) .admin-final-summary-icon {
+  background: linear-gradient(135deg, #118c65, #2cb983);
+}
+
+.admin-final-summary-card:nth-child(4) .admin-final-summary-icon {
+  background: linear-gradient(135deg, #8d56c8, #b06ce1);
+}
+
+.admin-final-summary-card > div {
+  min-width: 0;
+}
+
+.admin-final-summary-card strong {
+  display: block;
+  margin: 0 0 5px;
+  color: #172554;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.admin-final-summary-card strong::before {
+  content: "Approval path";
+  display: block;
+  margin-bottom: 2px;
+  color: #8190ad;
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.25px;
+  text-transform: uppercase;
+}
+
+.admin-final-summary-card > div > span {
+  display: inline-flex;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #eef1ff;
+  color: #5060c6;
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.admin-final-summary-card:nth-child(3) > div > span {
+  background: #e8f8f1;
+  color: #16835e;
+}
+
+.admin-final-summary-card:nth-child(4) > div > span {
+  background: #f4ebff;
+  color: #8a50bd;
+}
+
+.manage-leaves-section {
+  width: 100%;
+  border: 1px solid #dfe6ef;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 32px rgba(16, 24, 40, 0.055);
+  overflow: hidden;
+}
+
+
+/* ============================================================
+   REQUEST HEADER
+============================================================ */
+
+.manage-leaves-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border-bottom: 1px solid #e8edf3;
+  background: linear-gradient(135deg, #ffffff, #f9fbff);
+}
+
+.manage-leaves-section-title {
+  margin: 0;
+  color: #111827;
+  font-size: 21px;
+  font-weight: 850;
+}
+
+.manage-leaves-section-subtitle {
+  margin: 5px 0 0;
+  color: #98a2b3;
+  font-size: 10px;
+}
+
+
+/* ============================================================
+   TOOLBAR
+============================================================ */
+
+.manage-leaves-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0;
+}
+
+.manage-leaves-search {
+  width: 240px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 13px !important;
+  border: 1px solid #d9e1eb !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+  color: #344054 !important;
+  outline: none !important;
+  font-family: inherit !important;
+  font-size: 11px !important;
+  box-shadow: none !important;
+}
+
+.manage-leaves-search::placeholder {
+  color: #98a2b3;
+}
+
+.manage-leaves-search:focus {
+  background: #ffffff !important;
+  border-color: #6b8fe8 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08) !important;
+}
+
+.manage-leaves-status-filter {
+  width: 115px !important;
+  height: 40px !important;
+  margin: 0 !important;
+  padding: 0 9px !important;
+  border: 1px solid #d9e1eb !important;
+  border-radius: 10px !important;
+  background: #f8fafc !important;
+  color: #344054 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  outline: none !important;
+  cursor: pointer;
+}
+
+.manage-leaves-status-filter:focus {
+  border-color: #6b8fe8 !important;
+  background: #ffffff !important;
+}
+
+.manage-leaves-export-btn {
+  height: 40px !important;
+  padding: 0 14px !important;
+  border: 1px solid #cbd8f5 !important;
+  border-radius: 10px !important;
+  background: #f3f6ff !important;
+  color: #315ed8 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.manage-leaves-export-btn:hover {
+  background: #e9efff !important;
+  transform: translateY(-2px);
+}
+
+
+/* ============================================================
+   TABLE
+============================================================ */
+
 .manage-leaves-table-wrapper {
   width: 100%;
-
-  max-width: 100%;
-
   overflow-x: auto;
-
   overflow-y: hidden;
-
-  margin-top: 20px;
-
-  -webkit-overflow-scrolling: touch;
-
-  scrollbar-width: thin;
-
-  scrollbar-color:
-    #b8c4d6
-    #eef2f7;
 }
 
-.manage-leaves-page
-.manage-leaves-table-wrapper::-webkit-scrollbar {
-  height: 9px;
-}
-
-.manage-leaves-page
-.manage-leaves-table-wrapper::-webkit-scrollbar-track {
-  background: #eef2f7;
-
-  border-radius: 20px;
-}
-
-.manage-leaves-page
-.manage-leaves-table-wrapper::-webkit-scrollbar-thumb {
-  background: #b8c4d6;
-
-  border-radius: 20px;
-}
-
-.manage-leaves-page
-.manage-leaves-table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-
-/* =========================================================
-   TABLE
-========================================================= */
-
-.manage-leaves-page .manage-leaves-table {
-  width: 1450px;
-
-  min-width: 1450px;
-
-  max-width: none;
-
-  table-layout: fixed;
-
+.manage-leaves-table {
+  width: 100%;
+  min-width: 1100px;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
-.manage-leaves-page
 .manage-leaves-table thead {
-  background: #f8fafc;
+  background: #f7f9fc;
 }
 
-.manage-leaves-page
 .manage-leaves-table th {
-  padding: 15px 14px;
-
-  color: #64748b;
-
-  font-size: 10px;
-
+  padding: 13px 14px;
+  border-bottom: 1px solid #e5eaf1;
+  color: #667085;
+  font-size: 9px;
   font-weight: 850;
-
-  letter-spacing: 0.55px;
-
-  text-align: left;
-
   text-transform: uppercase;
-
+  letter-spacing: 0.55px;
+  text-align: left;
   white-space: nowrap;
-
-  border-bottom:
-    1px solid #e9eef5;
 }
 
-.manage-leaves-page
 .manage-leaves-table td {
-  padding: 17px 14px;
-
-  color: #475569;
-
-  font-size: 12px;
-
+  padding: 14px;
+  border-bottom: 1px solid #edf1f5;
+  color: #475467;
+  font-size: 10px;
   vertical-align: middle;
-
-  border-bottom:
-    1px solid #eef2f7;
 }
 
-.manage-leaves-page
 .manage-leaves-table tbody tr {
-  transition:
-    background 0.18s ease;
+  transition: 0.18s ease;
 }
 
-.manage-leaves-page
 .manage-leaves-table tbody tr:hover {
-  background:
-    linear-gradient(
-      90deg,
-      #f8fbff,
-      #ffffff
-    );
+  background: #f9fbff;
 }
 
-.manage-leaves-page
 .manage-leaves-table tbody tr:last-child td {
   border-bottom: none;
 }
 
 
-/* =========================================================
-   TABLE COLUMN WIDTHS
-========================================================= */
+/* ============================================================
+   EMPLOYEE
+============================================================ */
 
-/* Employee */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(1),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(1) {
-  width: 220px;
-
-  min-width: 220px;
-}
-
-/* Leave Type */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(2),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(2) {
-  width: 125px;
-
-  min-width: 125px;
-}
-
-/* Dates */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(3),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(3) {
-  width: 155px;
-
-  min-width: 155px;
-}
-
-/* Total */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(4),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(4) {
-  width: 90px;
-
-  min-width: 90px;
-}
-
-/* Paid */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(5),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(5) {
-  width: 90px;
-
-  min-width: 90px;
-}
-
-/* Unpaid */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(6),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(6) {
-  width: 90px;
-
-  min-width: 90px;
-}
-
-/* Reason */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(7),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(7) {
-  width: 170px;
-
+.manage-leaves-employee-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 170px;
 }
 
-/* Status */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(8),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(8) {
-  width: 135px;
-
-  min-width: 135px;
-}
-
-/* Approval Flow */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(9),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(9) {
-  width: 270px;
-
-  min-width: 270px;
-}
-
-/* Allocation */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(10),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(10) {
-  width: 150px;
-
-  min-width: 150px;
-}
-
-/* Actions */
-
-.manage-leaves-page
-.manage-leaves-table th:nth-child(11),
-.manage-leaves-page
-.manage-leaves-table td:nth-child(11) {
-  width: 150px;
-
-  min-width: 150px;
-}
-
-
-/* =========================================================
-   EMPLOYEE CELL
-========================================================= */
-
-.manage-leaves-page
-.manage-leaves-employee-cell {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  min-width: 205px;
-}
-
-.manage-leaves-page
 .manage-leaves-employee-avatar {
-  width: 44px;
-  height: 44px;
-
-  flex: 0 0 44px;
-
+  width: 37px;
+  height: 37px;
+  flex-shrink: 0;
   display: flex;
-
-  justify-content: center;
   align-items: center;
-
-  border-radius: 13px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #2563eb,
-      #6366f1,
-      #8b5cf6
-    );
-
+  justify-content: center;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #4264db, #7659e8);
   color: #ffffff;
-
-  font-size: 15px;
-
+  font-size: 10px;
   font-weight: 850;
-
-  box-shadow:
-    0 7px 16px rgba(79, 70, 229, 0.18);
 }
 
-.manage-leaves-page
 .manage-leaves-employee-info {
   min-width: 0;
 }
 
-.manage-leaves-page
 .manage-leaves-employee-name {
   display: block;
-
-  max-width: 170px;
-
+  max-width: 155px;
   overflow: hidden;
-
-  color: #0f172a;
-
-  font-size: 14px;
-
+  color: #172033;
+  font-size: 11px;
   font-weight: 800;
-
   text-overflow: ellipsis;
-
   white-space: nowrap;
 }
 
-.manage-leaves-page
 .manage-leaves-employee-email {
   display: block;
-
-  max-width: 175px;
-
+  max-width: 155px;
+  margin-top: 3px;
   overflow: hidden;
-
-  margin-top: 4px;
-
-  color: #94a3b8;
-
-  font-size: 10px;
-
+  color: #98a2b3;
+  font-size: 8.5px;
   text-overflow: ellipsis;
-
   white-space: nowrap;
 }
 
 
-/* =========================================================
+/* ============================================================
    LEAVE TYPE
-========================================================= */
+============================================================ */
 
-.manage-leaves-page
 .manage-leaves-type {
-  color: #0f172a;
-
-  font-size: 13px;
-
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 9px;
+  border-radius: 8px;
+  background: #eef4ff;
+  border: 1px solid #d9e5ff;
+  color: #315ed8;
+  font-size: 9px;
   font-weight: 800;
-
   white-space: nowrap;
 }
 
 
-/* =========================================================
-   DATE RANGE
-========================================================= */
+/* ============================================================
+   DATE
+============================================================ */
 
-.manage-leaves-page
 .manage-leaves-date-range {
   display: flex;
-
   flex-direction: column;
-
   gap: 3px;
-
-  color: #475569;
-
-  font-size: 11px;
-
-  line-height: 1.45;
-
-  white-space: nowrap;
-}
-
-.manage-leaves-page
-.manage-leaves-date-separator {
-  color: #94a3b8;
-
+  color: #475467;
   font-size: 9px;
-}
-
-
-/* =========================================================
-   DAY BADGES
-========================================================= */
-
-.manage-leaves-page
-.manage-leaves-total-days,
-.manage-leaves-page
-.manage-leaves-paid-days,
-.manage-leaves-page
-.manage-leaves-unpaid-days {
-  min-width: 40px;
-
-  min-height: 35px;
-
-  display: inline-flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  padding: 5px 8px;
-
-  border-radius: 9px;
-
-  font-size: 11px;
-
-  font-weight: 850;
-
   white-space: nowrap;
 }
 
-.manage-leaves-page
-.manage-leaves-total-days {
-  background: #eff6ff;
 
-  color: #2563eb;
-}
+/* ============================================================
+   DAYS
+============================================================ */
 
-.manage-leaves-page
-.manage-leaves-paid-days {
-  background: #ecfdf5;
-
-  color: #15803d;
-}
-
-.manage-leaves-page
+.manage-leaves-total-days,
+.manage-leaves-paid-days,
 .manage-leaves-unpaid-days {
-  background: #fff7ed;
+  min-width: 30px;
+  height: 29px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 850;
+}
 
-  color: #c2410c;
+.manage-leaves-total-days {
+  background: #eef4ff;
+  color: #315ed8;
+}
+
+.manage-leaves-paid-days {
+  background: #eafaf1;
+  color: #129453;
+}
+
+.manage-leaves-unpaid-days {
+  background: #fff4e8;
+  color: #c25a00;
 }
 
 
-/* =========================================================
-   REASON
-========================================================= */
+/* ============================================================
+   STATUS
+============================================================ */
 
-.manage-leaves-page
-.manage-leaves-reason {
-  display: block;
-
-  max-width: 165px;
-
-  color: #64748b;
-
-  font-size: 11px;
-
-  line-height: 1.5;
-
-  white-space: normal;
-}
-
-
-/* =========================================================
-   STATUS BADGES
-========================================================= */
-
-.manage-leaves-page
 .manage-leaves-status {
   display: inline-flex;
-
-  justify-content: center;
-
   align-items: center;
-
-  min-width: 92px;
-
-  padding: 8px 11px;
-
-  border: 1px solid transparent;
-
+  justify-content: center;
+  padding: 6px 9px;
   border-radius: 999px;
-
-  font-size: 11px;
-
-  font-weight: 800;
-
+  font-size: 8.5px;
+  font-weight: 850;
   white-space: nowrap;
 }
 
-.manage-leaves-page
 .manage-leaves-status.pending {
-  border-color: #fed7aa;
-
-  background: #fff7ed;
-
-  color: #c2410c;
-}
-
-.manage-leaves-page
-.manage-leaves-status.approved {
-  border-color: #bbf7d0;
-
-  background: #ecfdf5;
-
-  color: #15803d;
-}
-
-.manage-leaves-page
-.manage-leaves-status.rejected {
-  border-color: #fecaca;
-
-  background: #fff1f2;
-
-  color: #b91c1c;
-}
-
-
-/* =========================================================
-   ADMIN APPROVAL FLOW
-========================================================= */
-
-.manage-leaves-page
-.admin-approval-flow {
-  position: relative;
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 6px;
-
-  min-width: 245px;
-
-  padding-left: 3px;
-}
-
-.manage-leaves-page
-.admin-approval-flow::before {
-  content: "";
-
-  position: absolute;
-
-  left: 16px;
-
-  top: 16px;
-
-  bottom: 16px;
-
-  width: 2px;
-
-  background:
-    linear-gradient(
-      to bottom,
-      #22c55e,
-      #cbd5e1
-    );
-
-  opacity: 0.55;
-}
-
-.manage-leaves-page
-.admin-approval-stage {
-  position: relative;
-
-  z-index: 1;
-
-  display: flex;
-
-  align-items: center;
-
-  min-height: 33px;
-
-  padding: 5px 10px 5px 7px;
-
-  border-radius: 10px;
-
-  font-size: 11px;
-
-  font-weight: 800;
-
-  line-height: 1.25;
-
-  white-space: nowrap;
-
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.manage-leaves-page
-.admin-approval-stage:hover {
-  transform: translateX(3px);
-
-  box-shadow:
-    0 4px 11px rgba(15, 23, 42, 0.07);
-}
-
-
-/* Stage circle */
-
-.manage-leaves-page
-.admin-approval-stage > span {
-  width: 24px;
-
-  height: 24px;
-
-  margin-right: 7px;
-
-  flex: 0 0 24px;
-
-  display: flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  border-radius: 50%;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 2px 6px rgba(15, 23, 42, 0.10);
-
-  font-size: 11px;
-
-  font-weight: 900;
-}
-
-
-/* Approved */
-
-.manage-leaves-page
-.admin-approval-stage.approved {
-  border: 1px solid #bbf7d0;
-
-  border-left: 4px solid #16a34a;
-
-  background:
-    linear-gradient(
-      90deg,
-      #ecfdf5,
-      #f8fffb
-    );
-
-  color: #15803d;
-}
-
-.manage-leaves-page
-.admin-approval-stage.approved > span {
-  color: #16a34a;
-}
-
-
-/* Pending */
-
-.manage-leaves-page
-.admin-approval-stage.pending {
-  border: 1px solid #fed7aa;
-
-  border-left: 4px solid #f59e0b;
-
-  background:
-    linear-gradient(
-      90deg,
-      #fff7ed,
-      #fffaf5
-    );
-
+  background: #fff6df;
   color: #a16207;
 }
 
-.manage-leaves-page
-.admin-approval-stage.pending > span {
-  color: #f59e0b;
+.manage-leaves-status.approved {
+  background: #eafaf1;
+  color: #087443;
+}
+
+.manage-leaves-status.rejected {
+  background: #fff0f2;
+  color: #be123c;
 }
 
 
-/* Rejected */
+/* ============================================================
+   APPROVAL FLOW
+============================================================ */
 
-.manage-leaves-page
-.admin-approval-stage.rejected {
-  border: 1px solid #fecaca;
-
-  border-left: 4px solid #ef4444;
-
-  background:
-    linear-gradient(
-      90deg,
-      #fff1f2,
-      #fff8f8
-    );
-
-  color: #dc2626;
+.admin-approval-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 105px;
 }
 
-.manage-leaves-page
-.admin-approval-stage.rejected > span {
-  color: #ef4444;
-}
-
-
-/* =========================================================
-   ALLOCATION
-========================================================= */
-
-.manage-leaves-page
-.manage-leaves-allocation {
-  display: inline-flex;
-
-  justify-content: center;
-
+.admin-approval-stage {
+  display: flex;
   align-items: center;
-
-  min-width: 125px;
-
-  padding: 8px 10px;
-
-  border-radius: 999px;
-
-  font-size: 10px;
-
+  gap: 5px;
+  min-height: 24px;
+  padding: 3px 7px;
+  border-radius: 7px;
+  font-size: 8px;
   font-weight: 800;
-
-  line-height: 1.35;
-
-  text-align: center;
-
   white-space: nowrap;
 }
 
-.manage-leaves-page
-.manage-leaves-allocation.deducted {
-  border: 1px solid #bbf7d0;
-
-  background: #ecfdf5;
-
-  color: #15803d;
+.admin-approval-stage > span {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #ffffff;
+  font-size: 7px;
+  font-weight: 900;
 }
 
-.manage-leaves-page
-.manage-leaves-allocation.awaiting {
-  border: 1px solid #fed7aa;
-
-  background: #fff7ed;
-
-  color: #c2410c;
+.admin-approval-stage.approved {
+  background: #eafaf1;
+  color: #087443;
 }
 
-.manage-leaves-page
-.manage-leaves-allocation.not-deducted {
-  border: 1px solid #e2e8f0;
+.admin-approval-stage.pending {
+  background: #fff6df;
+  color: #a16207;
+}
 
-  background: #f8fafc;
-
-  color: #64748b;
+.admin-approval-stage.rejected {
+  background: #fff0f2;
+  color: #be123c;
 }
 
 
-/* =========================================================
-   ADMIN ACTIONS
-========================================================= */
+/* ============================================================
+   ACTIONS
+============================================================ */
 
-.manage-leaves-page
 .manage-leaves-actions {
   display: flex;
-
   flex-direction: column;
-
-  gap: 8px;
-
-  min-width: 120px;
+  gap: 5px;
+  min-width: 105px;
 }
 
-.manage-leaves-page
 .manage-leaves-approve-btn,
-.manage-leaves-page
 .manage-leaves-reject-btn {
   width: 100%;
-
-  min-height: 40px;
-
-  padding: 9px 14px;
-
+  min-height: 32px;
   border: none;
-
-  border-radius: 10px;
-
+  border-radius: 8px;
   color: #ffffff;
-
   font-family: inherit;
-
-  font-size: 12px;
-
-  font-weight: 800;
-
+  font-size: 9px;
+  font-weight: 850;
   cursor: pointer;
-
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    opacity 0.18s ease;
+  transition: 0.18s ease;
 }
 
-.manage-leaves-page
 .manage-leaves-approve-btn {
-  background:
-    linear-gradient(
-      135deg,
-      #16a34a,
-      #22c55e
-    );
-
-  box-shadow:
-    0 7px 16px rgba(22, 163, 74, 0.17);
+  background: linear-gradient(135deg, #12a150, #20bd61);
 }
 
-.manage-leaves-page
 .manage-leaves-reject-btn {
-  background:
-    linear-gradient(
-      135deg,
-      #dc2626,
-      #ef4444
-    );
-
-  box-shadow:
-    0 7px 16px rgba(220, 38, 38, 0.15);
+  background: linear-gradient(135deg, #dc2626, #ef4444);
 }
 
-.manage-leaves-page
 .manage-leaves-approve-btn:hover:not(:disabled),
-.manage-leaves-page
 .manage-leaves-reject-btn:hover:not(:disabled) {
   transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.10);
 }
 
-.manage-leaves-page
-.manage-leaves-approve-btn:hover:not(:disabled) {
-  box-shadow:
-    0 11px 22px rgba(22, 163, 74, 0.24);
-}
-
-.manage-leaves-page
-.manage-leaves-reject-btn:hover:not(:disabled) {
-  box-shadow:
-    0 11px 22px rgba(220, 38, 38, 0.22);
-}
-
-.manage-leaves-page
 .manage-leaves-approve-btn:disabled,
-.manage-leaves-page
 .manage-leaves-reject-btn:disabled {
   opacity: 0.55;
-
   cursor: not-allowed;
-
-  transform: none;
 }
 
 
-/* =========================================================
+/* ============================================================
    WAITING / REVIEWED
-========================================================= */
+============================================================ */
 
-.manage-leaves-page
 .manage-leaves-waiting-text,
-.manage-leaves-page
 .manage-leaves-reviewed-text {
   display: inline-flex;
-
   align-items: center;
-
-  padding: 8px 11px;
-
-  border-radius: 10px;
-
-  font-size: 11px;
-
-  font-weight: 800;
-
-  line-height: 1.4;
-}
-
-.manage-leaves-page
-.manage-leaves-waiting-text {
-  border: 1px solid #e2e8f0;
-
-  background: #f8fafc;
-
-  color: #64748b;
-}
-
-.manage-leaves-page
-.manage-leaves-reviewed-text {
-  font-size: 12px;
-}
-
-.manage-leaves-page
-.approved-text {
-  border: 1px solid #bbf7d0;
-
-  background: #ecfdf5;
-
-  color: #15803d;
-}
-
-.manage-leaves-page
-.rejected-text {
-  border: 1px solid #fecaca;
-
-  background: #fff1f2;
-
-  color: #b91c1c;
-}
-
-
-/* =========================================================
-   EMPTY STATE
-========================================================= */
-
-.manage-leaves-page
-.manage-leaves-empty {
-  min-height: 310px;
-
-  display: flex;
-
-  flex-direction: column;
-
   justify-content: center;
+  padding: 6px 9px;
+  border-radius: 8px;
+  font-size: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+}
 
+.manage-leaves-waiting-text {
+  background: #f5f7fa;
+  color: #667085;
+}
+
+.approved-text {
+  background: #eafaf1;
+  color: #087443;
+}
+
+.rejected-text {
+  background: #fff0f2;
+  color: #be123c;
+}
+
+
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+
+.manage-leaves-empty {
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-
-  padding: 40px;
-
+  justify-content: center;
+  padding: 35px;
   text-align: center;
 }
 
-.manage-leaves-page
 .manage-leaves-empty-icon {
-  width: 68px;
-  height: 68px;
-
+  width: 58px;
+  height: 58px;
   display: flex;
-
-  justify-content: center;
-
   align-items: center;
-
-  margin-bottom: 15px;
-
-  border-radius: 20px;
-
-  background: #eff6ff;
-
-  font-size: 29px;
+  justify-content: center;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: #eef4ff;
+  font-size: 24px;
 }
 
-.manage-leaves-page
-.manage-leaves-empty-title {
-  margin: 0 0 7px;
-
-  color: #0f172a;
-
-  font-size: 17px;
-
-  font-weight: 800;
+.manage-leaves-empty h3 {
+  margin: 0 0 5px;
+  color: #172033;
+  font-size: 16px;
 }
 
-.manage-leaves-page
-.manage-leaves-empty-description {
-  max-width: 420px;
-
+.manage-leaves-empty p {
   margin: 0;
-
-  color: #94a3b8;
-
-  font-size: 12px;
-
-  line-height: 1.7;
+  color: #98a2b3;
+  font-size: 10px;
 }
 
 
-/* =========================================================
+/* ============================================================
    LOADING
-========================================================= */
+============================================================ */
 
-.manage-leaves-page
 .manage-leaves-loading {
-  min-height: calc(100vh - 150px);
-
+  min-height: 65vh;
   display: flex;
-
   flex-direction: column;
-
-  justify-content: center;
-
   align-items: center;
-
-  gap: 14px;
+  justify-content: center;
+  gap: 12px;
 }
 
-.manage-leaves-page
 .manage-leaves-spinner {
-  width: 42px;
-  height: 42px;
-
-  border: 4px solid #dbeafe;
-
-  border-top-color: #2563eb;
-
+  width: 38px;
+  height: 38px;
+  border: 4px solid #dce7ff;
+  border-top-color: #4169df;
   border-radius: 50%;
-
-  animation:
-    manage-leaves-spin
-    0.8s linear infinite;
+  animation: manageLeavesSpin 0.8s linear infinite;
 }
 
-.manage-leaves-page
 .manage-leaves-loading-text {
-  color: #64748b;
-
-  font-size: 12px;
-
-  font-weight: 650;
+  color: #667085;
+  font-size: 11px;
 }
 
-@keyframes manage-leaves-spin {
+@keyframes manageLeavesSpin {
   to {
     transform: rotate(360deg);
   }
 }
 
 
-/* =========================================================
+/* ============================================================
    FOOTER
-========================================================= */
+============================================================ */
 
-.manage-leaves-page
 .manage-leaves-footer {
-  min-height: 55px;
-
   display: flex;
-
+  align-items: center;
   justify-content: space-between;
-
-  align-items: center;
-
-  gap: 15px;
-
-  padding: 14px 22px;
-
-  border-top: 1px solid #edf1f6;
-
-  background:
-    linear-gradient(
-      90deg,
-      #fbfdff,
-      #f8fafc
-    );
-}
-
-.manage-leaves-page
-.manage-leaves-result-text {
-  color: #94a3b8;
-
-  font-size: 11px;
-
-  font-weight: 650;
-}
-
-
-/* =========================================================
-   RESPONSIVE - LAPTOP
-========================================================= */
-
-@media screen and (max-width: 1250px) {
-
-  .manage-leaves-page
-  .manage-leaves-section-header {
-    align-items: flex-start;
-
-    flex-direction: column;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-toolbar {
-    width: 100%;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-search,
-  .manage-leaves-page
-  .manage-leaves-search-input {
-    flex: 1;
-
-    width: auto;
-  }
-
-}
-
-
-/* =========================================================
-   RESPONSIVE - TABLET
-========================================================= */
-
-@media screen and (max-width: 1000px) {
-
-  .manage-leaves-page {
-    padding: 26px 20px;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-stats-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-  .manage-leaves-page
-  .manage-leaves-days-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .manage-leaves-page
-  .admin-final-summary {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-
-/* =========================================================
-   RESPONSIVE - MOBILE
-========================================================= */
-
-@media screen and (max-width: 700px) {
-
-  .manage-leaves-page {
-    padding: 22px 14px;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-header {
-    align-items: flex-start;
-
-    flex-direction: column;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-title {
-    font-size: 30px;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-description {
-    font-size: 13px;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-toolbar {
-    align-items: stretch;
-
-    flex-direction: column;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-search,
-  .manage-leaves-page
-  .manage-leaves-search-input,
-  .manage-leaves-page
-  .manage-leaves-status-filter,
-  .manage-leaves-page
-  .manage-leaves-filter-select,
-  .manage-leaves-page
-  .manage-leaves-export-btn {
-    width: 100%;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-footer {
-    align-items: flex-start;
-
-    flex-direction: column;
-  }
-
-}
-
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
-@media screen and (max-width: 400px) {
-
-  .manage-leaves-page {
-    padding: 18px 10px;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-title {
-    font-size: 25px;
-  }
-
-  .manage-leaves-page
-  .manage-leaves-section-header {
-    padding: 20px;
-  }
-
-}
-
-/* =========================================================
-   REVIEW COMMAND CENTER - PRESENTATION OVERRIDES
-   ========================================================= */
-
-.manage-leaves-page {
-  padding: 24px 28px 36px;
-  background: #f4f7fb;
-}
-
-.manage-leaves-page::before,
-.manage-leaves-page::after {
-  display: none;
-}
-
-.manage-leaves-page .manage-leaves-container {
-  max-width: 1760px;
-}
-
-.manage-leaves-page .manage-leaves-header {
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.manage-leaves-page .manage-leaves-label {
-  margin-bottom: 5px;
-  color: #3278dd;
-  font-size: 10px;
-}
-
-.manage-leaves-page .manage-leaves-title {
-  font-size: 29px;
-  letter-spacing: 0;
-}
-
-.manage-leaves-page .manage-leaves-description {
-  max-width: 690px;
-  margin-top: 6px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.manage-leaves-page .manage-leaves-back-btn {
-  min-height: 36px;
-  border-radius: 6px;
-  box-shadow: none;
-  font-size: 10px;
-}
-
-.manage-leaves-page .manage-leaves-stats-grid {
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.manage-leaves-page .manage-leaves-stat-card {
-  min-height: 90px;
-  gap: 11px;
-  padding: 14px 16px;
-  border-radius: 7px;
-  box-shadow: 0 3px 12px rgba(27, 47, 82, .035);
-}
-
-.manage-leaves-page .manage-leaves-stat-card::after {
-  display: none;
-}
-
-.manage-leaves-page .manage-leaves-stat-card::before {
-  content: "";
-  position: absolute;
-  top: 14px;
-  bottom: 14px;
-  left: 0;
-  width: 4px;
-  border-radius: 0 4px 4px 0;
-  background: #3b82f6;
-}
-
-.manage-leaves-page .manage-leaves-stat-card:nth-child(2)::before { background: #ed8a16; }
-.manage-leaves-page .manage-leaves-stat-card:nth-child(3)::before { background: #18ad6b; }
-.manage-leaves-page .manage-leaves-stat-card:nth-child(4)::before { background: #e9465e; }
-
-.manage-leaves-page .manage-leaves-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(27, 47, 82, .08);
-}
-
-.manage-leaves-page .manage-leaves-stat-icon {
-  width: 38px;
-  height: 38px;
-  flex-basis: 38px;
-  border-radius: 50%;
-  font-size: 15px;
-}
-
-.manage-leaves-page .manage-leaves-stat-label {
-  margin-bottom: 4px;
-  font-size: 10px;
-}
-
-.manage-leaves-page .manage-leaves-stat-value {
-  font-size: 25px;
-}
-
-.manage-leaves-page .manage-leaves-days-grid {
-  gap: 0;
-  margin-bottom: 14px;
-  overflow: hidden;
-  border: 1px solid #dde5f0;
-  border-radius: 7px;
-  background: #ffffff;
-  box-shadow: 0 3px 12px rgba(27, 47, 82, .025);
-}
-
-.manage-leaves-page .manage-leaves-day-card {
-  min-height: 73px;
-  padding: 14px 20px;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: #ffffff;
-}
-
-.manage-leaves-page .manage-leaves-day-card + .manage-leaves-day-card {
-  border-left: 1px solid #e7ecf3;
-}
-
-.manage-leaves-page .manage-leaves-day-label {
-  font-size: 10px;
-}
-
-.manage-leaves-page .manage-leaves-day-value {
-  margin-top: 5px;
-  color: #2e74d9;
-  font-size: 24px;
-}
-
-.manage-leaves-page .admin-final-summary {
-  position: relative;
-  grid-template-columns: 1.45fr 1fr 1fr;
-  gap: 1px;
-  margin: 0 0 16px;
-  padding-top: 25px;
-  overflow: hidden;
-  border: 1px solid #dce5f0;
-  border-radius: 7px;
-  background: #dce5f0;
-  box-shadow: 0 3px 12px rgba(27, 47, 82, .025);
-}
-
-.manage-leaves-page .admin-final-summary::before {
-  content: "Final approval inbox";
-  position: absolute;
-  top: 8px;
-  left: 15px;
-  color: #4e607c;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.manage-leaves-page .admin-final-summary-card {
-  min-height: 72px;
-  padding: 12px 17px;
-  border: 0;
-  border-radius: 0;
-  background: #ffffff;
-  box-shadow: none;
-}
-
-.manage-leaves-page .admin-final-summary-card:first-child {
-  background: #fff9ed;
-}
-
-.manage-leaves-page .admin-final-summary-icon {
-  width: 34px;
-  height: 34px;
-  margin-right: 10px;
-  border-radius: 50%;
-  font-size: 14px;
-}
-
-.manage-leaves-page .admin-final-summary-card strong {
-  font-size: 22px;
-}
-
-.manage-leaves-page .admin-final-summary-card span:not(.admin-final-summary-icon) {
-  margin-top: 3px;
-  font-size: 10px;
-}
-
-.manage-leaves-page .manage-leaves-section {
-  overflow: hidden;
-  border: 1px solid #dce5f0;
-  border-radius: 7px;
-  background: #ffffff;
-  box-shadow: 0 4px 15px rgba(27, 47, 82, .035);
-}
-
-.manage-leaves-page .manage-leaves-section-header {
-  padding: 18px 20px;
-  border-bottom: 1px solid #e7ecf3;
+  min-height: 45px;
+  padding: 10px 18px;
+  border-top: 1px solid #edf1f5;
   background: #fbfcfe;
 }
 
-.manage-leaves-page .manage-leaves-section-title {
-  font-size: 18px;
-  letter-spacing: 0;
+.manage-leaves-result-text {
+  color: #98a2b3;
+  font-size: 9px;
 }
 
-.manage-leaves-page .manage-leaves-section-subtitle {
-  margin-top: 5px;
+
+/* ============================================================
+   TABLET
+============================================================ */
+
+@media (max-width: 1100px) {
+
+  .manage-leaves-page {
+    padding: 22px 18px 40px;
+  }
+
+  .manage-leaves-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-final-summary-card {
+    width: calc(50% - 8px);
+    margin: 0 12px 12px 0;
+  }
+
+  .admin-final-summary-card:nth-of-type(2n) {
+    margin-right: 0;
+  }
+
+  .admin-final-summary::after {
+    display: none;
+  }
+
+  .manage-leaves-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manage-leaves-toolbar {
+    width: 100%;
+  }
+
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 650px) {
+
+  .manage-leaves-page {
+    padding: 16px 12px 30px;
+  }
+
+  .manage-leaves-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .manage-leaves-title {
+    font-size: 26px;
+  }
+
+  .manage-leaves-back-btn {
+    width: 100%;
+  }
+
+  .manage-leaves-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-final-summary {
+    padding: 16px;
+  }
+
+  .admin-final-summary-card {
+    width: 100%;
+    margin: 0 0 9px;
+  }
+
+  .admin-final-summary-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .manage-leaves-days-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .manage-leaves-toolbar {
+    width: 100%;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .manage-leaves-search,
+  .manage-leaves-status-filter,
+  .manage-leaves-export-btn {
+    width: 100% !important;
+  }
+
+  .manage-leaves-section-header {
+    padding: 17px;
+  }
+
+  .manage-leaves-section-title {
+    font-size: 19px;
+  }
+
+}
+
+
+/* ============================================================
+   ACCESSIBLE TYPE SCALE — MANAGE LEAVES
+============================================================ */
+
+.manage-leaves-title {
+  font-size: 35px;
+}
+
+.manage-leaves-description {
+  font-size: 14px;
+}
+
+.manage-leaves-label,
+.manage-leaves-stat-label,
+.manage-leaves-day-label {
+  font-size: 12px;
+}
+
+.manage-leaves-stat-value,
+.manage-leaves-day-value {
+  font-size: 31px;
+}
+
+.admin-final-summary::before {
+  font-size: 11px;
+}
+
+.admin-final-summary-card strong {
+  font-size: 13px;
+}
+
+.admin-final-summary-card strong::before {
+  font-size: 9px;
+}
+
+.admin-final-summary-card > div > span,
+.admin-final-summary-icon {
   font-size: 10px;
 }
 
-.manage-leaves-page .manage-leaves-toolbar {
-  gap: 8px;
+.manage-leaves-section-title {
+  font-size: 24px;
 }
 
-.manage-leaves-page .manage-leaves-export-btn,
-.manage-leaves-page .manage-leaves-search,
-.manage-leaves-page .manage-leaves-status-filter {
-  height: 36px;
-  border-radius: 6px;
+.manage-leaves-section-subtitle,
+.manage-leaves-export-btn,
+.manage-leaves-search,
+.manage-leaves-status-filter {
+  font-size: 12px;
+}
+
+.manage-leaves-table th {
   font-size: 10px;
 }
 
-.manage-leaves-page .manage-leaves-export-btn {
-  box-shadow: none;
+.manage-leaves-table td {
+  font-size: 12px;
 }
 
-.manage-leaves-page .manage-leaves-table-wrapper {
-  margin-top: 0;
+.manage-leaves-employee-name {
+  font-size: 14px;
 }
 
-.manage-leaves-page .manage-leaves-table thead {
-  background: #f6f8fb;
+.manage-leaves-employee-email,
+.manage-leaves-date-range,
+.manage-leaves-reason {
+  font-size: 10px;
 }
 
-.manage-leaves-page .manage-leaves-table th {
-  padding-top: 12px;
-  padding-bottom: 12px;
-  font-size: 9px;
+.manage-leaves-type,
+.manage-leaves-status,
+.manage-leaves-allocation,
+.admin-approval-stage,
+.manage-leaves-approve-btn,
+.manage-leaves-reject-btn,
+.manage-leaves-waiting-text,
+.manage-leaves-reviewed-text {
+  font-size: 10px;
 }
-
-.manage-leaves-page .manage-leaves-table td {
-  padding-top: 12px;
-  padding-bottom: 12px;
-}
-
-.manage-leaves-page .manage-leaves-table tbody tr:hover {
-  background: #f8fbff;
-}
-
-.manage-leaves-page .admin-approval-flow {
-  gap: 4px;
-}
-
-.manage-leaves-page .admin-approval-stage {
-  min-height: 27px;
-  padding: 3px 8px 3px 5px;
-  border-radius: 5px;
-  font-size: 9px;
-}
-
-.manage-leaves-page .admin-approval-stage > span {
-  width: 19px;
-  height: 19px;
-  margin-right: 6px;
-  flex-basis: 19px;
-  font-size: 9px;
-}
-
-.manage-leaves-page .admin-approval-flow::before {
-  left: 12px;
-  top: 12px;
-  bottom: 12px;
-}
-
-@media screen and (max-width: 1000px) {
-  .manage-leaves-page .admin-final-summary { grid-template-columns: 1fr; }
-  .manage-leaves-page .manage-leaves-day-card + .manage-leaves-day-card { border-top: 1px solid #e7ecf3; border-left: 0; }
-}
-
-/* Larger type scale for the leave-review workspace. */
-.manage-leaves-page .manage-leaves-title { font-size: 35px; }
-.manage-leaves-page .manage-leaves-description { font-size: 14px; }
-.manage-leaves-page .manage-leaves-label { font-size: 11px; }
-.manage-leaves-page .manage-leaves-back-btn { font-size: 12px; }
-.manage-leaves-page .manage-leaves-stat-label,
-.manage-leaves-page .manage-leaves-day-label { font-size: 12px; }
-.manage-leaves-page .manage-leaves-stat-value,
-.manage-leaves-page .manage-leaves-day-value { font-size: 29px; }
-.manage-leaves-page .admin-final-summary::before { font-size: 11px; }
-.manage-leaves-page .admin-final-summary-card strong { font-size: 27px; }
-.manage-leaves-page .admin-final-summary-card span:not(.admin-final-summary-icon) { font-size: 12px; }
-.manage-leaves-page .manage-leaves-section-title { font-size: 22px; }
-.manage-leaves-page .manage-leaves-section-subtitle { font-size: 12px; }
-.manage-leaves-page .manage-leaves-export-btn,
-.manage-leaves-page .manage-leaves-search,
-.manage-leaves-page .manage-leaves-status-filter { font-size: 12px; }
-.manage-leaves-page .manage-leaves-table th { font-size: 10px; }
-.manage-leaves-page .manage-leaves-table td { font-size: 13px; }
-.manage-leaves-page .manage-leaves-employee-name { font-size: 15px; }
-.manage-leaves-page .manage-leaves-employee-email,
-.manage-leaves-page .manage-leaves-date-range,
-.manage-leaves-page .manage-leaves-reason { font-size: 11px; }
-.manage-leaves-page .manage-leaves-type { font-size: 14px; }
-.manage-leaves-page .manage-leaves-status,
-.manage-leaves-page .manage-leaves-allocation { font-size: 11px; }

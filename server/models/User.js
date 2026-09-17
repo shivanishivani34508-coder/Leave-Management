@@ -5,109 +5,57 @@ const leaveBalanceSchema = new mongoose.Schema(
     casual: {
       type: Number,
       default: 12,
-      min: 0,
     },
 
     sick: {
       type: Number,
       default: 12,
-      min: 0,
     },
 
     earned: {
       type: Number,
       default: 18,
-      min: 0,
     },
 
     marriage: {
       type: Number,
       default: 5,
-      min: 0,
     },
-
 
     maternity: {
       type: Number,
       default: 182,
-      min: 0,
     },
 
     paternity: {
       type: Number,
       default: 15,
-      min: 0,
     },
+
     bereavement: {
       type: Number,
       default: 5,
-      min: 0,
     },
 
-    /* =====================================================
-       CARRY FORWARD LEAVES
-    ===================================================== */
-
-    carryForward: {
-      casual: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      sick: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      earned: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      marriage: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      maternity: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      paternity: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-
-      bereavement: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
+    leaveWithoutPay: {
+      type: Number,
+      default: 0,
     },
   },
-  {
-    _id: false,
-  }
+  { _id: false }
 );
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Name is required"],
+      required: true,
       trim: true,
     },
 
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: true,
       unique: true,
       lowercase: true,
       trim: true,
@@ -115,62 +63,62 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: 6,
+      required: true,
     },
 
-   role: {
-  type: String,
-  enum: [
-    "admin",
-    "employee",
-    "manager",
-    "departmentHead",
-    "hr",
-  ],
-  default: "employee",
-},
+    role: {
+      type: String,
+      enum: [
+        "employee",
+        "manager",
+        "departmentHead",
+        "hr",
+        "admin",
+      ],
+      default: "employee",
+    },
 
-gender: {
-  type: String,
-  enum: ["Male", "Female", "Other"],
-  required: true,
-},
+    manager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
 
-leaveBalances: {
-  type: leaveBalanceSchema,
-  default: () => ({}),
-},
+    departmentHead: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
 
-manager: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  default: null,
-},
+    hr: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
 
-departmentHead: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  default: null,
-},
+    department: {
+      type: String,
+      default: "",
+      trim: true,
+    },
 
-department: {
-  type: String,
-  default: "",
-},
-    
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+      required: true,
+    },
+
+    leaveBalances: {
+      type: leaveBalanceSchema,
+      default: () => ({}),
+    },
   },
   {
     timestamps: true,
   }
 );
 
-console.log(
-  "Leave Balance Schema:",
-  leaveBalanceSchema.obj
-);
-
-console.log("Leave Balance Schema:", leaveBalanceSchema.obj);
-
-module.exports =
+const User =
   mongoose.models.User || mongoose.model("User", userSchema);
+
+module.exports = User;

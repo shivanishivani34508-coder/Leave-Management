@@ -50,7 +50,7 @@ function Reports() {
 
   const getAuthConfig = () => ({
     headers: {
-      Authorization: `Bearer ${localStorage.getItem(
+      Authorization: `Bearer ${sessionStorage.getItem(
         "token"
       )}`,
     },
@@ -83,7 +83,8 @@ function Reports() {
       console.error(error);
 
       if (error.response?.status === 401) {
-        localStorage.clear();
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
         navigate("/");
         return;
       }

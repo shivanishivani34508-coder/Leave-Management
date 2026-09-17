@@ -23,7 +23,9 @@ const getUsers = async (req, res) => {
         const statistics = await Leave.aggregate([
           {
             $match: {
-              employee: new mongoose.Types.ObjectId(user._id),
+              employee: new mongoose.Types.ObjectId(
+                user._id
+              ),
             },
           },
           {
@@ -215,7 +217,6 @@ const getUserById = async (req, res) => {
   }
 };
 
-
 /* =========================================================
    CREATE EMPLOYEE
    ADMIN ONLY
@@ -272,7 +273,7 @@ const createEmployee = async (req, res) => {
 
     console.log("Employee Data:", {
       name,
-      email: normalizedEmail,
+      email,
       password: hashedPassword,
       role,
       gender,
@@ -291,7 +292,6 @@ const createEmployee = async (req, res) => {
       manager,
       departmentHead,
     });
-
 
     /* =====================================================
        CREATE CURRENT YEAR LEAVE BALANCE
@@ -358,252 +358,86 @@ const createEmployee = async (req, res) => {
     );
 
 
-    /* =====================================================
-       CREATE NEXT YEAR BALANCE FOR NEW EMPLOYEE
-       
-       CARRY FORWARD POLICY:
-       casual     -> maximum 3
-       sick       -> maximum 5
-       earned     -> maximum 10
-       marriage   -> 0
-       maternity  -> 0
-       paternity  -> 0
-       bereavement-> 0
-    ===================================================== */
+/* =========================================================
+   CREATE NEXT YEAR BALANCE FOR NEW EMPLOYEE
+   This does NOT change the existing current-year balance.
+========================================================= */
 
-    const nextYear = currentYear + 1;
+const nextYear = currentYear + 1;
 
-    /* =====================================================
-       GET CURRENT YEAR BALANCE
-    ===================================================== */
+const existingNextYearBalance =
+  await YearlyLeaveBalance.findOne({
+    employee: employee._id,
+    year: nextYear,
+  });
 
-    const currentYearBalance =
-      await YearlyLeaveBalance.findOne({
-        employee: employee._id,
-        year: currentYear,
-      });
+if (!existingNextYearBalance) {
 
-    if (!currentYearBalance) {
-      throw new Error(
-        `Current year leave balance not found for employee ${employee._id}`
-      );
-    }
+  await YearlyLeaveBalance.create({
+    employee: employee._id,
+    year: nextYear,
 
+    casual: {
+      annualAllocation: 12,
+      carryForward: 0,
+      totalAvailable: 12,
+      remaining: 12,
+    },
 
-    /* =====================================================
-       CALCULATE CARRY FORWARD
-    ===================================================== */
+    sick: {
+      annualAllocation: 12,
+      carryForward: 0,
+      totalAvailable: 12,
+      remaining: 12,
+    },
 
-    const casualCarryForward = Math.min(
-      Number(
-        currentYearBalance.casual?.remaining || 0
-      ),
-      3
-    );
+    earned: {
+      annualAllocation: 18,
+      carryForward: 0,
+      totalAvailable: 18,
+      remaining: 18,
+    },
 
-    const sickCarryForward = Math.min(
-      Number(
-        currentYearBalance.sick?.remaining || 0
-      ),
-      5
-    );
+    marriage: {
+      annualAllocation: 5,
+      carryForward: 0,
+      totalAvailable: 5,
+      remaining: 5,
+    },
 
-    const earnedCarryForward = Math.min(
-      Number(
-        currentYearBalance.earned?.remaining || 0
-      ),
-      10
-    );
+    maternity: {
+      annualAllocation: 182,
+      carryForward: 0,
+      totalAvailable: 182,
+      remaining: 182,
+    },
 
-    /* =====================================================
-       OTHER LEAVES DO NOT CARRY FORWARD
-    ===================================================== */
+    paternity: {
+      annualAllocation: 15,
+      carryForward: 0,
+      totalAvailable: 15,
+      remaining: 15,
+    },
 
-    const marriageCarryForward = 0;
-    const maternityCarryForward = 0;
-    const paternityCarryForward = 0;
-    const bereavementCarryForward = 0;
+    bereavement: {
+      annualAllocation: 5,
+      carryForward: 0,
+      totalAvailable: 5,
+      remaining: 5,
+    },
+  });
 
+  console.log(
+    `Next year yearly leave balance created for ${name} - ${nextYear}`
+  );
 
-    /* =====================================================
-       CREATE / UPDATE NEXT YEAR BALANCE
-    ===================================================== */
+} else {
 
-    const nextYearBalance =
-      await YearlyLeaveBalance.findOne({
-        employee: employee._id,
-        year: nextYear,
-      });
+  console.log(
+    `Next year yearly leave balance already exists for ${name} - ${nextYear}`
+  );
+}
 
-
-    if (!nextYearBalance) {
-
-      await YearlyLeaveBalance.create({
-        employee: employee._id,
-        year: nextYear,
-
-        casual: {
-          annualAllocation: 12,
-          carryForward: casualCarryForward,
-          totalAvailable:
-            12 + casualCarryForward,
-          remaining:
-            12 + casualCarryForward,
-        },
-
-        sick: {
-          annualAllocation: 12,
-          carryForward: sickCarryForward,
-          totalAvailable:
-            12 + sickCarryForward,
-          remaining:
-            12 + sickCarryForward,
-        },
-
-        earned: {
-          annualAllocation: 18,
-          carryForward: earnedCarryForward,
-          totalAvailable:
-            18 + earnedCarryForward,
-          remaining:
-            18 + earnedCarryForward,
-        },
-
-        marriage: {
-          annualAllocation: 5,
-          carryForward: marriageCarryForward,
-          totalAvailable:
-            5 + marriageCarryForward,
-          remaining:
-            5 + marriageCarryForward,
-        },
-
-        maternity: {
-          annualAllocation: 182,
-          carryForward: maternityCarryForward,
-          totalAvailable:
-            182 + maternityCarryForward,
-          remaining:
-            182 + maternityCarryForward,
-        },
-
-        paternity: {
-          annualAllocation: 15,
-          carryForward: paternityCarryForward,
-          totalAvailable:
-            15 + paternityCarryForward,
-          remaining:
-            15 + paternityCarryForward,
-        },
-
-        bereavement: {
-          annualAllocation: 5,
-          carryForward: bereavementCarryForward,
-          totalAvailable:
-            5 + bereavementCarryForward,
-          remaining:
-            5 + bereavementCarryForward,
-        },
-      });
-
-      console.log(
-        `Next year yearly leave balance created for ${name} - ${nextYear}`
-      );
-
-      console.log(
-        "Carry Forward:",
-        {
-          casual: casualCarryForward,
-          sick: sickCarryForward,
-          earned: earnedCarryForward,
-          marriage: marriageCarryForward,
-          maternity: maternityCarryForward,
-          paternity: paternityCarryForward,
-          bereavement: bereavementCarryForward,
-        }
-      );
-
-    } else {
-
-      /* ===================================================
-         IF NEXT YEAR RECORD ALREADY EXISTS,
-         UPDATE ITS CARRY FORWARD
-      =================================================== */
-
-      nextYearBalance.casual.carryForward =
-        casualCarryForward;
-
-      nextYearBalance.casual.totalAvailable =
-        12 + casualCarryForward;
-
-      nextYearBalance.casual.remaining =
-        12 + casualCarryForward;
-
-
-      nextYearBalance.sick.carryForward =
-        sickCarryForward;
-
-      nextYearBalance.sick.totalAvailable =
-        12 + sickCarryForward;
-
-      nextYearBalance.sick.remaining =
-        12 + sickCarryForward;
-
-
-      nextYearBalance.earned.carryForward =
-        earnedCarryForward;
-
-      nextYearBalance.earned.totalAvailable =
-        18 + earnedCarryForward;
-
-      nextYearBalance.earned.remaining =
-        18 + earnedCarryForward;
-
-
-      nextYearBalance.marriage.carryForward = 0;
-      nextYearBalance.marriage.totalAvailable = 5;
-      nextYearBalance.marriage.remaining = 5;
-
-
-      nextYearBalance.maternity.carryForward = 0;
-      nextYearBalance.maternity.totalAvailable = 182;
-      nextYearBalance.maternity.remaining = 182;
-
-
-      nextYearBalance.paternity.carryForward = 0;
-      nextYearBalance.paternity.totalAvailable = 15;
-      nextYearBalance.paternity.remaining = 15;
-
-
-      nextYearBalance.bereavement.carryForward = 0;
-      nextYearBalance.bereavement.totalAvailable = 5;
-      nextYearBalance.bereavement.remaining = 5;
-
-
-      await nextYearBalance.save();
-
-      console.log(
-        `Next year yearly leave balance updated for ${name} - ${nextYear}`
-      );
-
-      console.log(
-        "Carry Forward:",
-        {
-          casual: casualCarryForward,
-          sick: sickCarryForward,
-          earned: earnedCarryForward,
-          marriage: 0,
-          maternity: 0,
-          paternity: 0,
-          bereavement: 0,
-        }
-      );
-    }
-
-
-    /* =====================================================
-       RETURN CREATED EMPLOYEE
-    ===================================================== */
 
     const createdEmployee = await User.findById(
       employee._id
@@ -615,9 +449,7 @@ const createEmployee = async (req, res) => {
       message: "Employee created successfully.",
       user: createdEmployee,
     });
-
   } catch (error) {
-
     console.error(
       "CREATE EMPLOYEE ERROR:",
       error
@@ -629,22 +461,27 @@ const createEmployee = async (req, res) => {
   }
 };
 
-
 /* =========================================================
    GET LOGGED-IN USER PROFILE
 ========================================================= */
-
 const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select(
-      "-password"
-    );
+    const user = await User.findById(req.user._id)
+      .select("-password")
+      .lean();
 
     if (!user) {
       return res.status(404).json({
         message: "User not found.",
       });
     }
+
+    console.log("========== GET PROFILE ==========");
+    console.log("User:", user.name);
+    console.log("Role:", user.role);
+    console.log("Gender:", user.gender);
+    console.log("Leave Balances:", user.leaveBalances);
+    console.log("=================================");
 
     return res.status(200).json(user);
   } catch (error) {
@@ -879,7 +716,6 @@ const updateLeaveBalance = async (req, res) => {
   }
 };
 
-
 /* =========================================================
    DELETE EMPLOYEE
    ADMIN ONLY
@@ -920,6 +756,7 @@ const deleteUser = async (req, res) => {
 
     /* =====================================================
        DELETE ALL YEARLY LEAVE BALANCES
+       INCLUDING CURRENT YEAR AND NEXT YEAR
     ===================================================== */
 
     await YearlyLeaveBalance.deleteMany({
@@ -947,8 +784,6 @@ const deleteUser = async (req, res) => {
     });
   }
 };
-
-
 /* =========================================================
    GET ALL MANAGERS
 ========================================================= */
@@ -979,7 +814,6 @@ const getManagers = async (req, res) => {
   }
 };
 
-
 /* =========================================================
    GET ALL DEPARTMENT HEADS
 ========================================================= */
@@ -1002,17 +836,13 @@ const getDepartmentHeads = async (req, res) => {
 
     return res.status(200).json(departmentHeads);
   } catch (error) {
-    console.error(
-      "GET DEPARTMENT HEADS ERROR:",
-      error
-    );
+    console.error("GET DEPARTMENT HEADS ERROR:", error);
 
     return res.status(500).json({
       message: "Unable to get department heads.",
     });
   }
 };
-
 
 /* =========================================================
    GET MY TEAM
@@ -1035,11 +865,6 @@ const getMyTeam = async (req, res) => {
     });
   }
 };
-
-
-/* =========================================================
-   UPDATE EMPLOYEE
-========================================================= */
 
 const updateEmployee = async (req, res) => {
   try {
@@ -1090,12 +915,9 @@ const updateEmployee = async (req, res) => {
     });
   }
 };
-
-
 /* =========================================================
    EXPORTS
 ========================================================= */
-
 module.exports = {
   getUsers,
   getUserById,

@@ -50,7 +50,7 @@ function Employees() {
   ========================================================= */
 
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
       headers: {
@@ -65,9 +65,9 @@ function Employees() {
   ========================================================= */
 
   const handleUnauthorized = useCallback(() => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
 
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
 
     navigate("/", {
       replace: true,
@@ -83,7 +83,7 @@ const fetchEmployees = useCallback(async () => {
     setLoading(true);
     setError("");
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       handleUnauthorized();

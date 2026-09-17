@@ -8,7 +8,7 @@ function ManagerLeaveRequests() {
   const [loading, setLoading] = useState(true);
   const loadLeaves = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const { data } = await api.get("/leaves/manager", {
         headers: {
@@ -34,7 +34,7 @@ console.log("Length:", data.length);
 
   const updateStatus = async (id, status) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     await api.put(
       `/leaves/${id}/manager`,
@@ -126,8 +126,10 @@ console.log("Length:", data.length);
           APPROVAL STATUS
       ================================================= */}
       <td>
-        <div className="approval-flow">
+      <div className="approval-flow">
 
+        {/* MANAGER */}
+        {leave.requiredApprovals?.includes("Manager") && (
           <span
             className={
               leave.managerStatus === "Approved"
@@ -137,10 +139,12 @@ console.log("Length:", data.length);
                 : "stage pending"
             }
           >
-            Manager:{" "}
-            {leave.managerStatus || "Pending"}
+            Manager: {leave.managerStatus || "Pending"}
           </span>
+        )}
 
+        {/* DEPARTMENT HEAD */}
+        {leave.requiredApprovals?.includes("DepartmentHead") && (
           <span
             className={
               leave.departmentHeadStatus === "Approved"
@@ -150,10 +154,12 @@ console.log("Length:", data.length);
                 : "stage pending"
             }
           >
-            Department Head:{" "}
-            {leave.departmentHeadStatus || "Pending"}
+            Department Head: {leave.departmentHeadStatus || "Pending"}
           </span>
+        )}
 
+        {/* HR */}
+        {leave.requiredApprovals?.includes("HR") && (
           <span
             className={
               leave.hrStatus === "Approved"
@@ -163,24 +169,11 @@ console.log("Length:", data.length);
                 : "stage pending"
             }
           >
-            HR:{" "}
-            {leave.hrStatus || "Pending"}
+            HR: {leave.hrStatus || "Pending"}
           </span>
+        )}
 
-          <span
-            className={
-              leave.adminStatus === "Approved"
-                ? "stage approved"
-                : leave.adminStatus === "Rejected"
-                ? "stage rejected"
-                : "stage pending"
-            }
-          >
-            Admin:{" "}
-            {leave.adminStatus || "Pending"}
-          </span>
-
-        </div>
+      </div>
       </td>
 
       {/* =================================================

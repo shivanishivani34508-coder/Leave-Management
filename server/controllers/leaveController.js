@@ -2,9 +2,8 @@ const Leave = require("../models/Leave");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Holiday = require("../models/Holiday");
-const YearlyLeaveBalance = require(
-  "../models/YearlyLeaveBalance"
-);
+const YearlyLeaveBalance = require("../models/YearlyLeaveBalance");
+const sendEmail = require("../utils/sendEmail");
 
 /* =========================================================
    CONFIGURATION
@@ -55,10 +54,7 @@ const normalizeDate = (dateValue) => {
    CALCULATE LEAVE DAYS
 ========================================================= */
 
-const calculateLeaveDays = (
-  startDate,
-  endDate
-) => {
+const calculateLeaveDays = (startDate, endDate) => {
   const millisecondsPerDay =
     1000 * 60 * 60 * 24;
 
@@ -97,6 +93,34 @@ const getLeaveYear = (dateValue) => {
 };
 
 /* =========================================================
+   CHECK WHETHER PENDING LEAVE HAS EXPIRED
+========================================================= */
+
+const isLeaveExpired = (endDate) => {
+  const normalizedEndDate =
+    normalizeDate(endDate);
+
+  if (!normalizedEndDate) {
+    return false;
+  }
+
+  const now = new Date();
+
+  const today = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    )
+  );
+
+  return (
+    normalizedEndDate.getTime() <
+    today.getTime()
+  );
+}; 
+
+/* =========================================================
    GET AVAILABLE BALANCE
 ========================================================= */
 
@@ -105,33 +129,30 @@ const getAvailableBalance = (
   leaveType
 ) => {
   if (
-    leaveType ===
-    "Leave Without Pay"
+    leaveType === "Leave Without Pay"
   ) {
     return 0;
   }
 
   const balanceKey =
-    LEAVE_BALANCE_KEYS[
-      leaveType
-    ];
+    LEAVE_BALANCE_KEYS[leaveType];
 
   if (!balanceKey) {
     return 0;
   }
 
   return Number(
-    user.leaveBalances?.[
-      balanceKey
-    ] ?? 0
+    user.leaveBalances?.[balanceKey] ?? 0
   );
 };
 
 /* =========================================================
-   RESTORE A RESERVED LEAVE BALANCE
+   RESTORE DEDUCTED LEAVE BALANCE
 ========================================================= */
 
-const restoreDeductedLeaveBalance = async (leave) => {
+const restoreDeductedLeaveBalance = async (
+  leave
+) => {
   if (
     !leave.balanceDeducted ||
     leave.leaveType === "Leave Without Pay"
@@ -139,8 +160,11 @@ const restoreDeductedLeaveBalance = async (leave) => {
     return;
   }
 
-  const balanceKey = LEAVE_BALANCE_KEYS[leave.leaveType];
-  const leaveYear = getLeaveYear(leave.startDate);
+  const balanceKey =
+    LEAVE_BALANCE_KEYS[leave.leaveType];
+
+  const leaveYear =
+    getLeaveYear(leave.startDate);
 
   if (!balanceKey || !leaveYear) {
     return;
@@ -153,13 +177,161 @@ const restoreDeductedLeaveBalance = async (leave) => {
     },
     {
       $inc: {
-        [`${balanceKey}.remaining`]: Number(leave.paidDays || 0),
+        [`${balanceKey}.remaining`]:
+          Number(leave.paidDays || 0),
+        [`${balanceKey}.used`]:
+          -Number(leave.paidDays || 0),
       },
     },
     {
       runValidators: true,
     }
   );
+};
+
+/* =========================================================
+   DEDUCT LEAVE BALANCE AFTER FINAL APPROVAL
+========================================================= */
+
+const deductLeaveBalance = async (leave) => {
+  console.log("========== DEDUCT LEAVE BALANCE ==========");
+  console.log("Employee:", leave.employee);
+  console.log("Leave Type:", leave.leaveType);
+  console.log("Paid Days:", leave.paidDays);
+  console.log("Balance Deducted Before:", leave.balanceDeducted);
+  if (leave.leaveType === "Leave Without Pay") {
+    return;
+  }
+
+  if (leave.balanceDeducted) {
+    return;
+  }
+
+  const balanceKey =
+    LEAVE_BALANCE_KEYS[leave.leaveType];
+
+  const leaveYear =
+    getLeaveYear(leave.startDate);
+
+  const paidDays =
+    Number(leave.paidDays || 0);
+
+  if (
+    !balanceKey ||
+    !leaveYear ||
+    paidDays <= 0
+  ) {
+    return;
+  }
+
+  const updatedBalance =
+    await YearlyLeaveBalance.findOneAndUpdate(
+      {
+        employee: leave.employee,
+        year: leaveYear,
+        [`${balanceKey}.remaining`]: {
+          $gte: paidDays,
+        },
+      },
+     {
+      $inc: {
+        [`${balanceKey}.remaining`]: -paidDays,
+        [`${balanceKey}.used`]: paidDays,
+      },
+    },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+  if (!updatedBalance) {
+    throw new Error(
+      `Insufficient ${leave.leaveType} balance for final approval.`
+    );
+  }
+
+  leave.balanceDeducted = true;
+};
+
+/* =========================================================
+   NOTIFY APPROVER
+========================================================= */
+
+const notifyApprover = async ({
+  approverId,
+  employee,
+  leave,
+  title = "New Leave Request",
+  message,
+  emailSubject = "New Leave Request Submitted",
+}) => {
+  if (!approverId) {
+    return;
+  }
+
+  const approver =
+    await User.findById(approverId);
+
+  if (!approver) {
+    return;
+  }
+
+  await Notification.create({
+    recipient: approver._id,
+    sender: employee._id,
+    title,
+    message:
+      message ||
+      `${employee.name} applied for ${leave.leaveType} leave.`,
+  });
+
+  try {
+    if (approver.email) {
+      await sendEmail(
+        approver.email,
+        emailSubject,
+        `
+          <h2>New Leave Request</h2>
+
+          <p>
+            <strong>${employee.name}</strong>
+            has applied for leave.
+          </p>
+
+          <p>
+            <strong>Leave Type:</strong>
+            ${leave.leaveType}
+          </p>
+
+          <p>
+            <strong>Start Date:</strong>
+            ${leave.startDate.toDateString()}
+          </p>
+
+          <p>
+            <strong>End Date:</strong>
+            ${leave.endDate.toDateString()}
+          </p>
+
+          <p>
+            <strong>Total Days:</strong>
+            ${leave.totalDays}
+          </p>
+
+          <p>
+            <strong>Reason:</strong>
+            ${leave.reason}
+          </p>
+        `
+      );
+    }
+  } catch (emailError) {
+    console.error(
+      "APPROVER EMAIL ERROR:",
+      emailError
+    );
+  }
 };
 
 /* =========================================================
@@ -181,7 +353,7 @@ const applyLeave = async (
       });
     }
 
-      const {
+    const {
       leaveType,
       startDate,
       endDate,
@@ -189,6 +361,7 @@ const applyLeave = async (
       durationType,
       halfDaySession,
     } = req.body;
+
     /* =====================================================
        REQUIRED FIELDS
     ===================================================== */
@@ -205,20 +378,20 @@ const applyLeave = async (
       });
     }
 
-
     /* =====================================================
-   VALIDATE HALF DAY
-===================================================== */
+       VALIDATE HALF DAY
+    ===================================================== */
 
-if (
-  durationType === "Half Day" &&
-  !halfDaySession
-) {
-  return res.status(400).json({
-    message:
-      "Please select First Half or Second Half.",
-  });
-}
+    if (
+      durationType === "Half Day" &&
+      !halfDaySession
+    ) {
+      return res.status(400).json({
+        message:
+          "Please select First Half or Second Half.",
+      });
+    }
+
     /* =====================================================
        VALIDATE LEAVE TYPE
     ===================================================== */
@@ -287,7 +460,7 @@ if (
     }
 
     /* =====================================================
-       DO NOT ALLOW LEAVE ACROSS TWO YEARS
+       DO NOT ALLOW CROSS-YEAR LEAVE
     ===================================================== */
 
     const leaveYear =
@@ -304,58 +477,73 @@ if (
           "A leave request cannot span across two different years. Please submit separate leave requests.",
       });
     }
-
-   /* =====================================================
-   CHECK COMPANY HOLIDAYS AND EXCLUDE THEM
+/* =====================================================
+   CHECK COMPANY HOLIDAYS
 ===================================================== */
 
-const holidays = await Holiday.find({
-  holidayDate: {
-    $gte: start,
-    $lte: end,
-  },
-});
+const holidays =
+  await Holiday.find({
+    holidayDate: {
+      $gte: start,
+      $lte: end,
+    },
+  });
 
-/*
-  Store the holiday dates which fall inside
-  the employee's requested leave range.
-*/
-const excludedHolidayDates = holidays.map(
-  (holiday) => normalizeDate(holiday.holidayDate)
-);
+const excludedHolidayDates =
+  holidays.map(
+    (holiday) =>
+      normalizeDate(
+        holiday.holidayDate
+      )
+  );
 
-/*
-  Calculate the normal requested duration.
-  Example:
-  21, 22, 23, 24 = 4 days
-*/
+/* =====================================================
+   EXCLUDE SUNDAYS
+===================================================== */
+
+let sundayCount = 0;
+
+const currentDate = new Date(start);
+
+while (
+  currentDate.getTime() <= end.getTime()
+) {
+  // 0 = Sunday
+  if (currentDate.getUTCDay() === 0) {
+    sundayCount++;
+  }
+
+  currentDate.setUTCDate(
+    currentDate.getUTCDate() + 1
+  );
+}
+
+/* =====================================================
+   CALCULATE REQUESTED DAYS
+===================================================== */
+
 let requestedDays =
   calculateLeaveDays(
     start,
     end
   );
 
-if (durationType === "Half Day") {
+if (
+  durationType === "Half Day"
+) {
   requestedDays = 0.5;
 }
 
+/* =====================================================
+   TOTAL WORKING LEAVE DAYS
+===================================================== */
+
 const totalDays =
   requestedDays -
-  excludedHolidayDates.length;
-
-/*
-  If every requested date is a holiday,
-  there is no leave to apply.
-*/
-if (totalDays <= 0) {
-  return res.status(400).json({
-    message:
-      "All selected dates are company holidays. Please select working days.",
-  });
-}
-
+  excludedHolidayDates.length -
+  sundayCount;
     /* =====================================================
-       FIND EMPLOYEE
+       GET USER
     ===================================================== */
 
     const user =
@@ -367,6 +555,120 @@ if (totalDays <= 0) {
           "Employee not found.",
       });
     }
+
+    /* =====================================================
+       DETERMINE APPROVAL FLOW
+    ===================================================== */
+
+    let requiredApprovals = [
+      "Manager",
+    ];
+
+    if (user.role === "manager") {
+    requiredApprovals = [
+      "DepartmentHead",
+    ];
+  }
+    else if (
+      user.role === "departmentHead"
+    ) {
+      requiredApprovals = [
+        "HR",
+      ];
+    } else if (
+      user.role === "hr"
+    ) {
+      requiredApprovals = [
+        "Admin",
+      ];
+    } else if (
+      user.role === "admin"
+    ) {
+      requiredApprovals = [
+        "Admin",
+      ];
+    } else {
+      if (
+        totalDays > 2 &&
+        totalDays <= 5
+      ) {
+        requiredApprovals = [
+          "Manager",
+          "DepartmentHead",
+        ];
+      } else if (
+        totalDays > 5
+      ) {
+        requiredApprovals = [
+          "Manager",
+          "DepartmentHead",
+          "HR",
+        ];
+      }
+    }
+
+    /* =====================================================
+       ALL DAYS ARE HOLIDAYS
+    ===================================================== */
+
+    if (totalDays <= 0) {
+      return res.status(400).json({
+        message:
+          "All selected dates are company holidays. Please select working days.",
+      });
+    }
+
+    /* =====================================================
+       DEBUG
+    ===================================================== */
+
+    console.log(
+      "========== APPLY LEAVE USER DEBUG =========="
+    );
+
+    console.log(
+      "User ID:",
+      user._id
+    );
+
+    console.log(
+      "User Name:",
+      user.name
+    );
+
+    console.log(
+      "User Role:",
+      user.role
+    );
+
+    console.log(
+      "User Department:",
+      user.department
+    );
+
+    console.log(
+      "User Manager:",
+      user.manager
+    );
+
+    console.log(
+      "User Department Head:",
+      user.departmentHead
+    );
+
+    console.log(
+      "User HR:",
+      user.hr
+    );
+
+    console.log(
+      "Required Approvals:",
+      requiredApprovals
+    );
+
+    console.log(
+      "============================================"
+    );
 
     /* =====================================================
        CHECK OVERLAPPING LEAVE
@@ -400,14 +702,13 @@ if (totalDays <= 0) {
     }
 
     /* =====================================================
-       CHECK YEARLY LEAVE BALANCE
-
-       Leave Without Pay does not use balance.
+       CHECK YEARLY BALANCE
     ===================================================== */
 
     let paidDays = 0;
     let unpaidDays = 0;
-    let balanceDeducted = false;
+    let balanceDeducted =
+      false;
 
     if (
       leaveType ===
@@ -472,46 +773,22 @@ if (totalDays <= 0) {
       unpaidDays = 0;
 
       /* ===================================================
-         RESERVE BALANCE WHEN THE LEAVE IS SUBMITTED
+         IMPORTANT:
+         DO NOT DEDUCT HERE.
+         Deduction happens after final approval.
       =================================================== */
 
-      const updatedYearlyBalance =
-        await YearlyLeaveBalance.findOneAndUpdate(
-          {
-            employee: userId,
-            year: leaveYear,
-            [`${balanceKey}.remaining`]: {
-              $gte: totalDays,
-            },
-          },
-          {
-            $inc: {
-              [`${balanceKey}.remaining`]: -totalDays,
-            },
-          },
-          {
-            new: true,
-            runValidators: true,
-          }
-        );
-
-      if (!updatedYearlyBalance) {
-        return res.status(409).json({
-          message:
-            `Insufficient ${leaveType} balance or the yearly balance has changed. Please refresh and try again.`,
-        });
-      }
-
-      balanceDeducted = true;
+      balanceDeducted = false;
     }
 
     /* =====================================================
-       CREATE LEAVE REQUEST
+       CREATE LEAVE
     ===================================================== */
 
     const leave =
       await Leave.create({
-        employee: user._id,
+        employee:
+          user._id,
 
         department:
           user.department || "",
@@ -519,15 +796,21 @@ if (totalDays <= 0) {
         leaveType,
 
         durationType,
-        halfDaySession,
 
-        startDate: start,
+        halfDaySession:
+          halfDaySession ||
+          undefined,
 
-        endDate: end,
+        startDate:
+          start,
+
+        endDate:
+          end,
 
         excludedHolidayDates,
 
-        reason: trimmedReason,
+        reason:
+          trimmedReason,
 
         totalDays,
 
@@ -537,6 +820,8 @@ if (totalDays <= 0) {
 
         status:
           "Pending",
+
+        requiredApprovals,
 
         managerStatus:
           "Pending",
@@ -554,77 +839,77 @@ if (totalDays <= 0) {
       });
 
     /* =====================================================
-       CREATE ADMIN NOTIFICATIONS
+       FIND FIRST APPROVER
     ===================================================== */
 
-    const admins =
-      await User.find({
-        role: "admin",
-      });
+    let firstApprover = null;
 
-    for (
-      const admin of admins
+    if (
+      requiredApprovals.includes(
+        "Manager"
+      )
     ) {
-      await Notification.create({
-        recipient:
-          admin._id,
+      firstApprover =
+        user.manager;
+    } else if (
+      requiredApprovals.includes(
+        "DepartmentHead"
+      )
+    ) {
+      firstApprover =
+        user.departmentHead;
+    } else if (
+      requiredApprovals.includes(
+        "HR"
+      )
+    ) {
+      firstApprover =
+        user.hr;
+    } else if (
+      requiredApprovals.includes(
+        "Admin"
+      )
+    ) {
+      if (
+        user.role !== "admin"
+      ) {
+        const admin =
+          await User.findOne({
+            role: "admin",
+          });
 
-        sender:
-          user._id,
+        firstApprover =
+          admin?._id || null;
+      }
+    }
+
+    /* =====================================================
+       NOTIFY FIRST APPROVER
+    ===================================================== */
+
+    if (
+      firstApprover &&
+      firstApprover.toString() !==
+        user._id.toString()
+    ) {
+      await notifyApprover({
+        approverId:
+          firstApprover,
+
+        employee:
+          user,
+
+        leave,
 
         title:
           "New Leave Request",
 
         message:
           `${user.name} applied for ${leaveType} leave.`,
+
+        emailSubject:
+          "New Leave Request Submitted",
       });
-
-      try {
-        if (admin.email) {
-          await sendEmail(
-            admin.email,
-            "New Leave Request Submitted",
-            `
-              <h2>New Leave Request</h2>
-
-              <p>
-                <strong>${user.name}</strong>
-                has applied for leave.
-              </p>
-
-              <p>
-                <strong>Leave Type:</strong>
-                ${leaveType}
-              </p>
-
-              <p>
-                <strong>Start Date:</strong>
-                ${start.toDateString()}
-              </p>
-
-              <p>
-                <strong>End Date:</strong>
-                ${end.toDateString()}
-              </p>
-
-              <p>
-                <strong>Total Days:</strong>
-                ${totalDays}
-              </p>
-
-              <p>
-                <strong>Reason:</strong>
-                ${trimmedReason}
-              </p>
-            `
-          );
-        }
-      } catch (emailError) {
-        console.error(
-          "ADMIN EMAIL ERROR:",
-          emailError
-        );
-      }
     }
 
     /* =====================================================
@@ -637,7 +922,6 @@ if (totalDays <= 0) {
 
       leave,
     });
-
   } catch (error) {
     console.error(
       "APPLY LEAVE ERROR:",
@@ -655,10 +939,7 @@ if (totalDays <= 0) {
    GET MY LEAVES
 ========================================================= */
 
-const getMyLeaves = async (
-  req,
-  res
-) => {
+const getMyLeaves = async (req, res) => {
   try {
     const userId =
       getLoggedInUserId(req);
@@ -680,7 +961,6 @@ const getMyLeaves = async (
     return res.status(200).json(
       leaves
     );
-
   } catch (error) {
     console.error(
       "GET MY LEAVES ERROR:",
@@ -696,27 +976,27 @@ const getMyLeaves = async (
 
 /* =========================================================
    GET ALL LEAVES
+   ADMIN ONLY
 ========================================================= */
 
-const getAllLeaves = async (
-  req,
-  res
-) => {
+const getAllLeaves = async (req, res) => {
   try {
-    const leaves =
-      await Leave.find()
-        .populate(
+    const leaves = (
+      await Leave.find({
+        status: { $ne: "Cancelled" },
+      })
+       .populate(
           "employee",
           "name email role department"
         )
         .sort({
           createdAt: -1,
-        });
+        })
+    ).filter(shouldDisplayLeave);
 
     return res.status(200).json(
       leaves
     );
-
   } catch (error) {
     console.error(
       "GET ALL LEAVES ERROR:",
@@ -734,13 +1014,20 @@ const getAllLeaves = async (
    CANCEL LEAVE
 ========================================================= */
 
-const cancelLeave = async (
-  req,
-  res
-) => {
+const cancelLeave = async (req, res) => {
   try {
+    console.log("========== CANCEL LEAVE CALLED ==========");
+    console.log("Leave ID:", req.params.id);
+    console.log("User:", req.user);
     const userId =
       getLoggedInUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        message:
+          "Unauthorized. Please login again.",
+      });
+    }
 
     const leave =
       await Leave.findById(
@@ -754,6 +1041,10 @@ const cancelLeave = async (
       });
     }
 
+    /* =====================================================
+       ONLY OWNER CAN CANCEL
+    ===================================================== */
+
     if (
       leave.employee.toString() !==
       userId.toString()
@@ -764,9 +1055,12 @@ const cancelLeave = async (
       });
     }
 
+    /* =====================================================
+       ALREADY CANCELLED
+    ===================================================== */
+
     if (
-      leave.status ===
-      "Cancelled"
+      leave.status === "Cancelled"
     ) {
       return res.status(400).json({
         message:
@@ -775,26 +1069,37 @@ const cancelLeave = async (
     }
 
     /* =====================================================
-       RESTORE YEARLY BALANCE IF IT WAS RESERVED
+       REJECTED LEAVE CANNOT BE CANCELLED
     ===================================================== */
 
-    await restoreDeductedLeaveBalance(leave);
+    if (
+      leave.status === "Rejected"
+    ) {
+      return res.status(400).json({
+        message:
+          "Rejected leave cannot be cancelled.",
+      });
+    }
 
-    leave.status =
-      "Cancelled";
+    /* =====================================================
+       RESTORE DEDUCTED BALANCE
+    ===================================================== */
 
-    leave.balanceDeducted =
-      false;
+    await restoreDeductedLeaveBalance(
+      leave
+    );
+
+    leave.status = "Cancelled";
+
+    leave.balanceDeducted = false;
 
     await leave.save();
 
     return res.status(200).json({
       message:
         "Leave cancelled successfully.",
-
       leave,
     });
-
   } catch (error) {
     console.error(
       "CANCEL LEAVE ERROR:",
@@ -808,50 +1113,71 @@ const cancelLeave = async (
   }
 };
 
+const getTodayStart = () => {
+  const now = new Date();
+
+  return new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    )
+  );
+};
+
+// A request is only hidden after its end date when no final decision was made.
+// Approved and rejected requests remain available as leave history.
+const shouldDisplayLeave = (leave) =>
+  leave.status !== "Pending" ||
+  !isLeaveExpired(leave.endDate);
+
 /* =========================================================
-   MANAGER - GET TEAM LEAVES
+   MANAGER - GET TEAM LEAVE REQUESTS
 ========================================================= */
-
-const getManagerLeaves = async (
-  req,
-  res
-) => {
+const getManagerLeaves = async (req, res) => {
   try {
-    const managerId =
-      getLoggedInUserId(req);
+    const managerId = getLoggedInUserId(req);
 
-    const employees =
-      await User.find({
-        manager:
-          managerId,
-      }).select(
-        "_id name manager"
-      );
+    if (!managerId) {
+      return res.status(401).json({
+        message: "Unauthorized. Please login again.",
+      });
+    }
 
-    const employeeIds =
-      employees.map(
-        (emp) => emp._id
-      );
-
-    const leaves =
-      await Leave.find({
-        employee: {
-          $in:
-            employeeIds,
-        },
-      })
-        .populate(
-          "employee",
-          "name email department"
-        )
-        .sort({
-          createdAt: -1,
-        });
-
-    return res.status(200).json(
-      leaves
+    const employees = await User.find({
+      manager: managerId,
+    }).select(
+      "_id name email department role manager departmentHead"
     );
 
+    const employeeIds = employees.map(
+      (employee) => employee._id
+    );
+
+    const leaves = await Leave.find({
+      employee: { $in: employeeIds },
+      requiredApprovals: "Manager",
+      status: { $ne: "Cancelled" },
+
+      $or: [
+        // Show leaves that are already processed
+        { status: { $ne: "Pending" } },
+
+        // Show Pending leaves only when their end date
+        // is today or in the future
+        {
+          status: "Pending",
+          endDate: { $gte: getTodayStart() },
+        },
+      ],
+    })
+      .populate(
+        "employee",
+        "name email department role"
+      )
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(leaves);
   } catch (error) {
     console.error(
       "GET MANAGER LEAVES ERROR:",
@@ -865,65 +1191,115 @@ const getManagerLeaves = async (
   }
 };
 /* =========================================================
-   DEPARTMENT HEAD - GET LEAVES
+   DEPARTMENT HEAD - GET LEAVE REQUESTS
 ========================================================= */
 
-const getDepartmentHeadLeaves = async (req, res) => {
+const getDepartmentHeadLeaves = async (
+  req,
+  res
+) => {
   try {
-    const departmentHead = req.user;
-
-    const leaves = await Leave.find({
-      managerStatus: "Approved",
-    })
-      .populate(
-        "employee",
-        "name email department departmentHead"
-      )
-      .sort({
-        createdAt: -1,
-      });
-
     const departmentHeadId =
-      (
-        departmentHead._id ||
-        departmentHead.id
-      ).toString();
+      getLoggedInUserId(req);
 
-    const assignedLeaves = leaves.filter((leave) => {
-      if (!leave.employee?.departmentHead) {
-        return false;
-      }
+    if (!departmentHeadId) {
+      return res.status(401).json({
+        message:
+          "Unauthorized. Please login again.",
+      });
+    }
 
-      return (
-        leave.employee.departmentHead.toString() ===
-        departmentHeadId
+ const leaves = (
+  await Leave.find({
+    requiredApprovals:
+      "DepartmentHead",
+
+    status: {
+      $ne: "Cancelled",
+    },
+
+    $or: [
+      {
+        requiredApprovals: "Manager",
+        managerStatus: "Approved",
+      },
+
+      {
+        requiredApprovals: {
+          $ne: "Manager",
+        },
+      },
+    ],
+  })
+        .populate(
+          "employee",
+          "name email department role departmentHead hr"
+        )
+        .sort({
+          createdAt: -1,
+        })
+    ).filter(shouldDisplayLeave);
+
+    const assignedLeaves =
+      leaves.filter(
+        (leave) => {
+          if (
+            !leave.employee ||
+            !leave.employee.departmentHead
+          ) {
+            return false;
+          }
+
+          return (
+            leave.employee.departmentHead.toString() ===
+            departmentHeadId.toString()
+          );
+        }
       );
-    });
 
-    console.log("======================================");
-    console.log("DEPARTMENT HEAD DEBUG");
     console.log(
-      "Department Head:",
-      departmentHead.name
+      "======================================"
     );
+
+    console.log(
+      "DEPARTMENT HEAD DEBUG"
+    );
+
     console.log(
       "Department Head ID:",
       departmentHeadId
     );
+
     console.log(
-      "Manager Approved Leaves:",
-      leaves.length
-    );
-    console.log(
-      "Leaves Assigned To This Department Head:",
+      "Assigned Leaves:",
       assignedLeaves.length
     );
-    console.log("======================================");
+
+    console.log(
+      "Pending DH Leaves:",
+      assignedLeaves.filter(
+        (leave) =>
+          leave.departmentHeadStatus ===
+          "Pending"
+      ).length
+    );
+
+    console.log(
+      "Processed DH Leaves:",
+      assignedLeaves.filter(
+        (leave) =>
+          leave.departmentHeadStatus !==
+          "Pending"
+      ).length
+    );
+
+    console.log(
+      "======================================"
+    );
 
     return res.status(200).json(
       assignedLeaves
     );
-
   } catch (error) {
     console.error(
       "GET DEPARTMENT HEAD LEAVES ERROR:",
@@ -933,44 +1309,6 @@ const getDepartmentHeadLeaves = async (req, res) => {
     return res.status(500).json({
       message:
         "Server error while loading department leave requests.",
-    });
-  }
-};
-/* =========================================================
-   HR - GET LEAVES
-========================================================= */
-
-const getHRLeaves = async (
-  req,
-  res
-) => {
-  try {
-    const leaves =
-      await Leave.find({
-        departmentHeadStatus:
-          "Approved",
-      })
-        .populate(
-          "employee",
-          "name email department"
-        )
-        .sort({
-          createdAt: -1,
-        });
-
-    return res.status(200).json(
-      leaves
-    );
-
-  } catch (error) {
-    console.error(
-      "GET HR LEAVES ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      message:
-        "Server Error",
     });
   }
 };
@@ -988,14 +1326,23 @@ const managerApproval = async (
       req.body;
 
     if (
-      ![
-        "Approved",
-        "Rejected",
-      ].includes(status)
+      !["Approved", "Rejected"].includes(
+        status
+      )
     ) {
       return res.status(400).json({
         message:
           "Status must be Approved or Rejected.",
+      });
+    }
+
+    const managerId =
+      getLoggedInUserId(req);
+
+    if (!managerId) {
+      return res.status(401).json({
+        message:
+          "Unauthorized. Please login again.",
       });
     }
 
@@ -1008,7 +1355,18 @@ const managerApproval = async (
       return res.status(404).json({
         message:
           "Leave request not found.",
-        });
+      });
+    }
+
+    if (
+      !leave.requiredApprovals.includes(
+        "Manager"
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Manager approval is not required for this leave.",
+      });
     }
 
     const employee =
@@ -1020,11 +1378,8 @@ const managerApproval = async (
       return res.status(404).json({
         message:
           "Employee not found.",
-        });
+      });
     }
-
-    const managerId =
-      getLoggedInUserId(req);
 
     if (
       !employee.manager ||
@@ -1034,6 +1389,13 @@ const managerApproval = async (
       return res.status(403).json({
         message:
           "You are not authorized to review this employee's leave.",
+      });
+    }
+
+    if (leave.status === "Cancelled") {
+      return res.status(400).json({
+        message:
+          "This leave request was cancelled by the employee and cannot be approved or rejected.",
       });
     }
 
@@ -1047,7 +1409,9 @@ const managerApproval = async (
       });
     }
 
-    /* REJECT */
+    /* =====================================================
+       MANAGER REJECTS
+    ===================================================== */
 
     if (
       status === "Rejected"
@@ -1058,7 +1422,9 @@ const managerApproval = async (
       leave.status =
         "Rejected";
 
-      await restoreDeductedLeaveBalance(leave);
+      await restoreDeductedLeaveBalance(
+        leave
+      );
 
       leave.balanceDeducted =
         false;
@@ -1078,7 +1444,9 @@ const managerApproval = async (
               </p>
 
               <p>
-                Your leave request has been rejected by the Manager.
+                Your leave request has been
+                <strong>REJECTED</strong>
+                by the Manager.
               </p>
 
               <p>
@@ -1095,6 +1463,11 @@ const managerApproval = async (
                 <strong>End Date:</strong>
                 ${leave.endDate.toDateString()}
               </p>
+
+              <p>
+                <strong>Total Days:</strong>
+                ${leave.totalDays}
+              </p>
             `
           );
         }
@@ -1108,37 +1481,105 @@ const managerApproval = async (
       return res.status(200).json({
         message:
           "Leave rejected by Manager.",
-
         leave,
       });
     }
 
-    /* APPROVE */
+    /* =====================================================
+       MANAGER APPROVES
+    ===================================================== */
 
     leave.managerStatus =
       "Approved";
 
-    leave.departmentHeadStatus =
-      "Pending";
+    leave.approvedBy.manager =
+      managerId;
 
-    leave.hrStatus =
-      "Pending";
+    leave.approvedAt.manager =
+      new Date();
 
-    leave.adminStatus =
-      "Pending";
+    /* =====================================================
+       DETERMINE NEXT LEVEL
+    ===================================================== */
 
-    leave.status =
-      "Pending";
+    if (
+      leave.requiredApprovals.includes(
+        "DepartmentHead"
+      )
+    ) {
+      leave.departmentHeadStatus =
+        "Pending";
+
+      leave.status =
+        "Pending";
+    } else if (
+      leave.requiredApprovals.includes(
+        "HR"
+      )
+    ) {
+      leave.hrStatus =
+        "Pending";
+
+      leave.status =
+        "Pending";
+    } else {
+      leave.status =
+        "Approved";
+
+      // Manager is final approver.
+      await deductLeaveBalance(
+        leave
+      );
+    }
 
     await leave.save();
 
+    /* =====================================================
+       NOTIFY DEPARTMENT HEAD
+    ===================================================== */
+
+    if (
+      leave.status === "Pending" &&
+      leave.requiredApprovals.includes(
+        "DepartmentHead"
+      )
+    ) {
+      const departmentHead =
+        employee.departmentHead
+          ? await User.findById(
+              employee.departmentHead
+            )
+          : null;
+
+      if (departmentHead) {
+        await notifyApprover({
+          approverId:
+            departmentHead._id,
+
+          employee,
+
+          leave,
+
+          title:
+            "Leave Request Requires Department Head Approval",
+
+          message:
+            `${employee.name}'s leave request has been approved by the Manager and requires your approval.`,
+
+          emailSubject:
+            "Leave Request Requires Department Head Approval",
+        });
+      }
+    }
+
     return res.status(200).json({
       message:
-        "Leave approved by Manager and forwarded to Department Head.",
+        leave.status === "Approved"
+          ? "Leave approved successfully by Manager."
+          : "Leave approved by Manager and forwarded to the next approval level.",
 
       leave,
     });
-
   } catch (error) {
     console.error(
       "MANAGER APPROVAL ERROR:",
@@ -1156,189 +1597,15 @@ const managerApproval = async (
    DEPARTMENT HEAD APPROVAL
 ========================================================= */
 
-const departmentHeadApproval =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      const { status } =
-        req.body;
-
-      if (
-        ![
-          "Approved",
-          "Rejected",
-        ].includes(status)
-      ) {
-        return res.status(400).json({
-          message:
-            "Status must be Approved or Rejected.",
-        });
-      }
-
-      const leave =
-        await Leave.findById(
-          req.params.id
-        );
-
-      if (!leave) {
-        return res.status(404).json({
-          message:
-            "Leave request not found.",
-        });
-      }
-
-      const employee =
-        await User.findById(
-          leave.employee
-        );
-
-      if (!employee) {
-        return res.status(404).json({
-          message:
-            "Employee not found.",
-        });
-      }
-
-      const departmentHeadId =
-        getLoggedInUserId(req);
-
-      if (
-        !employee.departmentHead ||
-        employee.departmentHead.toString() !==
-          departmentHeadId.toString()
-      ) {
-        return res.status(403).json({
-          message:
-            "You are not authorized to review this employee's leave.",
-        });
-      }
-
-      if (
-        leave.managerStatus !==
-        "Approved"
-      ) {
-        return res.status(400).json({
-          message:
-            "Manager approval is required before Department Head approval.",
-        });
-      }
-
-      if (
-        leave.departmentHeadStatus !==
-        "Pending"
-      ) {
-        return res.status(400).json({
-          message:
-            "Department Head has already reviewed this leave.",
-        });
-      }
-
-      /* REJECT */
-
-      if (
-        status === "Rejected"
-      ) {
-        leave.departmentHeadStatus =
-          "Rejected";
-
-        leave.status =
-          "Rejected";
-
-        await restoreDeductedLeaveBalance(leave);
-
-        leave.balanceDeducted =
-          false;
-
-        await leave.save();
-
-        try {
-          if (employee.email) {
-            await sendEmail(
-              employee.email,
-              "Leave Request Rejected by Department Head",
-              `
-                <h2>Leave Request Rejected</h2>
-
-                <p>
-                  Hello <strong>${employee.name}</strong>,
-                </p>
-
-                <p>
-                  Your leave request has been rejected by the Department Head.
-                </p>
-              `
-            );
-          }
-        } catch (emailError) {
-          console.error(
-            "DEPARTMENT HEAD REJECTION EMAIL ERROR:",
-            emailError
-          );
-        }
-
-        return res.status(200).json({
-          message:
-            "Leave rejected by Department Head.",
-
-          leave,
-        });
-      }
-
-      /* APPROVE */
-
-      leave.departmentHeadStatus =
-        "Approved";
-
-      leave.hrStatus =
-        "Pending";
-
-      leave.adminStatus =
-        "Pending";
-
-      leave.status =
-        "Pending";
-
-      await leave.save();
-
-      return res.status(200).json({
-        message:
-          "Leave approved by Department Head and forwarded to HR.",
-
-        leave,
-      });
-
-    } catch (error) {
-      console.error(
-        "DEPARTMENT HEAD APPROVAL ERROR:",
-        error
-      );
-
-      return res.status(500).json({
-        message:
-          "Server error while processing Department Head approval.",
-      });
-    }
-  };
-
-/* =========================================================
-   HR APPROVAL
-========================================================= */
-
-const hrApproval = async (
-  req,
-  res
-) => {
+const departmentHeadApproval = async (req,res) => {
   try {
     const { status } =
       req.body;
 
     if (
-      ![
-        "Approved",
-        "Rejected",
-      ].includes(status)
+      !["Approved", "Rejected"].includes(
+        status
+      )
     ) {
       return res.status(400).json({
         message:
@@ -1355,7 +1622,25 @@ const hrApproval = async (
       return res.status(404).json({
         message:
           "Leave request not found.",
-        });
+      });
+    }
+
+    if (leave.status === "Cancelled") {
+  return res.status(400).json({
+    message:
+      "This leave request was cancelled by the employee and cannot be approved or rejected.",
+  });
+}
+
+    if (
+      !leave.requiredApprovals.includes(
+        "DepartmentHead"
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Department Head approval is not required for this leave.",
+      });
     }
 
     const employee =
@@ -1367,12 +1652,454 @@ const hrApproval = async (
       return res.status(404).json({
         message:
           "Employee not found.",
-        });
+      });
+    }
+
+    const departmentHeadId =
+      getLoggedInUserId(req);
+
+    if (
+      !employee.departmentHead ||
+      employee.departmentHead.toString() !==
+        departmentHeadId.toString()
+    ) {
+      return res.status(403).json({
+        message:
+          "You are not authorized to review this employee's leave.",
+      });
     }
 
     if (
+      leave.requiredApprovals.includes(
+        "Manager"
+      ) &&
       leave.managerStatus !==
-      "Approved"
+        "Approved"
+    ) {
+      return res.status(400).json({
+        message:
+          "Manager approval is required before Department Head approval.",
+      });
+    }
+
+    if (
+      leave.departmentHeadStatus !==
+      "Pending"
+    ) {
+      return res.status(400).json({
+        message:
+          "Department Head has already reviewed this leave.",
+      });
+    }
+
+    /* =====================================================
+       DEPARTMENT HEAD REJECTS
+    ===================================================== */
+
+    if (
+      status === "Rejected"
+    ) {
+      leave.departmentHeadStatus =
+        "Rejected";
+
+      leave.status =
+        "Rejected";
+
+      await restoreDeductedLeaveBalance(
+        leave
+      );
+
+      leave.balanceDeducted =
+        false;
+
+      await leave.save();
+
+      try {
+        if (employee.email) {
+          await sendEmail(
+            employee.email,
+            "Leave Request Rejected by Department Head",
+            `
+              <h2>Leave Request Rejected</h2>
+
+              <p>
+                Hello <strong>${employee.name}</strong>,
+              </p>
+
+              <p>
+                Your leave request has been
+                <strong>REJECTED</strong> by the Department Head.
+              </p>
+
+              <p>
+                <strong>Leave Type:</strong>
+                ${leave.leaveType}
+              </p>
+
+              <p>
+                <strong>Start Date:</strong>
+                ${leave.startDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>End Date:</strong>
+                ${leave.endDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>Total Days:</strong>
+                ${leave.totalDays}
+              </p>
+            `
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "DEPARTMENT HEAD REJECTION EMAIL ERROR:",
+          emailError
+        );
+      }
+
+      return res.status(200).json({
+        message:
+          "Leave rejected by Department Head.",
+        leave,
+      });
+    }
+
+    /* =====================================================
+       DEPARTMENT HEAD APPROVES
+    ===================================================== */
+
+    leave.departmentHeadStatus =
+      "Approved";
+
+    leave.approvedBy.departmentHead =
+      departmentHeadId;
+
+    leave.approvedAt.departmentHead =
+      new Date();
+
+    if (
+      leave.requiredApprovals.includes(
+        "HR"
+      )
+    ) {
+      leave.hrStatus =
+        "Pending";
+
+      leave.status =
+        "Pending";
+    } else {
+      leave.status =
+        "Approved";
+
+      // Department Head is final approver.
+      await deductLeaveBalance(
+        leave
+      );
+    }
+
+    await leave.save();
+
+    /* =====================================================
+       NOTIFY HR
+    ===================================================== */
+
+    if (
+      leave.requiredApprovals.includes(
+        "HR"
+      ) &&
+      leave.status === "Pending"
+    ) {
+      const hrUsers =
+        await User.find({
+          role: "hr",
+        });
+
+      for (const hrUser of hrUsers) {
+        await Notification.create({
+          recipient: hrUser._id,
+          sender: employee._id,
+          title:
+            "Leave Request Requires HR Approval",
+          message:
+            `${employee.name}'s leave request has been approved by the Department Head and requires your approval.`,
+        });
+
+        try {
+          if (hrUser.email) {
+            await sendEmail(
+              hrUser.email,
+              "Leave Request Requires HR Approval",
+              `
+                <h2>Leave Request Requires HR Approval</h2>
+
+                <p>
+                  <strong>${employee.name}</strong>'s
+                  leave request has been approved by the
+                  Department Head and requires your approval.
+                </p>
+
+                <p>
+                  <strong>Leave Type:</strong>
+                  ${leave.leaveType}
+                </p>
+
+                <p>
+                  <strong>Start Date:</strong>
+                  ${leave.startDate.toDateString()}
+                </p>
+
+                <p>
+                  <strong>End Date:</strong>
+                  ${leave.endDate.toDateString()}
+                </p>
+
+                <p>
+                  <strong>Total Days:</strong>
+                  ${leave.totalDays}
+                </p>
+              `
+            );
+          }
+        } catch (emailError) {
+          console.error(
+            "HR NOTIFICATION EMAIL ERROR:",
+            emailError
+          );
+        }
+      }
+    }
+
+    /* =====================================================
+       FINAL APPROVAL EMAIL
+    ===================================================== */
+
+    if (
+      leave.status === "Approved"
+    ) {
+      try {
+        if (employee.email) {
+          await sendEmail(
+            employee.email,
+            "Leave Request Approved",
+            `
+              <h2>Leave Request Approved</h2>
+
+              <p>
+                Hello <strong>${employee.name}</strong>,
+              </p>
+
+              <p>
+                Your leave request has been
+                <strong>APPROVED</strong>.
+              </p>
+
+              <p>
+                <strong>Leave Type:</strong>
+                ${leave.leaveType}
+              </p>
+
+              <p>
+                <strong>Start Date:</strong>
+                ${leave.startDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>End Date:</strong>
+                ${leave.endDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>Total Days:</strong>
+                ${leave.totalDays}
+              </p>
+            `
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "DEPARTMENT HEAD APPROVAL EMAIL ERROR:",
+          emailError
+        );
+      }
+    }
+
+    return res.status(200).json({
+      message:
+        leave.status === "Approved"
+          ? "Leave approved successfully by Department Head."
+          : "Leave approved by Department Head and forwarded to HR.",
+
+      leave,
+    });
+  } catch (error) {
+    console.error(
+      "DEPARTMENT HEAD APPROVAL ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error while processing Department Head approval.",
+    });
+  }
+};
+/* =========================================================
+   HR - GET LEAVES
+========================================================= */
+
+const getHRLeaves = async (req, res) => {
+  try {
+    const hrId =
+      getLoggedInUserId(req);
+
+    if (!hrId) {
+      return res.status(401).json({
+        message:
+          "Unauthorized. Please login again.",
+      });
+    }
+
+    const leaves =
+      await Leave.find({
+        requiredApprovals: "HR",
+
+        employee: {
+          $ne: hrId,
+        },
+
+            status: {
+      $ne: "Cancelled",
+    },
+
+
+        $or: [
+          {
+            departmentHeadStatus:
+              "Approved",
+          },
+
+          {
+            requiredApprovals: {
+              $ne: "DepartmentHead",
+            },
+          },
+        ],
+      })
+        .populate(
+          "employee",
+          "name email department role departmentHead hr"
+        )
+        .sort({
+          createdAt: -1,
+        });
+
+    return res.status(200).json(
+      leaves.filter(shouldDisplayLeave)
+    );
+  } catch (error) {
+    console.error(
+      "GET HR LEAVES ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error while loading HR leave requests.",
+    });
+  }
+};
+
+/* =========================================================
+   HR APPROVAL
+========================================================= */
+
+const hrApproval = async (
+  req,
+  res
+) => {
+  try {
+    const { status } =
+      req.body;
+
+    if (
+      !["Approved", "Rejected"].includes(
+        status
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Status must be Approved or Rejected.",
+      });
+    }
+
+    const leave =
+      await Leave.findById(
+        req.params.id
+      );
+
+    if (!leave) {
+      return res.status(404).json({
+        message:
+          "Leave request not found.",
+      });
+    }
+
+    if (leave.status === "Cancelled") {
+  return res.status(400).json({
+    message:
+      "This leave request was cancelled by the employee and cannot be approved or rejected.",
+  });
+}
+
+    if (
+      !leave.requiredApprovals.includes(
+        "HR"
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "HR approval is not required for this leave.",
+      });
+    }
+
+    const employee =
+      await User.findById(
+        leave.employee
+      );
+
+    if (!employee) {
+      return res.status(404).json({
+        message:
+          "Employee not found.",
+      });
+    }
+
+    const hrId =
+      getLoggedInUserId(req);
+
+    /* =====================================================
+       HR CANNOT APPROVE OWN LEAVE
+    ===================================================== */
+
+    if (
+      employee._id.toString() ===
+      hrId.toString()
+    ) {
+      return res.status(403).json({
+        message:
+          "You cannot approve your own leave. Admin approval is required.",
+      });
+    }
+
+    if (
+      leave.requiredApprovals.includes(
+        "Manager"
+      ) &&
+      leave.managerStatus !==
+        "Approved"
     ) {
       return res.status(400).json({
         message:
@@ -1381,8 +2108,11 @@ const hrApproval = async (
     }
 
     if (
+      leave.requiredApprovals.includes(
+        "DepartmentHead"
+      ) &&
       leave.departmentHeadStatus !==
-      "Approved"
+        "Approved"
     ) {
       return res.status(400).json({
         message:
@@ -1400,7 +2130,9 @@ const hrApproval = async (
       });
     }
 
-    /* REJECT */
+    /* =====================================================
+       HR REJECTS
+    ===================================================== */
 
     if (
       status === "Rejected"
@@ -1411,7 +2143,9 @@ const hrApproval = async (
       leave.status =
         "Rejected";
 
-      await restoreDeductedLeaveBalance(leave);
+      await restoreDeductedLeaveBalance(
+        leave
+      );
 
       leave.balanceDeducted =
         false;
@@ -1431,7 +2165,28 @@ const hrApproval = async (
               </p>
 
               <p>
-                Your leave request has been rejected by HR.
+                Your leave request has been
+                <strong>REJECTED</strong> by HR.
+              </p>
+
+              <p>
+                <strong>Leave Type:</strong>
+                ${leave.leaveType}
+              </p>
+
+              <p>
+                <strong>Start Date:</strong>
+                ${leave.startDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>End Date:</strong>
+                ${leave.endDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>Total Days:</strong>
+                ${leave.totalDays}
               </p>
             `
           );
@@ -1446,31 +2201,169 @@ const hrApproval = async (
       return res.status(200).json({
         message:
           "Leave rejected by HR.",
-
         leave,
       });
     }
 
-    /* APPROVE */
+    /* =====================================================
+       HR APPROVES
+    ===================================================== */
 
     leave.hrStatus =
       "Approved";
 
-    leave.adminStatus =
-      "Pending";
+    leave.approvedBy.hr =
+      hrId;
 
-    leave.status =
-      "Pending";
+    leave.approvedAt.hr =
+      new Date();
+
+    if (
+      leave.requiredApprovals.includes(
+        "Admin"
+      )
+    ) {
+      leave.adminStatus =
+        "Pending";
+
+      leave.status =
+        "Pending";
+    } else {
+      leave.status =
+        "Approved";
+
+      // HR is the final approver.
+      await deductLeaveBalance(
+        leave
+      );
+    }
 
     await leave.save();
 
+    /* =====================================================
+       ADMIN FINAL APPROVAL REQUIRED
+    ===================================================== */
+
+    if (
+      leave.requiredApprovals.includes(
+        "Admin"
+      )
+    ) {
+      const admins =
+        await User.find({
+          role: "admin",
+        });
+
+      for (const admin of admins) {
+        await Notification.create({
+          recipient: admin._id,
+          sender: employee._id,
+          title:
+            "Leave Request Requires Admin Approval",
+          message:
+            `${employee.name}'s leave request requires your final approval.`,
+        });
+
+        try {
+          if (admin.email) {
+            await sendEmail(
+              admin.email,
+              "Leave Request Requires Admin Approval",
+              `
+                <h2>
+                  Leave Request Requires Admin Approval
+                </h2>
+
+                <p>
+                  <strong>${employee.name}</strong>'s
+                  leave request requires your final approval.
+                </p>
+
+                <p>
+                  <strong>Leave Type:</strong>
+                  ${leave.leaveType}
+                </p>
+
+                <p>
+                  <strong>Start Date:</strong>
+                  ${leave.startDate.toDateString()}
+                </p>
+
+                <p>
+                  <strong>End Date:</strong>
+                  ${leave.endDate.toDateString()}
+                </p>
+
+                <p>
+                  <strong>Total Days:</strong>
+                  ${leave.totalDays}
+                </p>
+              `
+            );
+          }
+        } catch (emailError) {
+          console.error(
+            "ADMIN NOTIFICATION EMAIL ERROR:",
+            emailError
+          );
+        }
+      }
+    } else {
+      try {
+        if (employee.email) {
+          await sendEmail(
+            employee.email,
+            "Leave Request Approved by HR",
+            `
+              <h2>Leave Request Approved</h2>
+
+              <p>
+                Hello <strong>${employee.name}</strong>,
+              </p>
+
+              <p>
+                Your leave request has been
+                <strong>APPROVED</strong> by HR.
+              </p>
+
+              <p>
+                <strong>Leave Type:</strong>
+                ${leave.leaveType}
+              </p>
+
+              <p>
+                <strong>Start Date:</strong>
+                ${leave.startDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>End Date:</strong>
+                ${leave.endDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>Total Days:</strong>
+                ${leave.totalDays}
+              </p>
+            `
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "HR APPROVAL EMAIL ERROR:",
+          emailError
+        );
+      }
+    }
+
     return res.status(200).json({
       message:
-        "Leave approved by HR and forwarded to Admin for final approval.",
+        leave.status === "Approved"
+          ? "Leave approved successfully by HR."
+          : "Leave approved by HR and forwarded to Admin for final approval.",
 
       leave,
     });
-
   } catch (error) {
     console.error(
       "HR APPROVAL ERROR:",
@@ -1485,443 +2378,8 @@ const hrApproval = async (
 };
 
 /* =========================================================
-   ADMIN - FINAL LEAVE STATUS
-========================================================= */
-
-const updateLeaveStatus =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      const { status } =
-        req.body;
-
-      if (
-        ![
-          "Approved",
-          "Rejected",
-        ].includes(status)
-      ) {
-        return res.status(400).json({
-          message:
-            "Status must be Approved or Rejected.",
-        });
-      }
-
-      const leave =
-        await Leave.findById(
-          req.params.id
-        );
-
-      if (!leave) {
-        return res.status(404).json({
-          message:
-            "Leave request not found.",
-        });
-      }
-
-      if (
-        leave.status !==
-        "Pending"
-      ) {
-        return res.status(400).json({
-          message:
-            `This leave request has already been ${leave.status.toLowerCase()}.`,
-        });
-      }
-
-      if (
-        leave.adminStatus !==
-        "Pending"
-      ) {
-        return res.status(400).json({
-          message:
-            "Admin has already reviewed this leave.",
-        });
-      }
-
-      const user =
-        await User.findById(
-          leave.employee
-        );
-
-      if (!user) {
-        return res.status(404).json({
-          message:
-            "Employee not found.",
-        });
-      }
-
-      /* ===================================================
-         CHECK APPROVAL FLOW
-      =================================================== */
-
-      if (
-        status === "Approved"
-      ) {
-        if (
-          leave.managerStatus !==
-          "Approved"
-        ) {
-          return res.status(400).json({
-            message:
-              "Manager approval is required before Admin final approval.",
-          });
-        }
-
-        if (
-          leave.departmentHeadStatus !==
-          "Approved"
-        ) {
-          return res.status(400).json({
-            message:
-              "Department Head approval is required before Admin final approval.",
-          });
-        }
-
-        if (
-          leave.hrStatus !==
-          "Approved"
-        ) {
-          return res.status(400).json({
-            message:
-              "HR approval is required before Admin final approval.",
-          });
-        }
-      }
-
-      /* ===================================================
-         ADMIN REJECTION
-      =================================================== */
-
-      if (
-        status === "Rejected"
-      ) {
-        leave.adminStatus =
-          "Rejected";
-
-        leave.status =
-          "Rejected";
-
-        await restoreDeductedLeaveBalance(leave);
-
-        leave.balanceDeducted =
-          false;
-
-        await leave.save();
-
-        try {
-          if (user.email) {
-            await sendEmail(
-              user.email,
-              "Leave Request Rejected",
-              `
-                <h2>Leave Request Rejected</h2>
-
-                <p>
-                  Hello <strong>${user.name}</strong>,
-                </p>
-
-                <p>
-                  Your leave request has been rejected.
-                </p>
-              `
-            );
-          }
-        } catch (emailError) {
-          console.error(
-            "REJECTION EMAIL ERROR:",
-            emailError
-          );
-        }
-
-        return res.status(200).json({
-          message:
-            "Leave request rejected successfully.",
-
-          leave,
-        });
-      }
-
-      /* ===================================================
-         LEAVE WITHOUT PAY
-      =================================================== */
-
-      if (
-        leave.leaveType ===
-        "Leave Without Pay"
-      ) {
-        leave.paidDays =
-          0;
-
-        leave.unpaidDays =
-          leave.totalDays;
-
-        leave.adminStatus =
-          "Approved";
-
-        leave.status =
-          "Approved";
-
-        leave.balanceDeducted =
-          false;
-
-        await leave.save();
-
-        return res.status(200).json({
-          message:
-            "Leave request approved successfully.",
-
-          leave,
-        });
-      }
-
-      /* ===================================================
-         GET YEARLY BALANCE
-      =================================================== */
-
-      const balanceKey =
-        LEAVE_BALANCE_KEYS[
-          leave.leaveType
-        ];
-
-      if (!balanceKey) {
-        return res.status(400).json({
-          message:
-            "Unable to determine employee leave balance type.",
-        });
-      }
-
-      const leaveYear =
-        getLeaveYear(
-          leave.startDate
-        );
-
-      if (!leaveYear) {
-        return res.status(400).json({
-          message:
-            "Unable to determine leave year.",
-        });
-      }
-
-      const requiredDays =
-        Number(
-          leave.totalDays || 0
-        );
-
-        console.log("========== BALANCE DEDUCTION DEBUG ==========");
-console.log("Employee ID:", leave.employee);
-console.log("Leave Type:", leave.leaveType);
-console.log("Balance Key:", balanceKey);
-console.log("Leave Year:", leaveYear);
-console.log("Required Days:", requiredDays);
-console.log("=============================================");
-
-      /* ===================================================
-         ATOMIC YEARLY BALANCE DEDUCTION
-      =================================================== */
-console.log("========== BEFORE YEARLY BALANCE UPDATE ==========");
-
-console.log("Employee ID:", leave.employee);
-console.log("Employee ID String:", leave.employee?.toString());
-console.log("Leave Type:", leave.leaveType);
-console.log("Balance Key:", balanceKey);
-console.log("Leave Year:", leaveYear);
-console.log("Required Days:", requiredDays);
-
-const balanceBefore =
-  await YearlyLeaveBalance.findOne({
-    employee: leave.employee,
-    year: leaveYear,
-  });
-
-console.log(
-  "YEARLY BALANCE DOCUMENT BEFORE UPDATE:",
-  balanceBefore
-);
-
-if (balanceBefore) {
-  console.log(
-    "BALANCE BEFORE:",
-    balanceBefore[balanceKey]?.remaining
-  );
-}
-
-console.log("=================================================");
-
-
-/* ===================================================
-   ATOMIC YEARLY BALANCE DEDUCTION
-=================================================== */
-
-const updatedYearlyBalance =
-  leave.balanceDeducted
-    ? await YearlyLeaveBalance.findOne({
-        employee: leave.employee,
-        year: leaveYear,
-      })
-    : await YearlyLeaveBalance.findOneAndUpdate(
-        {
-          employee:
-            leave.employee,
-
-          year:
-            leaveYear,
-
-          [`${balanceKey}.remaining`]: {
-            $gte:
-              requiredDays,
-          },
-        },
-
-        {
-          $inc: {
-            [`${balanceKey}.remaining`]:
-              -requiredDays,
-          },
-        },
-
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
-
-
-console.log("========== AFTER YEARLY BALANCE UPDATE ==========");
-
-console.log(
-  "UPDATED YEARLY BALANCE:",
-  updatedYearlyBalance
-);
-
-if (updatedYearlyBalance) {
-  console.log(
-    "BALANCE AFTER:",
-    updatedYearlyBalance[
-      balanceKey
-    ]?.remaining
-  );
-} else {
-  console.log(
-    "❌ UPDATED YEARLY BALANCE IS NULL"
-  );
-}
-
-console.log("=================================================");
-
-        
-
-      if (!updatedYearlyBalance) {
-        return res.status(409).json({
-          message:
-            `Insufficient ${leave.leaveType} balance or the yearly balance has changed. Please refresh and try again.`,
-        });
-      }
-
-      /* ===================================================
-         APPROVE LEAVE
-      =================================================== */
-
-      leave.paidDays =
-        requiredDays;
-
-      leave.unpaidDays =
-        0;
-
-      leave.adminStatus =
-        "Approved";
-
-      leave.status =
-        "Approved";
-
-      leave.balanceDeducted =
-        true;
-
-      await leave.save();
-
-      /* ===================================================
-         APPROVAL EMAIL
-      =================================================== */
-
-      try {
-        if (user.email) {
-          await sendEmail(
-            user.email,
-            "Leave Request Approved",
-            `
-              <h2>Leave Approved</h2>
-
-              <p>
-                Hello <strong>${user.name}</strong>,
-              </p>
-
-              <p>
-                Your leave request has been
-                <strong>APPROVED</strong>.
-              </p>
-
-              <p>
-                <strong>Leave Type:</strong>
-                ${leave.leaveType}
-              </p>
-
-              <p>
-                <strong>Total Days:</strong>
-                ${leave.totalDays}
-              </p>
-
-              <p>
-                <strong>Remaining ${leave.leaveType} Balance:</strong>
-                ${updatedYearlyBalance[balanceKey].remaining}
-              </p>
-            `
-          );
-        }
-      } catch (emailError) {
-        console.error(
-          "APPROVAL EMAIL ERROR:",
-          emailError
-        );
-      }
-
-      const updatedLeave =
-        await Leave.findById(
-          leave._id
-        ).populate(
-          "employee",
-          "name email role department"
-        );
-
-      return res.status(200).json({
-        message:
-          "Leave request approved successfully.",
-
-        leave:
-          updatedLeave,
-
-        yearlyBalance:
-          updatedYearlyBalance[
-            balanceKey
-          ],
-      });
-
-    } catch (error) {
-      console.error(
-        "UPDATE LEAVE STATUS ERROR:",
-        error
-      );
-
-      return res.status(500).json({
-        message:
-          "Server error while updating leave request status.",
-      });
-    }
-  };
-
-/* =========================================================
-   ADMIN FINAL APPROVAL
+   ADMIN APPROVAL
+   Used ONLY when Admin is included in requiredApprovals.
 ========================================================= */
 
 const adminApproval = async (
@@ -1929,6 +2387,20 @@ const adminApproval = async (
   res
 ) => {
   try {
+    const { status } =
+      req.body;
+
+    if (
+      !["Approved", "Rejected"].includes(
+        status
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Status must be Approved or Rejected.",
+      });
+    }
+
     const leave =
       await Leave.findById(
         req.params.id
@@ -1942,6 +2414,17 @@ const adminApproval = async (
     }
 
     if (
+      !leave.requiredApprovals.includes(
+        "Admin"
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Admin approval is not required for this leave.",
+      });
+    }
+
+    if (
       leave.adminStatus !==
       "Pending"
     ) {
@@ -1951,41 +2434,170 @@ const adminApproval = async (
       });
     }
 
-    if (
-      leave.managerStatus !==
-      "Approved"
-    ) {
-      return res.status(400).json({
+    const adminId =
+      getLoggedInUserId(req);
+
+    const employee =
+      await User.findById(
+        leave.employee
+      );
+
+    if (!employee) {
+      return res.status(404).json({
         message:
-          "Manager approval is required before Admin can review this leave.",
+          "Employee not found.",
       });
     }
 
+    /* =====================================================
+       ADMIN REJECTS
+    ===================================================== */
+
     if (
-      leave.departmentHeadStatus !==
-      "Approved"
+      status === "Rejected"
     ) {
-      return res.status(400).json({
+      leave.adminStatus =
+        "Rejected";
+
+      leave.status =
+        "Rejected";
+
+      await restoreDeductedLeaveBalance(
+        leave
+      );
+
+      leave.balanceDeducted =
+        false;
+
+      await leave.save();
+
+      try {
+        if (employee.email) {
+          await sendEmail(
+            employee.email,
+            "Leave Request Rejected by Admin",
+            `
+              <h2>Leave Request Rejected</h2>
+
+              <p>
+                Hello <strong>${employee.name}</strong>,
+              </p>
+
+              <p>
+                Your leave request has been
+                <strong>REJECTED</strong> by Admin.
+              </p>
+
+              <p>
+                <strong>Leave Type:</strong>
+                ${leave.leaveType}
+              </p>
+
+              <p>
+                <strong>Start Date:</strong>
+                ${leave.startDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>End Date:</strong>
+                ${leave.endDate.toDateString()}
+              </p>
+
+              <p>
+                <strong>Total Days:</strong>
+                ${leave.totalDays}
+              </p>
+            `
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "ADMIN REJECTION EMAIL ERROR:",
+          emailError
+        );
+      }
+
+      return res.status(200).json({
         message:
-          "Department Head approval is required before Admin can review this leave.",
+          "Leave rejected by Admin.",
+        leave,
       });
     }
 
-    if (
-      leave.hrStatus !==
-      "Approved"
-    ) {
-      return res.status(400).json({
-        message:
-          "HR approval is required before Admin can review this leave.",
-      });
-    }
+    /* =====================================================
+       ADMIN APPROVES
+    ===================================================== */
 
-    return updateLeaveStatus(
-      req,
-      res
+    leave.adminStatus =
+      "Approved";
+
+    leave.approvedBy.admin =
+      adminId;
+
+    leave.approvedAt.admin =
+      new Date();
+
+    leave.status =
+      "Approved";
+
+    // Admin is the final approver.
+    await deductLeaveBalance(
+      leave
     );
 
+    await leave.save();
+
+    try {
+      if (employee.email) {
+        await sendEmail(
+          employee.email,
+          "Leave Request Approved by Admin",
+          `
+            <h2>Leave Request Approved</h2>
+
+            <p>
+              Hello <strong>${employee.name}</strong>,
+            </p>
+
+            <p>
+              Your leave request has been
+              <strong>APPROVED</strong> by Admin.
+            </p>
+
+            <p>
+              <strong>Leave Type:</strong>
+              ${leave.leaveType}
+            </p>
+
+            <p>
+              <strong>Start Date:</strong>
+              ${leave.startDate.toDateString()}
+            </p>
+
+            <p>
+              <strong>End Date:</strong>
+              ${leave.endDate.toDateString()}
+            </p>
+
+            <p>
+              <strong>Total Days:</strong>
+              ${leave.totalDays}
+            </p>
+          `
+        );
+      }
+    } catch (emailError) {
+      console.error(
+        "ADMIN APPROVAL EMAIL ERROR:",
+        emailError
+      );
+    }
+
+    return res.status(200).json({
+      message:
+        "Leave approved successfully by Admin.",
+      leave,
+    });
   } catch (error) {
     console.error(
       "ADMIN APPROVAL ERROR:",
@@ -1995,27 +2607,163 @@ const adminApproval = async (
     return res.status(500).json({
       message:
         "Server error while processing Admin approval.",
-      });
+    });
   }
 };
 
 /* =========================================================
-   EXPORT CONTROLLERS
+   OLD ADMIN STATUS ENDPOINT
+   Kept for compatibility.
+========================================================= */
+
+const updateLeaveStatus = async (
+  req,
+  res
+) => {
+  try {
+    const { status } =
+      req.body;
+
+    if (
+      !["Approved", "Rejected"].includes(
+        status
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Status must be Approved or Rejected.",
+      });
+    }
+
+    const leave =
+      await Leave.findById(
+        req.params.id
+      );
+
+    if (!leave) {
+      return res.status(404).json({
+        message:
+          "Leave request not found.",
+      });
+    }
+
+    if (
+      !leave.requiredApprovals.includes(
+        "Admin"
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          "Admin approval is not required for this leave.",
+      });
+    }
+
+    if (
+      leave.adminStatus !==
+      "Pending"
+    ) {
+      return res.status(400).json({
+        message:
+          "Admin has already reviewed this leave.",
+      });
+    }
+
+    const adminId =
+      getLoggedInUserId(req);
+
+    const employee =
+      await User.findById(
+        leave.employee
+      );
+
+    if (!employee) {
+      return res.status(404).json({
+        message:
+          "Employee not found.",
+      });
+    }
+
+    if (
+      status === "Rejected"
+    ) {
+      leave.adminStatus =
+        "Rejected";
+
+      leave.status =
+        "Rejected";
+
+      await restoreDeductedLeaveBalance(
+        leave
+      );
+
+      leave.balanceDeducted =
+        false;
+
+      await leave.save();
+
+      return res.status(200).json({
+        message:
+          "Leave rejected by Admin.",
+        leave,
+      });
+    }
+
+    leave.adminStatus =
+      "Approved";
+
+    leave.approvedBy.admin =
+      adminId;
+
+    leave.approvedAt.admin =
+      new Date();
+
+    leave.status =
+      "Approved";
+
+    // Admin is the final approver.
+    await deductLeaveBalance(
+      leave
+    );
+
+    await leave.save();
+
+    return res.status(200).json({
+      message:
+        "Leave approved successfully by Admin.",
+      leave,
+    });
+  } catch (error) {
+    console.error(
+      "UPDATE LEAVE STATUS ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error while updating leave status.",
+    });
+  }
+};
+
+/* =========================================================
+   EXPORTS
 ========================================================= */
 
 module.exports = {
   applyLeave,
   getMyLeaves,
   getAllLeaves,
-  updateLeaveStatus,
   cancelLeave,
 
   getManagerLeaves,
-  getDepartmentHeadLeaves,
-  getHRLeaves,
-
   managerApproval,
+
+  getDepartmentHeadLeaves,
   departmentHeadApproval,
+
+  getHRLeaves,
   hrApproval,
+
   adminApproval,
+  updateLeaveStatus,
 };

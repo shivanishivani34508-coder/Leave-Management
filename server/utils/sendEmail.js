@@ -23,6 +23,7 @@ const sendEmail = async (to, subject, html) => {
   console.log("To:", to);
   console.log("Subject:", subject);
   console.log("========================================");
+  const sendEmail = require("../utils/sendEmail");
 
   try {
     const info = await transporter.sendMail({

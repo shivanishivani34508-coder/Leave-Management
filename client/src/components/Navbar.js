@@ -1,482 +1,402 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import api from "../services/api";
 import "./Navbar.css";
 
-function Navbar() {
+const Navbar = () => {
   const navigate = useNavigate();
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  /* ===========================================
-     GET USER
-  =========================================== */
-
-  const storedUser = localStorage.getItem("user");
-
-  const user = storedUser ? JSON.parse(storedUser) : null;
-
-  /* ===========================================
-     ROLES
-  =========================================== */
-
-  const isAdmin = user?.role === "admin";
-  const isEmployee = user?.role === "employee";
-  const isManager = user?.role === "manager";
-  const isDepartmentHead = user?.role === "departmentHead";
-  const isHR = user?.role === "hr";
-
-  /* ===========================================
-     ADMIN NOTIFICATIONS
-  =========================================== */
-
-  const fetchUnreadCount = async () => {
-    if (!isAdmin) return;
-
-    try {
-      const token = localStorage.getItem("token");
-
-      const { data } = await api.get(
-        "/notifications/unread-count",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setUnreadCount(data.unread || 0);
-    } catch (error) {
-      console.error(
-        "Unable to load notification count",
-        error
-      );
-    }
-  };
+  const [user, setUser] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    fetchUnreadCount();
+    const loadUser = () => {
+      try {
+        const storedUser = sessionStorage.getItem("user");
 
-    const timer = setInterval(() => {
-      fetchUnreadCount();
-    }, 30000);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (error) {
+        console.error("Error loading user:", error);
+      }
+    };
 
-    return () => clearInterval(timer);
+    loadUser();
   }, []);
 
-  /* ===========================================
-     NO USER
-  =========================================== */
+  const role = user?.role;
 
-  if (!user) {
-    return null;
-  }
+  const getRoleName = () => {
+    switch (role) {
+      case "admin":
+        return "Admin";
 
-  /* ===========================================
-     USER INITIALS
-  =========================================== */
+      case "manager":
+        return "Manager";
 
-  const getInitials = () => {
-    if (!user.name) return "U";
+      case "departmentHead":
+        return "Department Head";
 
-    const words = user.name.trim().split(" ");
+      case "hr":
+        return "HR";
 
-    if (words.length === 1) {
-      return words[0][0].toUpperCase();
+      default:
+        return "Employee";
     }
-
-    return (
-      words[0][0] +
-      words[words.length - 1][0]
-    ).toUpperCase();
   };
 
-  /* ===========================================
-     HELPERS
-  =========================================== */
+  const getDashboardPath = () => {
+    switch (role) {
+      case "admin":
+        return "/admin-dashboard";
 
-  const closeMenu = () => {
-    setMenuOpen(false);
+      case "manager":
+        return "/manager-dashboard";
+
+      case "departmentHead":
+        return "/department-head-dashboard";
+
+      case "hr":
+        return "/hr-dashboard";
+
+      default:
+        return "/dashboard";
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
-    navigate("/", {
-      replace: true,
-    });
+    setUser(null);
+    setIsMenuOpen(false);
+
+    navigate("/");
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
+  const getInitials = () => {
+    if (!user?.name) return "U";
+
+    return user.name
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
   };
 
   return (
-    <nav className="app-navbar">
+    <nav className="navbar">
+      <div className="navbar-container">
 
-      {/* ==========================
-          LOGO
-      ========================== */}
+        {/* LOGO */}
+        <div
+          className="navbar-brand"
+          onClick={() => navigate(getDashboardPath())}
+        >
+          <div className="brand-logo">
+            <span>LM</span>
+          </div>
 
-      <div
-        className="navbar-brand"
-        onClick={() => {
-          closeMenu();
-
-          if (isAdmin) {
-            navigate("/admin-dashboard");
-          } else if (isManager) {
-            navigate("/manager-dashboard");
-          } else if (isDepartmentHead) {
-            navigate("/department-head-dashboard");
-          } else if (isHR) {
-            navigate("/hr-dashboard");
-          } else {
-            navigate("/dashboard");
-          }
-        }}
-      >
-        <div className="navbar-logo">
-          LM
+          <div className="brand-text">
+            <h2>LeaveFlow</h2>
+            <span>Leave Management System</span>
+          </div>
         </div>
 
-        <div className="navbar-brand-text">
-          <h1 className="navbar-title">
-            LeaveFlow
-          </h1>
+        {/* MOBILE MENU BUTTON */}
+        <button
+          className="navbar-menu-button"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? "✕" : "☰"}
+        </button>
 
-          <span className="navbar-subtitle">
-            Leave Management System
-          </span>
-        </div>
-      </div>
+        {/* NAVIGATION */}
+        <div
+          className={`navbar-menu ${
+            isMenuOpen ? "navbar-menu-active" : ""
+          }`}
+        >
 
-      {/* ==========================
-          NAVIGATION LINKS
-      ========================== */}
-
-      <div
-        className={
-          menuOpen
-            ? "navbar-links open"
-            : "navbar-links"
-        }
-      >
-                {/* ==========================
-            ADMIN MENU
-        ========================== */}
-
-        {isAdmin ? (
-
-          <>
-            <NavLink
-              to="/admin-dashboard"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">🏠</span>
-              Dashboard
-            </NavLink>
-
-            <NavLink
-              to="/manage-leaves"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">📋</span>
-              Manage Leaves
-            </NavLink>
-
-            <NavLink
-              to="/employees"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
+          {/* ADMIN */}
+          {role === "admin" && (
+            <>
+              <NavLink
+                to="/admin-dashboard"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">🏠</span>
+                <span>Dashboard</span>
+              </NavLink>
 
               <NavLink
-  to="/departments"
-  onClick={closeMenu}
-  className={({ isActive }) =>
-    isActive
-      ? "navbar-link active"
-      : "navbar-link"
-  }
->
-  <span className="navbar-link-icon">🏢</span>
-  Departments
-</NavLink>
-              <span className="navbar-link-icon">👥</span>
-              Employees
-            </NavLink>
-
-            <NavLink
-              to="/notifications"
-              onClick={() => {
-                closeMenu();
-                fetchUnreadCount();
-              }}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span
-                className="navbar-link-icon"
-                style={{
-                  position: "relative",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+                to="/employees"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
               >
-                🔔
+                <span className="nav-icon">👥</span>
+                <span>Employees</span>
+              </NavLink>
 
-                {unreadCount > 0 && (
-                  <span className="notification-badge">
-                    {unreadCount > 99
-                      ? "99+"
-                      : unreadCount}
-                  </span>
-                )}
+              <NavLink
+                  to="/manage-leaves"
+                  onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📋</span>
+                <span>Manage Leaves</span>
+              </NavLink>
+
+              <NavLink
+                to="/reports"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📊</span>
+                <span>Reports</span>
+              </NavLink>
+            </>
+          )}
+
+          {/* MANAGER */}
+          {role === "manager" && (
+            <>
+              <NavLink
+                to="/manager-dashboard"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">🏠</span>
+                <span>Dashboard</span>
+              </NavLink>
+
+              <NavLink
+                to="/manager/leave-requests"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📋</span>
+                <span>Leave Requests</span>
+              </NavLink>
+
+              <NavLink
+                to="/manager-team"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">👥</span>
+                <span>Team Members</span>
+              </NavLink>
+
+              <NavLink
+                to="/apply-leave"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📝</span>
+                <span>Apply Leave</span>
+              </NavLink>
+
+              <NavLink
+                to="/leave-history"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📅</span>
+                <span>Leave History</span>
+              </NavLink>
+            </>
+          )}
+
+          {/* DEPARTMENT HEAD */}
+          {role === "departmentHead" && (
+            <>
+              <NavLink
+                to="/department-head-dashboard"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">🏠</span>
+                <span>Dashboard</span>
+              </NavLink>
+
+              <NavLink
+               to="/department-head/leave-requests"                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📋</span>
+                <span>Department Leaves</span>
+              </NavLink>
+
+              <NavLink
+                to="/apply-leave"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📝</span>
+                <span>Apply Leave</span>
+              </NavLink>
+
+              <NavLink
+                to="/leave-history"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📅</span>
+                <span>Leave History</span>
+              </NavLink>
+            </>
+          )}
+
+          {/* HR */}
+          {role === "hr" && (
+            <>
+              <NavLink
+                to="/hr-dashboard"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">🏠</span>
+                <span>Dashboard</span>
+              </NavLink>
+
+              <NavLink
+                 to="/hr/leave-requests"
+                  onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📋</span>
+                <span>Leave Verification</span>
+              </NavLink>
+
+              <NavLink
+                to="/apply-leave"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📝</span>
+                <span>Apply Leave</span>
+              </NavLink>
+
+              <NavLink
+                to="/leave-history"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📅</span>
+                <span>Leave History</span>
+              </NavLink>
+            </>
+          )}
+
+          {/* EMPLOYEE */}
+          {role === "employee" && (
+            <>
+              <NavLink
+                to="/dashboard"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">🏠</span>
+                <span>Dashboard</span>
+              </NavLink>
+
+              <NavLink
+                to="/apply-leave"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📝</span>
+                <span>Apply Leave</span>
+              </NavLink>
+
+              <NavLink
+                to="/leave-history"
+                onClick={closeMenu}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon">📅</span>
+                <span>Leave History</span>
+              </NavLink>
+            </>
+          )}
+
+          {/* USER SECTION */}
+          <div className="navbar-user">
+
+            <div className="navbar-user-info">
+              <strong>
+                {user?.name || getRoleName()}
+              </strong>
+
+              <span>
+                {getRoleName()}
               </span>
+            </div>
 
-              Notifications
-            </NavLink>
+            <div className="navbar-avatar">
+              {getInitials()}
+            </div>
 
-            <NavLink
-              to="/reports"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
+            <button
+              className="logout-button"
+              onClick={handleLogout}
             >
-              <span className="navbar-link-icon">📊</span>
-              Reports
-            </NavLink>
+              <span>↪</span>
+              <span>Logout</span>
+            </button>
 
-          </>
-                  ) : isManager ? (
-
-          <>
-            <NavLink
-              to="/manager-dashboard"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">🏠</span>
-              Dashboard
-            </NavLink>
-
-            <NavLink
-              to="/manager/leave-requests"             
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">📋</span>
-              Leave Requests
-            </NavLink>
-
-            <NavLink
-              to="/manager-team"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">👥</span>
-              Team Members
-            </NavLink>
-
-          </>
-
-        ) : isDepartmentHead ? (
-
-          <>
-            <NavLink
-              to="/department-head-dashboard"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">🏠</span>
-              Dashboard
-            </NavLink>
-
-            <NavLink
-              to="/department-head/leave-requests"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">📋</span>
-              Department Leaves
-            </NavLink>
-
-          </>
-
-        ) : isHR ? (
-
-          <>
-            <NavLink
-              to="/hr-dashboard"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">🏠</span>
-              Dashboard
-            </NavLink>
-
-            <NavLink
-             to="/hr/leave-requests"             
-             onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">📋</span>
-              Leave Verification
-            </NavLink>
-
-          </>
-
-        ) : isEmployee ? (
-
-          <>
-            <NavLink
-              to="/dashboard"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">🏠</span>
-              Dashboard
-            </NavLink>
-
-            <NavLink
-              to="/apply-leave"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">📝</span>
-              Apply Leave
-            </NavLink>
-
-            <NavLink
-              to="/leave-history"
-              onClick={closeMenu}
-              className={({ isActive }) =>
-                isActive
-                  ? "navbar-link active"
-                  : "navbar-link"
-              }
-            >
-              <span className="navbar-link-icon">📅</span>
-              Leave History
-            </NavLink>
-          </>
-
-        ) : null}
-
-      </div>
-            {/* ==========================
-          USER SECTION
-      ========================== */}
-
-      <div className="navbar-user-section">
-
-        <div className="navbar-user-info">
-
-          <span className="navbar-user-name">
-            {user.name}
-          </span>
-
-          <span className="navbar-user-role">
-            {isAdmin
-              ? "Administrator"
-              : isManager
-              ? "Manager"
-              : isDepartmentHead
-              ? "Department Head"
-              : isHR
-              ? "HR"
-              : "Employee"}
-          </span>
-
+          </div>
         </div>
-
-        <div
-          className="navbar-avatar"
-          title={user.name}
-        >
-          {getInitials()}
-        </div>
-
-        <button
-          className="navbar-logout-btn"
-          onClick={handleLogout}
-        >
-          <span>↪</span>
-
-          <span className="navbar-logout-text">
-            Logout
-          </span>
-        </button>
-
-        <button
-          className="navbar-menu-btn"
-          onClick={() =>
-            setMenuOpen(!menuOpen)
-          }
-        >
-          {menuOpen ? "✕" : "☰"}
-        </button>
-
       </div>
-
     </nav>
   );
-}
+};
 
 export default Navbar;

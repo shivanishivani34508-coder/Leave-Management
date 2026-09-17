@@ -12,7 +12,7 @@ function HRLeaveRequests() {
 
   const fetchLeaves = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const response = await api.get("/leaves/hr", {
         headers: {
@@ -42,18 +42,16 @@ function HRLeaveRequests() {
   /* =========================================================
      SEPARATE PENDING AND PROCESSED
   ========================================================= */
-
-  const pendingLeaves = leaves.filter(
-    (leave) =>
-      leave.departmentHeadStatus === "Approved" &&
-      leave.hrStatus === "Pending"
-  );
-
-  const processedLeaves = leaves.filter(
-    (leave) =>
-      leave.departmentHeadStatus === "Approved" &&
-      leave.hrStatus !== "Pending"
-  );
+const pendingLeaves = leaves.filter(
+  (leave) =>
+    leave.requiredApprovals?.includes("HR") &&
+    leave.hrStatus === "Pending"
+);
+const processedLeaves = leaves.filter(
+  (leave) =>
+    leave.requiredApprovals?.includes("HR") &&
+    leave.hrStatus !== "Pending"
+);
 
   /* =========================================================
      HR APPROVE / REJECT
@@ -71,7 +69,7 @@ const updateLeaveStatus = async (
     setProcessingLeaveId(leaveId);
 
     const token =
-      localStorage.getItem("token");
+      sessionStorage.getItem("token");
 
     await api.put(
       `/leaves/${leaveId}/hr`,

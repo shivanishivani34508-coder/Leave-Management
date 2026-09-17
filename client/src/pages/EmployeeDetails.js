@@ -48,7 +48,7 @@ function EmployeeDetails() {
   ========================================================= */
 
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
       headers: {

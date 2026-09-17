@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 /* =========================================================
    LEAVE BALANCE SUB-SCHEMA
 ========================================================= */
-
 const leaveBalanceSchema = new mongoose.Schema(
   {
     annualAllocation: {
@@ -26,12 +25,24 @@ const leaveBalanceSchema = new mongoose.Schema(
       min: 0,
     },
 
-    remaining: {
-      type: Number,
-      required: true,
-      default: 0,
-      min: 0,
-    },
+    used: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  pending: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  remaining: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+  },
   },
   {
     _id: false,

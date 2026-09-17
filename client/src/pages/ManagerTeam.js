@@ -16,7 +16,7 @@ function ManagerTeam() {
 
   const fetchTeam = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const { data } = await api.get("/users/my-team", {
         headers: {
@@ -56,9 +56,16 @@ function ManagerTeam() {
     (emp) => emp.role === "employee"
   ).length;
 
-  const managers = employees.filter(
-    (emp) => emp.role === "manager"
-  ).length;
+  /*
+    The /users/my-team API returns the manager's team members,
+    but it does not include the logged-in manager.
+
+    So we count:
+    - Managers already present in the team data
+    - + the currently logged-in manager
+  */
+  const managers =
+    employees.filter((emp) => emp.role === "manager").length + 1;
 
   if (loading) {
     return (
@@ -70,7 +77,8 @@ function ManagerTeam() {
 
   return (
     <div className="manager-team-page">
-            {/* ==========================================================
+
+      {/* ==========================================================
           HEADER
       ========================================================== */}
 
@@ -99,65 +107,92 @@ function ManagerTeam() {
 
       </div>
 
+
       {/* ==========================================================
           STATISTICS
       ========================================================== */}
-<div className="team-stats">
 
-  <div className="stat-card">
+      <div className="team-stats">
 
-    <div className="stat-icon blue">
-      👥
-    </div>
+        {/* TOTAL MEMBERS */}
 
-    <div className="stat-content">
-      <h2>{totalMembers}</h2>
-      <p>Total Members</p>
-    </div>
+        <div className="stat-card">
 
-  </div>
+          <div className="stat-icon blue">
+            👥
+          </div>
 
-  <div className="stat-card">
+          <div className="stat-content">
 
-    <div className="stat-icon purple">
-      🏢
-    </div>
+            <h2>{totalMembers}</h2>
 
-    <div className="stat-content">
-      <h2>{departments}</h2>
-      <p>Departments</p>
-    </div>
+            <p>Total Members</p>
 
-  </div>
+          </div>
 
-  <div className="stat-card">
+        </div>
 
-    <div className="stat-icon green">
-      🟢
-    </div>
 
-    <div className="stat-content">
-      <h2>{activeMembers}</h2>
-      <p>Employees</p>
-    </div>
+        {/* DEPARTMENTS */}
 
-  </div>
+        <div className="stat-card">
 
-  <div className="stat-card">
+          <div className="stat-icon purple">
+            🏢
+          </div>
 
-    <div className="stat-icon orange">
-      👨‍💼
-    </div>
+          <div className="stat-content">
 
-    <div className="stat-content">
-      <h2>{managers}</h2>
-      <p>Managers</p>
-    </div>
+            <h2>{departments}</h2>
 
-  </div>
+            <p>Departments</p>
 
-</div>
-            {/* ==========================================================
+          </div>
+
+        </div>
+
+
+        {/* EMPLOYEES */}
+
+        <div className="stat-card">
+
+          <div className="stat-icon green">
+            🟢
+          </div>
+
+          <div className="stat-content">
+
+            <h2>{activeMembers}</h2>
+
+            <p>Employees</p>
+
+          </div>
+
+        </div>
+
+
+        {/* MANAGERS */}
+
+        <div className="stat-card">
+
+          <div className="stat-icon orange">
+            👨‍💼
+          </div>
+
+          <div className="stat-content">
+
+            <h2>{managers}</h2>
+
+            <p>Managers</p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* ==========================================================
           EMPLOYEE TABLE
       ========================================================== */}
 
@@ -176,107 +211,144 @@ function ManagerTeam() {
           </div>
 
         ) : (
-<div className="employee-grid">
 
-  {filteredEmployees.map((employee) => (
-<div
-  className="employee-card"
-  key={employee._id}
->
+          <div className="employee-grid">
 
-  <div className="employee-ribbon">
-    Team Member
-  </div>
+            {filteredEmployees.map((employee) => (
 
-      <div className="employee-top">
+              <div
+                className="employee-card"
+                key={employee._id}
+              >
 
-        <div className="employee-avatar">
+                <div className="employee-ribbon">
+                  Team Member
+                </div>
 
-          {employee.name
-            ? employee.name.charAt(0).toUpperCase()
-            : "E"}
 
-        </div>
+                {/* EMPLOYEE TOP */}
 
-        <div className="employee-name">
+                <div className="employee-top">
 
-          <h3>{employee.name}</h3>
+                  <div className="employee-avatar">
 
-          <p>{employee.email}</p>
+                    {employee.name
+                      ? employee.name.charAt(0).toUpperCase()
+                      : "E"}
 
-        </div>
+                  </div>
 
-      </div>
 
-      <div className="employee-body">
-<div className="info-box">
+                  <div className="employee-name">
 
-  <div className="info-item">
+                    <h3>{employee.name}</h3>
 
-    <div className="info-icon">🏢</div>
+                    <p>{employee.email}</p>
 
-    <div>
+                  </div>
 
-      <small>Department</small>
+                </div>
 
-      <h4>{employee.department || "N/A"}</h4>
 
-    </div>
+                {/* EMPLOYEE BODY */}
 
-  </div>
+                <div className="employee-body">
 
-  <div className="info-item">
+                  <div className="info-box">
 
-    <div className="info-icon">💼</div>
 
-    <div>
+                    {/* DEPARTMENT */}
 
-      <small>Role</small>
+                    <div className="info-item">
 
-      <span className="role-badge">
-        {employee.role}
-      </span>
+                      <div className="info-icon">
+                        🏢
+                      </div>
 
-    </div>
+                      <div>
 
-  </div>
+                        <small>Department</small>
 
-  <div className="info-item">
+                        <h4>
+                          {employee.department || "N/A"}
+                        </h4>
 
-    <div className="info-icon">🟢</div>
+                      </div>
 
-    <div>
+                    </div>
 
-      <small>Status</small>
 
-      <span className="status-badge active">
-        Active
-      </span>
+                    {/* ROLE */}
 
-    </div>
+                    <div className="info-item">
 
-  </div>
+                      <div className="info-icon">
+                        💼
+                      </div>
 
-</div>
+                      <div>
 
-      </div>
-<button
-  className="view-btn"
- onClick={() =>
-navigate(`/manager/employees/${employee._id}`)}
->
-  👁 View Profile
-</button>
+                        <small>Role</small>
 
-    </div>
+                        <span className="role-badge">
+                          {employee.role}
+                        </span>
 
-  ))}
+                      </div>
 
-</div>
+                    </div>
+
+
+                    {/* STATUS */}
+
+                    <div className="info-item">
+
+                      <div className="info-icon">
+                        🟢
+                      </div>
+
+                      <div>
+
+                        <small>Status</small>
+
+                        <span className="status-badge active">
+                          Active
+                        </span>
+
+                      </div>
+
+                    </div>
+
+
+                  </div>
+
+                </div>
+
+
+                {/* VIEW PROFILE */}
+
+                <button
+                  className="view-btn"
+                  onClick={() =>
+                    navigate(
+                      `/manager/employees/${employee._id}`
+                    )
+                  }
+                >
+                  👁 View Profile
+                </button>
+
+              </div>
+
+            ))}
+
+          </div>
+
         )}
 
       </div>
-          </div>
+
+    </div>
   );
 }
 

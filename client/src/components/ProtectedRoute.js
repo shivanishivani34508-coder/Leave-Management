@@ -1,9 +1,9 @@
 import { Navigate } from "react-router-dom";
 
 function ProtectedRoute({ children, allowedRole }) {
-  // Get token and user from localStorage
-  const token = localStorage.getItem("token");
-  const storedUser = localStorage.getItem("user");
+  // Get token and user from this browser tab's session storage.
+  const token = sessionStorage.getItem("token");
+  const storedUser = sessionStorage.getItem("user");
 
   let user = null;
 
@@ -11,9 +11,9 @@ function ProtectedRoute({ children, allowedRole }) {
   try {
     user = storedUser ? JSON.parse(storedUser) : null;
   } catch (error) {
-    // Invalid user data: clear localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    // Invalid user data: clear this tab's session.
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
     return <Navigate to="/" replace />;
   }

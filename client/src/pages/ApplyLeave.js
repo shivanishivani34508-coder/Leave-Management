@@ -85,7 +85,7 @@ console.log("================================");
   ========================================================= */
 
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
       headers: {
@@ -99,8 +99,8 @@ console.log("================================");
   ========================================================= */
 
   const handleUnauthorized = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
     navigate("/", { replace: true });
   };
@@ -116,7 +116,7 @@ console.log("================================");
         setProfileLoading(true);
         setMessage("");
 
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
 
         if (!token) {
           handleUnauthorized();
@@ -133,13 +133,14 @@ console.log("================================");
         if (!profile) {
           throw new Error("Employee profile was not returned.");
         }
-
-        if (profile.role !== "employee") {
-          navigate("/admin-dashboard", { replace: true });
-          return;
-        }
-      
-
+      if (
+        !["employee", "manager", "departmentHead", "hr", "admin"].includes(
+          profile.role
+        )
+      ) {
+        navigate("/", { replace: true });
+        return;
+      }
 console.log("FULL PROFILE:", profile);
 console.log("LEAVE BALANCES:", profile.leaveBalances);
 
@@ -162,12 +163,12 @@ console.log("GENDER:", profile.gender);
         
 
         /*
-          Keep localStorage user information synchronized.
+          Keep this tab's user information synchronized.
 
           We intentionally keep the existing token separately.
         */
 
-        localStorage.setItem(
+        sessionStorage.setItem(
           "user",
           JSON.stringify(profile)
         );
@@ -210,6 +211,21 @@ console.log("GENDER:", profile.gender);
         ...previousData,
         [name]: value,
       };
+
+      if (
+  name === "startDate" &&
+  previousData.durationType === "Half Day"
+) {
+  updatedData.endDate = value;
+}
+
+if (
+  name === "durationType" &&
+  value === "Half Day" &&
+  previousData.startDate
+) {
+  updatedData.endDate = previousData.startDate;
+}
 
       /*
         If start date becomes later than the current end date,
@@ -414,6 +430,10 @@ const availableBalance = useMemo(() => {
 } = formData;
 
     const reason = formData.reason.trim();
+    const actualEndDate =
+    durationType === "Half Day"
+    ? startDate
+    : endDate;
 
     /* -------------------------------------------------------
        REQUIRED FIELDS
@@ -422,7 +442,7 @@ const availableBalance = useMemo(() => {
     if (
       !leaveType ||
       !startDate ||
-      !endDate ||
+      !actualEndDate||
       !reason
     ) {
       setMessageType("error");
@@ -510,7 +530,7 @@ const availableBalance = useMemo(() => {
        TOKEN CHECK
     ------------------------------------------------------- */
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       handleUnauthorized();
@@ -530,7 +550,7 @@ const availableBalance = useMemo(() => {
           {
             leaveType,
             startDate,
-            endDate,
+            endDate: actualEndDate,
             reason,
             durationType,
             halfDaySession,
@@ -541,7 +561,6 @@ const availableBalance = useMemo(() => {
         "APPLY LEAVE RESPONSE:",
         response.data
       );
-
       setMessageType("success");
 
       setMessage(
@@ -549,10 +568,18 @@ const availableBalance = useMemo(() => {
           "Leave request submitted successfully."
       );
 
-      /*
-        Clear form after successful submission.
-      */
+      // Stop the submit button immediately
+      setLoading(false);
 
+      // Clear the form after successful submission
+      setFormData({
+        leaveType: "",
+        startDate: "",
+        endDate: "",
+        reason: "",
+        durationType: "Full Day",
+        halfDaySession: "",
+      });
       setFormData({
         leaveType: "",
         startDate: "",
@@ -579,7 +606,7 @@ const availableBalance = useMemo(() => {
         if (updatedProfile) {
           setUser(updatedProfile);
 
-          localStorage.setItem(
+          sessionStorage.setItem(
             "user",
             JSON.stringify(updatedProfile)
           );

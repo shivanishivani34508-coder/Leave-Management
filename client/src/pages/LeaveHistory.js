@@ -7,7 +7,13 @@ function LeaveHistory() {
   const navigate = useNavigate();
 
   const [leaves, setLeaves] = useState([]);
+  const [user, setUser] = useState(null);
+
+  const showMaternityLeave = user?.gender === "Female";
+  const showPaternityLeave = user?.gender === "Male";
+
   const [loading, setLoading] = useState(true);
+  const [leaveBalance, setLeaveBalance] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -21,7 +27,7 @@ function LeaveHistory() {
   ========================================================= */
 
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
       headers: {
@@ -35,8 +41,8 @@ function LeaveHistory() {
   ========================================================= */
 
   const handleUnauthorized = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
     navigate("/", {
       replace: true,
@@ -52,7 +58,7 @@ function LeaveHistory() {
       setLoading(true);
       setErrorMessage("");
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         handleUnauthorized();
@@ -64,11 +70,34 @@ function LeaveHistory() {
         getAuthConfig()
       );
 
+      console.log("LEAVE HISTORY API STATUS:", response.status);
+      console.log("LEAVE HISTORY API DATA:", response.data);
+
       const leaveData = Array.isArray(response.data)
         ? response.data
         : response.data?.leaves || [];
 
       setLeaves(leaveData);
+
+      // Fetch leave balance separately
+      try {
+        const balanceResponse = await api.get(
+          "/yearly-leave-balances/my",
+          getAuthConfig()
+        );
+
+        setLeaveBalance(balanceResponse.data);
+
+        console.log(
+          "YEARLY BALANCE RECEIVED:",
+          balanceResponse.data
+        );
+      } catch (balanceError) {
+        console.error(
+          "FETCH LEAVE BALANCE ERROR:",
+          balanceError
+        );
+      }
     } catch (error) {
       console.error(
         "FETCH LEAVE HISTORY ERROR:",
@@ -94,7 +123,69 @@ function LeaveHistory() {
 
   useEffect(() => {
     fetchLeaveHistory();
+
+    const fetchProfile = async () => {
+      try {
+        const response = await api.get(
+          "/users/profile",
+          getAuthConfig()
+        );
+
+        const profile = response.data?.user || response.data;
+
+        console.log("CURRENT USER PROFILE:", profile);
+        console.log(
+          "CURRENT USER GENDER:",
+          profile?.gender
+        );
+
+        if (profile) {
+          setUser(profile);
+        }
+      } catch (error) {
+        console.error(
+          "PROFILE FETCH ERROR:",
+          error
+        );
+      }
+    };
+
+    fetchProfile();
   }, [fetchLeaveHistory]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await api.get(
+          "/users/profile",
+          getAuthConfig()
+        );
+
+        const profile = response.data?.user || response.data;
+
+        console.log(
+          "LEAVE HISTORY PROFILE:",
+          profile
+        );
+
+        console.log(
+          "LEAVE HISTORY GENDER:",
+          profile?.gender
+        );
+
+        if (profile) {
+          setUser(profile);
+        }
+      } catch (error) {
+        console.error(
+          "FETCH PROFILE ERROR:",
+          error
+        );
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   /* =========================================================
      STATISTICS
@@ -189,6 +280,32 @@ function LeaveHistory() {
   }, [leaves, searchTerm, statusFilter]);
 
   /* =========================================================
+     LEAVE BALANCE DISPLAY
+
+     `remaining` is the balance enforced by the backend. Older
+     records can have an out-of-date `used` value, so derive it
+     from total minus remaining to keep all three values consistent.
+  ========================================================= */
+
+  const getBalanceDisplay = (leaveType) => {
+    const balance = leaveBalance?.[leaveType] || {};
+    const total = Math.max(
+      0,
+      Number(balance.totalAvailable) || 0
+    );
+    const remaining = Math.min(
+      total,
+      Math.max(0, Number(balance.remaining) || 0)
+    );
+
+    return {
+      total,
+      used: total - remaining,
+      remaining,
+    };
+  };
+
+  /* =========================================================
      FORMAT DATE
   ========================================================= */
 
@@ -233,67 +350,53 @@ function LeaveHistory() {
   /* =========================================================
      CANCEL PENDING LEAVE
   ========================================================= */
+const handleCancelLeave = async (leave) => {
+  console.log("========== CANCEL BUTTON CLICKED ==========");
+  console.log("Leave ID:", leave?._id);
+  console.log("Leave status:", leave?.status);
 
-  const handleCancelLeave = async (leave) => {
-    if (leave.status !== "Pending") {
-      setErrorMessage(
-        "Only Pending leave requests can be cancelled."
-      );
+  try {
+    const token = sessionStorage.getItem("token");
 
+    console.log("Token exists:", !!token);
+
+    if (!token) {
+      alert("Please login again.");
       return;
     }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to cancel your ${leave.leaveType} leave request?`
+    const response = await api.delete(
+      `/leaves/${leave._id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
-    if (!confirmed) {
-      return;
-    }
+    console.log("CANCEL RESPONSE:", response.data);
 
-    try {
-      setCancellingId(leave._id);
-      setErrorMessage("");
-      setSuccessMessage("");
+    alert("Leave cancelled successfully.");
 
-      await api.delete(
-        `/leaves/${leave._id}`,
-        getAuthConfig()
-      );
+    // Remove cancelled leave from the displayed list
+    setLeaves((prevLeaves) =>
+      prevLeaves.filter(
+        (item) => item._id !== leave._id
+      )
+    );
 
-      setLeaves((currentLeaves) =>
-        currentLeaves.filter(
-          (currentLeave) =>
-            currentLeave._id !== leave._id
-        )
-      );
+  } catch (error) {
+    console.error("========== CANCEL ERROR ==========");
+    console.error("Status:", error.response?.status);
+    console.error("Response:", error.response?.data);
+    console.error("Full error:", error);
 
-      setSuccessMessage(
-        "Leave request cancelled successfully."
-      );
-    } catch (error) {
-      console.error(
-        "CANCEL LEAVE ERROR:",
-        error
-      );
-
-      if (
-        error.response?.status === 401 ||
-        error.response?.status === 403
-      ) {
-        handleUnauthorized();
-        return;
-      }
-
-      setErrorMessage(
-        error.response?.data?.message ||
-          "Unable to cancel leave request."
-      );
-    } finally {
-      setCancellingId(null);
-    }
-  };
-
+    alert(
+      error.response?.data?.message ||
+      "Failed to cancel leave."
+    );
+  }
+};
   /* =========================================================
      LOADING
   ========================================================= */
@@ -442,6 +545,174 @@ function LeaveHistory() {
 
         </section>
 
+        {/* LEAVE BALANCE */}
+
+        {leaveBalance && (
+          <section className="leave-history-days-grid">
+
+            {/* CASUAL */}
+
+            <article className="leave-history-day-card">
+              <span className="leave-history-day-label">
+                Casual Leave
+              </span>
+
+              <strong className="leave-history-day-value">
+                Total:{" "}
+                {getBalanceDisplay("casual").total}
+              </strong>
+
+              <span>
+                Used: {getBalanceDisplay("casual").used}
+              </span>
+
+              <span>
+                Remaining:{" "}
+                {getBalanceDisplay("casual").remaining}
+              </span>
+            </article>
+
+            {/* SICK */}
+
+            <article className="leave-history-day-card">
+              <span className="leave-history-day-label">
+                Sick Leave
+              </span>
+
+              <strong className="leave-history-day-value">
+                Total:{" "}
+                {getBalanceDisplay("sick").total}
+              </strong>
+
+              <span>
+                Used: {getBalanceDisplay("sick").used}
+              </span>
+
+              <span>
+                Remaining:{" "}
+                {getBalanceDisplay("sick").remaining}
+              </span>
+            </article>
+
+            {/* EARNED */}
+
+            <article className="leave-history-day-card">
+              <span className="leave-history-day-label">
+                Earned Leave
+              </span>
+
+              <strong className="leave-history-day-value">
+                Total:{" "}
+                {getBalanceDisplay("earned").total}
+              </strong>
+
+              <span>
+                Used: {getBalanceDisplay("earned").used}
+              </span>
+
+              <span>
+                Remaining:{" "}
+                {getBalanceDisplay("earned").remaining}
+              </span>
+            </article>
+
+            {/* MARRIAGE */}
+
+            <article className="leave-history-day-card">
+              <span className="leave-history-day-label">
+                Marriage Leave
+              </span>
+
+              <strong className="leave-history-day-value">
+                Total:{" "}
+                {getBalanceDisplay("marriage").total}
+              </strong>
+
+              <span>
+                Used: {getBalanceDisplay("marriage").used}
+              </span>
+
+              <span>
+                Remaining:{" "}
+                {getBalanceDisplay("marriage").remaining}
+              </span>
+            </article>
+
+            {/* BEREAVEMENT */}
+
+            <article className="leave-history-day-card">
+              <span className="leave-history-day-label">
+                Bereavement Leave
+              </span>
+
+              <strong className="leave-history-day-value">
+                Total:{" "}
+                {getBalanceDisplay("bereavement").total}
+              </strong>
+
+              <span>
+                Used: {getBalanceDisplay("bereavement").used}
+              </span>
+
+              <span>
+                Remaining:{" "}
+                {getBalanceDisplay("bereavement").remaining}
+              </span>
+            </article>
+
+            {/* MATERNITY */}
+
+            {showMaternityLeave && (
+              <article className="leave-history-day-card">
+                <span className="leave-history-day-label">
+                  Maternity Leave
+                </span>
+
+                <strong className="leave-history-day-value">
+                  Total:{" "}
+                  {getBalanceDisplay("maternity").total}
+                </strong>
+
+                <span>
+                  Used:{" "}
+                  {getBalanceDisplay("maternity").used}
+                </span>
+
+                <span>
+                  Remaining:{" "}
+                  {getBalanceDisplay("maternity").remaining}
+                </span>
+              </article>
+            )}
+
+            {/* PATERNITY */}
+
+            {showPaternityLeave && (
+              <article className="leave-history-day-card">
+                <span className="leave-history-day-label">
+                  Paternity Leave
+                </span>
+
+                <strong className="leave-history-day-value">
+                  Total:{" "}
+                  {getBalanceDisplay("paternity").total}
+                </strong>
+
+                <span>
+                  Used:{" "}
+                  {getBalanceDisplay("paternity").used}
+                </span>
+
+                <span>
+                  Remaining:{" "}
+                  {getBalanceDisplay("paternity").remaining}
+                </span>
+              </article>
+            )}
+
+          </section>
+        )}
+
         {/* DAY SUMMARY */}
 
         <section className="leave-history-days-grid">
@@ -543,6 +814,7 @@ function LeaveHistory() {
           {filteredLeaves.length === 0 ? (
 
             <div className="leave-history-empty">
+
               <div className="leave-history-empty-icon">
                 📋
               </div>
@@ -570,11 +842,13 @@ function LeaveHistory() {
                   Apply for Leave
                 </button>
               )}
+
             </div>
 
           ) : (
 
             <>
+
               <div className="leave-history-table-wrapper">
 
                 <table className="leave-history-table">
@@ -605,6 +879,7 @@ function LeaveHistory() {
 
                         <td>
                           <div className="leave-history-date-range">
+
                             <span>
                               {formatDate(leave.startDate)}
                             </span>
@@ -616,6 +891,7 @@ function LeaveHistory() {
                             <span>
                               {formatDate(leave.endDate)}
                             </span>
+
                           </div>
                         </td>
 
@@ -657,7 +933,9 @@ function LeaveHistory() {
                         </td>
 
                         <td>
+
                           {leave.status === "Pending" ? (
+
                             <button
                               type="button"
                               className="leave-history-cancel-btn"
@@ -672,11 +950,15 @@ function LeaveHistory() {
                                 ? "Cancelling..."
                                 : "Cancel"}
                             </button>
+
                           ) : (
+
                             <span className="leave-history-no-action">
                               Reviewed
                             </span>
+
                           )}
+
                         </td>
 
                       </tr>
@@ -685,9 +967,11 @@ function LeaveHistory() {
                   </tbody>
 
                 </table>
+
               </div>
 
               <div className="leave-history-footer">
+
                 <span className="leave-history-result-text">
                   Showing {filteredLeaves.length} of{" "}
                   {leaves.length} leave request
@@ -697,7 +981,9 @@ function LeaveHistory() {
                 <span className="leave-history-result-text">
                   Only Pending requests can be cancelled.
                 </span>
+
               </div>
+
             </>
 
           )}

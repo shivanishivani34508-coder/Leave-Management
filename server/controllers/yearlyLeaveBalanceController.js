@@ -1,461 +1,223 @@
 const User = require("../models/User");
 const YearlyLeaveBalance = require("../models/YearlyLeaveBalance");
 const LeaveYear = require("../models/LeaveYear");
-
 const {
-  LEAVE_CARRY_FORWARD_POLICY,
+  getLeavePolicy,
+  getCarryForwardLimit,
 } = require("../config/leavePolicy");
 
 /* =========================================================
-   HELPER FUNCTIONS
+   CARRY FORWARD CALCULATION
 ========================================================= */
-
-/*
-  Get annual allocation safely from policy.
-*/
-const getAnnualAllocation = (leaveType) => {
-  return Number(
-    LEAVE_CARRY_FORWARD_POLICY?.[leaveType]?.annualAllocation || 0
-  );
-};
-
-/*
-  Get maximum carry-forward safely from policy.
-*/
-const getMaxCarryForward = (leaveType) => {
-  return Number(
-    LEAVE_CARRY_FORWARD_POLICY?.[leaveType]?.maxCarryForward || 0
-  );
-};
-
-/*
-  Calculate carry-forward.
-*/
 const calculateCarryForward = (remaining, leaveType) => {
-  const maxCarryForward = getMaxCarryForward(leaveType);
-
-  return Math.min(
-    Math.max(Number(remaining || 0), 0),
-    maxCarryForward
-  );
-};
-
-/*
-  Create one yearly leave balance object.
-*/
-const createBalanceObject = (leaveType, carryForward = 0) => {
-  const annualAllocation = getAnnualAllocation(leaveType);
-
-  const safeCarryForward = Math.max(
-    Number(carryForward || 0),
-    0
+  const safeRemaining = Math.max(
+    0,
+    Number(remaining) || 0
   );
 
-  const totalAvailable =
-    annualAllocation + safeCarryForward;
+  const normalizedType = String(leaveType).toLowerCase();
 
-  return {
-    annualAllocation,
-    carryForward: safeCarryForward,
-    totalAvailable,
-    remaining: totalAvailable,
-  };
+  if (!["casual", "sick", "earned"].includes(normalizedType)) {
+    return 0;
+  }
+
+  const maxCarryForward = getCarryForwardLimit(normalizedType);
+
+  return Math.min(safeRemaining, maxCarryForward);
 };
 
 
 /* =========================================================
+   HELPER
+========================================================= */
+const createBalanceObject = (
+  leaveType,
+  annualAllocation,
+  carryForward = 0
+) => {
+  const safeCarryForward = Math.max(
+    0,
+    Number(carryForward) || 0
+  );
+
+  const totalAvailable =
+    Number(annualAllocation) + safeCarryForward;
+
+  return {
+    annualAllocation: Number(annualAllocation),
+    carryForward: safeCarryForward,
+    totalAvailable,
+    remaining: totalAvailable,
+    pending: 0,
+    used: 0,
+  };
+};
+/* =========================================================
    CREATE NEXT YEAR LEAVE BALANCES
-
-   ADMIN / HR ONLY
-
-   EXISTING FUNCTION - KEPT AS IT IS
 ========================================================= */
 
-const createNextYearLeaveBalances = async (req, res) => {
+const createNextYearLeaveBalances = async ( req,res) => {
   try {
-    /* =====================================================
-       GET CURRENT YEAR
-    ===================================================== */
+   const currentYear =
+  Number(req.body?.currentYear) ||
+  new Date().getFullYear();
 
-    const currentYear = Number(req.body.currentYear);
-
-    if (!currentYear || currentYear < 2000) {
-      return res.status(400).json({
-        message: "Please provide a valid current year.",
-      });
-    }
-
-    const nextYear = currentYear + 1;
-
-    /* =====================================================
-       CHECK CURRENT YEAR PROCESSING
-    ===================================================== */
-
-    const processedYear = await LeaveYear.findOne({
-      year: currentYear,
-    });
-
-    if (!processedYear) {
-      return res.status(400).json({
-        message:
-          `Carry-forward for ${currentYear} must be processed first.`,
-      });
-    }
-
-    /* =====================================================
-       GET ALL EMPLOYEES
-    ===================================================== */
+const nextYear = currentYear + 1;
 
     const employees = await User.find({
-      role: "employee",
+      role: {
+        $in: [
+          "employee",
+          "manager",
+          "departmentHead",
+          "hr",
+        ],
+      },
     });
 
-    if (employees.length === 0) {
-      return res.status(404).json({
-        message: "No employees found.",
-      });
-    }
+    let created = 0;
+    let skipped = 0;
 
-    let createdEmployees = 0;
-    let updatedEmployees = 0;
-    let skippedEmployees = 0;
-
-    /* =====================================================
-       PROCESS EACH EMPLOYEE
-    ===================================================== */
+    const createdEmployees = [];
+    const skippedEmployees = [];
 
     for (const employee of employees) {
-      /* ===================================================
-         GET CURRENT YEAR BALANCE
-      =================================================== */
-
-      const currentBalance =
-        await YearlyLeaveBalance.findOne({
-          employee: employee._id,
-          year: currentYear,
-        });
-
-      if (!currentBalance) {
-        console.log(
-          `No ${currentYear} yearly balance found for ${employee.name}. Skipping.`
-        );
-
-        skippedEmployees++;
-        continue;
-      }
-
-      /* ===================================================
-         READ CURRENT YEAR REMAINING
-      =================================================== */
-
-      const casualRemaining = Number(
-        currentBalance.casual?.remaining || 0
-      );
-
-      const sickRemaining = Number(
-        currentBalance.sick?.remaining || 0
-      );
-
-      const earnedRemaining = Number(
-        currentBalance.earned?.remaining || 0
-      );
-
-      /* ===================================================
-         CALCULATE CARRY FORWARD
-      =================================================== */
-
-      const casualCarryForward =
-        calculateCarryForward(
-          casualRemaining,
-          "casual"
-        );
-
-      const sickCarryForward =
-        calculateCarryForward(
-          sickRemaining,
-          "sick"
-        );
-
-      const earnedCarryForward =
-        calculateCarryForward(
-          earnedRemaining,
-          "earned"
-        );
-
-      console.log(
-        `Carry-forward calculation for ${employee.name}:`,
-        {
-          currentYear,
-          nextYear,
-
-          casualRemaining,
-          casualCarryForward,
-
-          sickRemaining,
-          sickCarryForward,
-
-          earnedRemaining,
-          earnedCarryForward,
-        }
-      );
-
-      /* ===================================================
-         CHECK WHETHER NEXT YEAR BALANCE ALREADY EXISTS
-      =================================================== */
-
-      const existingNextYearBalance =
+      const existingBalance =
         await YearlyLeaveBalance.findOne({
           employee: employee._id,
           year: nextYear,
         });
 
-      /* ===================================================
-         NEXT YEAR BALANCE ALREADY EXISTS
-      =================================================== */
+      if (existingBalance) {
+        skipped++;
 
-      if (existingNextYearBalance) {
-        /* =================================================
-           CHECK WHETHER NEXT YEAR BALANCE IS UNUSED
-        ================================================= */
-
-        const casualRemainingNextYear = Number(
-          existingNextYearBalance.casual?.remaining || 0
-        );
-
-        const casualTotalNextYear = Number(
-          existingNextYearBalance.casual?.totalAvailable || 0
-        );
-
-        const sickRemainingNextYear = Number(
-          existingNextYearBalance.sick?.remaining || 0
-        );
-
-        const sickTotalNextYear = Number(
-          existingNextYearBalance.sick?.totalAvailable || 0
-        );
-
-        const earnedRemainingNextYear = Number(
-          existingNextYearBalance.earned?.remaining || 0
-        );
-
-        const earnedTotalNextYear = Number(
-          existingNextYearBalance.earned?.totalAvailable || 0
-        );
-
-        const casualCarryExisting = Number(
-          existingNextYearBalance.casual?.carryForward || 0
-        );
-
-        const sickCarryExisting = Number(
-          existingNextYearBalance.sick?.carryForward || 0
-        );
-
-        const earnedCarryExisting = Number(
-          existingNextYearBalance.earned?.carryForward || 0
-        );
-
-        const nextYearBalanceIsUnused =
-          casualRemainingNextYear === casualTotalNextYear &&
-          sickRemainingNextYear === sickTotalNextYear &&
-          earnedRemainingNextYear === earnedTotalNextYear;
-
-        const carryForwardNotProcessed =
-          casualCarryExisting === 0 &&
-          sickCarryExisting === 0 &&
-          earnedCarryExisting === 0;
-
-        /* =================================================
-           UPDATE FRESH NEXT YEAR BALANCE
-        ================================================= */
-
-        if (
-          nextYearBalanceIsUnused &&
-          carryForwardNotProcessed
-        ) {
-          /* ===============================================
-             CASUAL
-          =============================================== */
-
-          existingNextYearBalance.casual =
-            createBalanceObject(
-              "casual",
-              casualCarryForward
-            );
-
-          /* ===============================================
-             SICK
-          =============================================== */
-
-          existingNextYearBalance.sick =
-            createBalanceObject(
-              "sick",
-              sickCarryForward
-            );
-
-          /* ===============================================
-             EARNED
-          =============================================== */
-
-          existingNextYearBalance.earned =
-            createBalanceObject(
-              "earned",
-              earnedCarryForward
-            );
-
-          /* ===============================================
-             SPECIAL LEAVES
-             
-             These do NOT carry forward.
-          =============================================== */
-
-          existingNextYearBalance.marriage =
-            createBalanceObject("marriage", 0);
-
-          existingNextYearBalance.maternity =
-            createBalanceObject("maternity", 0);
-
-          existingNextYearBalance.paternity =
-            createBalanceObject("paternity", 0);
-
-          existingNextYearBalance.bereavement =
-            createBalanceObject("bereavement", 0);
-
-          await existingNextYearBalance.save();
-
-          updatedEmployees++;
-
-          console.log(
-            `${nextYear} balance UPDATED for ${employee.name}`
-          );
-        } else {
-          /* ===============================================
-             DO NOT MODIFY USED / ALREADY PROCESSED BALANCE
-          =============================================== */
-
-          skippedEmployees++;
-
-          console.log(
-            `${nextYear} balance SKIPPED for ${employee.name} - already processed or used`
-          );
-        }
+        skippedEmployees.push({
+          name: employee.name,
+          email: employee.email,
+          reason:
+            "Yearly balance already exists",
+        });
 
         continue;
       }
 
-      /* ===================================================
-         CREATE NEW NEXT YEAR BALANCE
-      =================================================== */
+      const policy = await getLeavePolicy(
+        employee.department
+      );
+
+      const casualAllocation =
+        Number(policy?.casual || 12);
+
+      const sickAllocation =
+        Number(policy?.sick || 12);
+
+      const earnedAllocation =
+        Number(policy?.earned || 18);
+
+      const marriageAllocation =
+        Number(policy?.marriage || 5);
+
+      const maternityAllocation =
+        Number(policy?.maternity || 182);
+
+      const paternityAllocation =
+        Number(policy?.paternity || 15);
+
+      const bereavementAllocation =
+        Number(policy?.bereavement || 5);
 
       await YearlyLeaveBalance.create({
         employee: employee._id,
+
         year: nextYear,
 
-        casual:
-          createBalanceObject(
-            "casual",
-            casualCarryForward
-          ),
+        casual: createBalanceObject(
+          "casual",
+          casualAllocation
+        ),
 
-        sick:
-          createBalanceObject(
-            "sick",
-            sickCarryForward
-          ),
+        sick: createBalanceObject(
+          "sick",
+          sickAllocation
+        ),
 
-        earned:
-          createBalanceObject(
-            "earned",
-            earnedCarryForward
-          ),
+        earned: createBalanceObject(
+          "earned",
+          earnedAllocation
+        ),
 
-        marriage:
-          createBalanceObject(
-            "marriage",
-            0
-          ),
+        marriage: createBalanceObject(
+          "marriage",
+          marriageAllocation
+        ),
 
-        maternity:
-          createBalanceObject(
-            "maternity",
-            0
-          ),
+        maternity: createBalanceObject(
+          "maternity",
+          maternityAllocation
+        ),
 
-        paternity:
-          createBalanceObject(
-            "paternity",
-            0
-          ),
+        paternity: createBalanceObject(
+          "paternity",
+          paternityAllocation
+        ),
 
-        bereavement:
-          createBalanceObject(
-            "bereavement",
-            0
-          ),
+        bereavement: createBalanceObject(
+          "bereavement",
+          bereavementAllocation
+        ),
       });
 
-      createdEmployees++;
+      created++;
 
-      console.log(
-        `${nextYear} balance CREATED for ${employee.name}`
-      );
-
-      console.log(
-        `Carry-forward for ${employee.name}:`,
-        {
-          casual: casualCarryForward,
-          sick: sickCarryForward,
-          earned: earnedCarryForward,
-        }
-      );
+      createdEmployees.push({
+        name: employee.name,
+        email: employee.email,
+      });
     }
-
-    /* =====================================================
-       SUCCESS RESPONSE
-    ===================================================== */
 
     return res.status(200).json({
       message:
-        `Yearly leave balances processed successfully for ${nextYear}.`,
+        `Leave balances created for ${nextYear}.`,
 
       currentYear,
 
       nextYear,
 
-      createdEmployees,
+      totalEmployees: employees.length,
 
-      updatedEmployees,
+      created,
+
+      skipped,
+
+      createdEmployees,
 
       skippedEmployees,
     });
   } catch (error) {
     console.error(
-      "CREATE NEXT YEAR BALANCE ERROR:",
+      "Create next year balances error:",
       error
     );
 
     return res.status(500).json({
       message:
-        "Server error while creating next year's leave balances.",
+        "Failed to create next year leave balances.",
       error: error.message,
     });
   }
 };
 
-
 /* =========================================================
    GET MY YEARLY LEAVE BALANCE
-
-   EXISTING FUNCTION - KEPT AS IT IS
 ========================================================= */
 
-const getMyYearlyLeaveBalance = async (req, res) => {
+const getMyYearlyLeaveBalance = async ( req,res) => {
   try {
-    const year = Number(
-      req.query.year || new Date().getFullYear()
-    );
+    const employeeId = req.user._id;
 
-    const employeeId =
-      req.user._id || req.user.id;
+    const year =
+      Number(req.query.year) ||
+      new Date().getFullYear();
 
     const balance =
       await YearlyLeaveBalance.findOne({
@@ -463,7 +225,7 @@ const getMyYearlyLeaveBalance = async (req, res) => {
         year,
       }).populate(
         "employee",
-        "name email department"
+        "name email role department"
       );
 
     if (!balance) {
@@ -473,243 +235,69 @@ const getMyYearlyLeaveBalance = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      message:
-        "Yearly leave balance fetched successfully.",
-
-      balance,
-    });
+    return res.status(200).json(balance);
   } catch (error) {
     console.error(
-      "GET MY YEARLY BALANCE ERROR:",
+      "Get my yearly balance error:",
       error
     );
 
     return res.status(500).json({
       message:
-        "Server error while fetching yearly leave balance.",
-    });
-  }
-};
-
-
-/* =========================================================
-   GET ALL YEARLY LEAVE BALANCES
-
-   ADMIN / HR
-
-   EXISTING FUNCTION - KEPT AS IT IS
-========================================================= */
-
-const getAllYearlyLeaveBalances = async (req, res) => {
-  try {
-    const year = Number(
-      req.query.year || new Date().getFullYear()
-    );
-
-    const balances =
-      await YearlyLeaveBalance.find({
-        year,
-      })
-        .populate(
-          "employee",
-          "name email department role"
-        )
-        .sort({
-          "employee.name": 1,
-        });
-
-    return res.status(200).json({
-      message:
-        "Yearly leave balances fetched successfully.",
-
-      year,
-
-      totalEmployees:
-        balances.length,
-
-      balances,
-    });
-  } catch (error) {
-    console.error(
-      "GET ALL YEARLY BALANCES ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      message:
-        "Server error while fetching yearly leave balances.",
-    });
-  }
-};
-
-
-/* =========================================================
-   CREATE INITIAL YEAR LEAVE BALANCES
-
-   ADMIN / HR ONLY
-
-   EXISTING FUNCTION - KEPT AS IT IS
-========================================================= */
-
-const createInitialYearLeaveBalances = async (req, res) => {
-  try {
-    const year = Number(req.body.year);
-
-    /* =====================================================
-       VALIDATE YEAR
-    ===================================================== */
-
-    if (!year || year < 2000) {
-      return res.status(400).json({
-        message: "Please provide a valid year.",
-      });
-    }
-
-    /* =====================================================
-       CHECK WHETHER BALANCES ALREADY EXIST
-    ===================================================== */
-
-    const existingBalance =
-      await YearlyLeaveBalance.findOne({
-        year,
-      });
-
-    if (existingBalance) {
-      return res.status(409).json({
-        message:
-          `Yearly leave balances for ${year} already exist.`,
-
-        year,
-      });
-    }
-
-    /* =====================================================
-       GET ALL EMPLOYEES
-    ===================================================== */
-
-    const employees = await User.find({
-      role: "employee",
-    });
-
-    if (employees.length === 0) {
-      return res.status(404).json({
-        message: "No employees found.",
-      });
-    }
-
-    let createdEmployees = 0;
-
-    /* =====================================================
-       CREATE INITIAL BALANCE FOR EACH EMPLOYEE
-    ===================================================== */
-
-    for (const employee of employees) {
-      await YearlyLeaveBalance.create({
-        employee: employee._id,
-
-        year,
-
-        /* ===============================================
-           CASUAL
-        =============================================== */
-
-        casual:
-          createBalanceObject(
-            "casual",
-            0
-          ),
-
-        /* ===============================================
-           SICK
-        =============================================== */
-
-        sick:
-          createBalanceObject(
-            "sick",
-            0
-          ),
-
-        /* ===============================================
-           EARNED
-        =============================================== */
-
-        earned:
-          createBalanceObject(
-            "earned",
-            0
-          ),
-
-        /* ===============================================
-           SPECIAL LEAVES
-        =============================================== */
-
-        marriage:
-          createBalanceObject(
-            "marriage",
-            0
-          ),
-
-        maternity:
-          createBalanceObject(
-            "maternity",
-            0
-          ),
-
-        paternity:
-          createBalanceObject(
-            "paternity",
-            0
-          ),
-
-        bereavement:
-          createBalanceObject(
-            "bereavement",
-            0
-          ),
-      });
-
-      createdEmployees++;
-
-      console.log(
-        `${year} balance created for ${employee.name}`
-      );
-    }
-
-    /* =====================================================
-       SUCCESS RESPONSE
-    ===================================================== */
-
-    return res.status(200).json({
-      message:
-        `Initial yearly leave balances created successfully for ${year}.`,
-
-      year,
-
-      createdEmployees,
-    });
-  } catch (error) {
-    console.error(
-      "CREATE INITIAL YEAR BALANCE ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      message:
-        "Server error while creating initial yearly leave balances.",
+        "Failed to fetch yearly leave balance.",
       error: error.message,
     });
   }
 };
 
-
 /* =========================================================
-   MIGRATE MISSING YEARLY BALANCES
-
-   ONE-TIME MIGRATION FOR OLD EMPLOYEES
+   GET ALL YEARLY LEAVE BALANCES
 ========================================================= */
 
-const migrateMissingYearlyBalances = async (req, res) => {
+const getAllYearlyLeaveBalances = async (
+  req,
+  res
+) => {
+  try {
+    const year =
+      Number(req.query.year) ||
+      new Date().getFullYear();
+
+    const balances =
+      await YearlyLeaveBalance.find({
+        year,
+      }).populate(
+        "employee",
+        "name email role department"
+      );
+
+    return res.status(200).json({
+      year,
+      total: balances.length,
+      balances,
+    });
+  } catch (error) {
+    console.error(
+      "Get all yearly balances error:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Failed to fetch yearly leave balances.",
+      error: error.message,
+    });
+  }
+};
+
+/* =========================================================
+   CREATE INITIAL YEAR LEAVE BALANCES
+========================================================= */
+
+const createInitialYearLeaveBalances = async (
+  req,
+  res
+) => {
   try {
     const year = Number(req.body.year);
 
@@ -720,7 +308,14 @@ const migrateMissingYearlyBalances = async (req, res) => {
     }
 
     const employees = await User.find({
-      role: "employee",
+      role: {
+        $in: [
+          "employee",
+          "manager",
+          "departmentHead",
+          "hr",
+        ],
+      },
     });
 
     let created = 0;
@@ -742,7 +337,8 @@ const migrateMissingYearlyBalances = async (req, res) => {
         skippedEmployees.push({
           name: employee.name,
           email: employee.email,
-          reason: "Yearly balance already exists",
+          reason:
+            "Yearly balance already exists",
         });
 
         continue;
@@ -763,43 +359,43 @@ const migrateMissingYearlyBalances = async (req, res) => {
       const casualRemaining =
         Number(
           userBalances.casual ??
-          casualAllocation
+            casualAllocation
         );
 
       const sickRemaining =
         Number(
           userBalances.sick ??
-          sickAllocation
+            sickAllocation
         );
 
       const earnedRemaining =
         Number(
           userBalances.earned ??
-          earnedAllocation
+            earnedAllocation
         );
 
       const marriageRemaining =
         Number(
           userBalances.marriage ??
-          marriageAllocation
+            marriageAllocation
         );
 
       const maternityRemaining =
         Number(
           userBalances.maternity ??
-          maternityAllocation
+            maternityAllocation
         );
 
       const paternityRemaining =
         Number(
           userBalances.paternity ??
-          paternityAllocation
+            paternityAllocation
         );
 
       const bereavementRemaining =
         Number(
           userBalances.bereavement ??
-          bereavementAllocation
+            bereavementAllocation
         );
 
       await YearlyLeaveBalance.create({
@@ -808,52 +404,310 @@ const migrateMissingYearlyBalances = async (req, res) => {
         year,
 
         casual: {
-          annualAllocation: casualAllocation,
+          annualAllocation:
+            casualAllocation,
           carryForward: 0,
-          totalAvailable: casualAllocation,
-          remaining: casualRemaining,
+          totalAvailable:
+            casualAllocation,
+          remaining:
+            casualRemaining,
         },
 
         sick: {
-          annualAllocation: sickAllocation,
+          annualAllocation:
+            sickAllocation,
           carryForward: 0,
-          totalAvailable: sickAllocation,
-          remaining: sickRemaining,
+          totalAvailable:
+            sickAllocation,
+          remaining:
+            sickRemaining,
         },
 
         earned: {
-          annualAllocation: earnedAllocation,
+          annualAllocation:
+            earnedAllocation,
           carryForward: 0,
-          totalAvailable: earnedAllocation,
-          remaining: earnedRemaining,
+          totalAvailable:
+            earnedAllocation,
+          remaining:
+            earnedRemaining,
         },
 
         marriage: {
-          annualAllocation: marriageAllocation,
+          annualAllocation:
+            marriageAllocation,
           carryForward: 0,
-          totalAvailable: marriageAllocation,
-          remaining: marriageRemaining,
+          totalAvailable:
+            marriageAllocation,
+          remaining:
+            marriageRemaining,
         },
 
         maternity: {
-          annualAllocation: maternityAllocation,
+          annualAllocation:
+            maternityAllocation,
           carryForward: 0,
-          totalAvailable: maternityAllocation,
-          remaining: maternityRemaining,
+          totalAvailable:
+            maternityAllocation,
+          remaining:
+            maternityRemaining,
         },
 
         paternity: {
-          annualAllocation: paternityAllocation,
+          annualAllocation:
+            paternityAllocation,
           carryForward: 0,
-          totalAvailable: paternityAllocation,
-          remaining: paternityRemaining,
+          totalAvailable:
+            paternityAllocation,
+          remaining:
+            paternityRemaining,
         },
 
         bereavement: {
-          annualAllocation: bereavementAllocation,
+          annualAllocation:
+            bereavementAllocation,
           carryForward: 0,
-          totalAvailable: bereavementAllocation,
-          remaining: bereavementRemaining,
+          totalAvailable:
+            bereavementAllocation,
+          remaining:
+            bereavementRemaining,
+        },
+      });
+
+      created++;
+
+      createdEmployees.push({
+        name: employee.name,
+        email: employee.email,
+      });
+    }
+
+    return res.status(200).json({
+      message:
+        "Initial yearly balances created successfully.",
+
+      year,
+
+      totalEmployees: employees.length,
+
+      created,
+
+      skipped,
+
+      createdEmployees,
+
+      skippedEmployees,
+    });
+  } catch (error) {
+    console.error(
+      "Create initial yearly balances error:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Failed to create initial yearly leave balances.",
+      error: error.message,
+    });
+  }
+};
+
+/* =========================================================
+   MIGRATE MISSING YEARLY BALANCES
+========================================================= */
+
+const migrateMissingYearlyBalances = async (
+  req,
+  res
+) => {
+  try {
+    const year = Number(req.body.year);
+
+    if (!year) {
+      return res.status(400).json({
+        message: "Year is required.",
+      });
+    }
+
+    const employees = await User.find({
+      role: {
+        $in: [
+          "employee",
+          "manager",
+          "departmentHead",
+          "hr",
+        ],
+      },
+    });
+
+    // TEMPORARY DEBUGGING
+    console.log(
+      "MIGRATION USERS COUNT:",
+      employees.length
+    );
+
+    console.log(
+      "MIGRATION USERS:",
+      employees.map((u) => ({
+        name: u.name,
+        role: u.role,
+        id: u._id,
+      }))
+    );
+
+    let created = 0;
+    let skipped = 0;
+
+    const createdEmployees = [];
+    const skippedEmployees = [];
+
+    for (const employee of employees) {
+      const existingBalance =
+        await YearlyLeaveBalance.findOne({
+          employee: employee._id,
+          year,
+        });
+
+      if (existingBalance) {
+        skipped++;
+
+        skippedEmployees.push({
+          name: employee.name,
+          email: employee.email,
+          reason:
+            "Yearly balance already exists",
+        });
+
+        continue;
+      }
+
+      const userBalances =
+        employee.leaveBalances || {};
+
+      const casualAllocation = 12;
+      const sickAllocation = 12;
+      const earnedAllocation = 18;
+
+      const marriageAllocation = 5;
+      const maternityAllocation = 182;
+      const paternityAllocation = 15;
+      const bereavementAllocation = 5;
+
+      const casualRemaining =
+        Number(
+          userBalances.casual ??
+            casualAllocation
+        );
+
+      const sickRemaining =
+        Number(
+          userBalances.sick ??
+            sickAllocation
+        );
+
+      const earnedRemaining =
+        Number(
+          userBalances.earned ??
+            earnedAllocation
+        );
+
+      const marriageRemaining =
+        Number(
+          userBalances.marriage ??
+            marriageAllocation
+        );
+
+      const maternityRemaining =
+        Number(
+          userBalances.maternity ??
+            maternityAllocation
+        );
+
+      const paternityRemaining =
+        Number(
+          userBalances.paternity ??
+            paternityAllocation
+        );
+
+      const bereavementRemaining =
+        Number(
+          userBalances.bereavement ??
+            bereavementAllocation
+        );
+
+      await YearlyLeaveBalance.create({
+        employee: employee._id,
+
+        year,
+
+        casual: {
+          annualAllocation:
+            casualAllocation,
+          carryForward: 0,
+          totalAvailable:
+            casualAllocation,
+          remaining:
+            casualRemaining,
+        },
+
+        sick: {
+          annualAllocation:
+            sickAllocation,
+          carryForward: 0,
+          totalAvailable:
+            sickAllocation,
+          remaining:
+            sickRemaining,
+        },
+
+        earned: {
+          annualAllocation:
+            earnedAllocation,
+          carryForward: 0,
+          totalAvailable:
+            earnedAllocation,
+          remaining:
+            earnedRemaining,
+        },
+
+        marriage: {
+          annualAllocation:
+            marriageAllocation,
+          carryForward: 0,
+          totalAvailable:
+            marriageAllocation,
+          remaining:
+            marriageRemaining,
+        },
+
+        maternity: {
+          annualAllocation:
+            maternityAllocation,
+          carryForward: 0,
+          totalAvailable:
+            maternityAllocation,
+          remaining:
+            maternityRemaining,
+        },
+
+        paternity: {
+          annualAllocation:
+            paternityAllocation,
+          carryForward: 0,
+          totalAvailable:
+            paternityAllocation,
+          remaining:
+            paternityRemaining,
+        },
+
+        bereavement: {
+          annualAllocation:
+            bereavementAllocation,
+          carryForward: 0,
+          totalAvailable:
+            bereavementAllocation,
+          remaining:
+            bereavementRemaining,
         },
       });
 
@@ -894,42 +748,27 @@ const migrateMissingYearlyBalances = async (req, res) => {
     });
   }
 };
-
-
 /* =========================================================
    REPAIR MISSING CARRY-FORWARD
-
-   ONE-TIME USE FOR OLD EMPLOYEES
-
-   THIS IS THE NEW FUNCTION
 ========================================================= */
 
-const repairMissingCarryForward = async (req, res) => {
+const repairMissingCarryForward = async (req,res) => {
   try {
     const currentYear =
-      Number(req.body.currentYear);
+  Number(req.body?.currentYear) ||
+  new Date().getFullYear();
+    const nextYear = currentYear + 1;
 
-    if (!currentYear || currentYear < 2000) {
-      return res.status(400).json({
-        message:
-          "Please provide a valid current year.",
-      });
-    }
-
-    const nextYear =
-      currentYear + 1;
-
-    const employees =
-      await User.find({
-        role: "employee",
-      });
-
-    if (employees.length === 0) {
-      return res.status(404).json({
-        message:
-          "No employees found.",
-      });
-    }
+    const employees = await User.find({
+      role: {
+        $in: [
+          "employee",
+          "manager",
+          "departmentHead",
+          "hr",
+        ],
+      },
+    });
 
     let updatedEmployees = 0;
     let skippedEmployees = 0;
@@ -938,10 +777,6 @@ const repairMissingCarryForward = async (req, res) => {
     const skippedList = [];
 
     for (const employee of employees) {
-      /* ===================================================
-         GET CURRENT YEAR BALANCE
-      =================================================== */
-
       const currentBalance =
         await YearlyLeaveBalance.findOne({
           employee: employee._id,
@@ -955,15 +790,11 @@ const repairMissingCarryForward = async (req, res) => {
           name: employee.name,
           email: employee.email,
           reason:
-            `No ${currentYear} yearly balance found`,
+            `Current year balance ${currentYear} not found`,
         });
 
         continue;
       }
-
-      /* ===================================================
-         GET NEXT YEAR BALANCE
-      =================================================== */
 
       const nextYearBalance =
         await YearlyLeaveBalance.findOne({
@@ -978,15 +809,11 @@ const repairMissingCarryForward = async (req, res) => {
           name: employee.name,
           email: employee.email,
           reason:
-            `No ${nextYear} yearly balance found`,
+            `Next year balance ${nextYear} not found`,
         });
 
         continue;
       }
-
-      /* ===================================================
-         CALCULATE CARRY-FORWARD
-      =================================================== */
 
       const casualRemaining =
         Number(
@@ -1020,10 +847,6 @@ const repairMissingCarryForward = async (req, res) => {
           earnedRemaining,
           "earned"
         );
-
-      /* ===================================================
-         CHECK NEXT YEAR BALANCE IS UNUSED
-      =================================================== */
 
       const casualUnused =
         Number(
@@ -1066,53 +889,52 @@ const repairMissingCarryForward = async (req, res) => {
         continue;
       }
 
-      /* ===================================================
-         UPDATE ONLY CARRY-FORWARD LEAVES
-      =================================================== */
-
       nextYearBalance.casual =
         createBalanceObject(
           "casual",
+          12,
           casualCarryForward
         );
 
       nextYearBalance.sick =
         createBalanceObject(
           "sick",
+          12,
           sickCarryForward
         );
 
       nextYearBalance.earned =
         createBalanceObject(
           "earned",
+          18,
           earnedCarryForward
         );
-
-      /* ===================================================
-         SPECIAL LEAVES DO NOT CARRY FORWARD
-      =================================================== */
 
       nextYearBalance.marriage =
         createBalanceObject(
           "marriage",
+          5,
           0
         );
 
       nextYearBalance.maternity =
         createBalanceObject(
           "maternity",
+          182,
           0
         );
 
       nextYearBalance.paternity =
         createBalanceObject(
           "paternity",
+          15,
           0
         );
 
       nextYearBalance.bereavement =
         createBalanceObject(
           "bereavement",
+          5,
           0
         );
 
@@ -1123,7 +945,6 @@ const repairMissingCarryForward = async (req, res) => {
       updatedList.push({
         name: employee.name,
         email: employee.email,
-
         casualCarryForward,
         sickCarryForward,
         earnedCarryForward,
@@ -1159,7 +980,6 @@ const repairMissingCarryForward = async (req, res) => {
     });
   }
 };
-
 
 /* =========================================================
    EXPORT

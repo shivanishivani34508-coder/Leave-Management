@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./Dashboard.css";
+console.log("DASHBOARD COMPONENT LOADED");
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ function Dashboard() {
   ========================================================= */
 
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
       headers: {
@@ -32,8 +33,8 @@ function Dashboard() {
   ========================================================= */
 
   const handleUnauthorized = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
     navigate("/", {
       replace: true,
@@ -49,7 +50,7 @@ function Dashboard() {
       setLoading(true);
       setErrorMessage("");
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         handleUnauthorized();
@@ -90,7 +91,7 @@ function Dashboard() {
       setUser(latestUser);
       setLeaves(leaveData);
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         "user",
         JSON.stringify(latestUser)
       );
@@ -124,7 +125,7 @@ function Dashboard() {
 
 const fetchYearlyBalance = useCallback(async () => {
   try {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     if (!token) {
       return;
@@ -143,9 +144,23 @@ const nextYear = currentYear + 1;
     );
 
     setCurrentYearlyBalance(
-      currentBalanceResponse.data?.balance || null
+      currentBalanceResponse.data?.balance ||
+      currentBalanceResponse.data ||
+      null
     );
+   console.log(
+  "CURRENT YEAR BALANCE:",
+  currentBalanceResponse.data?.balance ||
+  currentBalanceResponse.data
+);
 
+console.log(
+  "CASUAL BALANCE:",
+  (
+    currentBalanceResponse.data?.balance ||
+    currentBalanceResponse.data
+  )?.casual
+);
     const response = await api.get(
       `/yearly-leave-balances/my?year=${nextYear}`,
       {
@@ -155,8 +170,11 @@ const nextYear = currentYear + 1;
       }
     );
 
-    setYearlyBalance(response.data?.balance || null);
-
+setYearlyBalance(
+  response.data?.balance ||
+  response.data ||
+  null
+);
   } catch (error) {
     console.error(
       "YEARLY LEAVE BALANCE ERROR:",
@@ -224,54 +242,59 @@ const leaveBalance = useMemo(() => {
 
   const balances = [
 
-    {
-      title: "Casual Leave",
-      total: 12,
-      remaining: remaining.casual ?? 12,
-    },
+  {
+  title: "Casual Leave",
+  total: 12,
+  remaining: remaining.casual ?? 12,
+  carryForward: currentYearlyBalance?.casual?.carryForward ?? 0,
+},
 
+   {
+  title: "Sick Leave",
+  total: 12,
+  remaining: remaining.sick ?? 12,
+  carryForward: currentYearlyBalance?.sick?.carryForward ?? 0,
+},
+{
+  title: "Earned Leave",
+  total: 18,
+  remaining: remaining.earned ?? 18,
+  carryForward: currentYearlyBalance?.earned?.carryForward ?? 0,
+},
     {
-      title: "Sick Leave",
-      total: 12,
-      remaining: remaining.sick ?? 12,
-    },
+  title: "Marriage Leave",
+  total: 5,
+  remaining: remaining.marriage ?? 5,
+  carryForward: currentYearlyBalance?.marriage?.carryForward ?? 0,
+},
 
-    {
-      title: "Earned Leave",
-      total: 18,
-      remaining: remaining.earned ?? 18,
-    },
-
-    {
-      title: "Marriage Leave",
-      total: 5,
-      remaining: remaining.marriage ?? 5,
-    },
-
-    {
-      title: "Bereavement Leave",
-      total: 5,
-      remaining: remaining.bereavement ?? 5,
-    },
+   {
+  title: "Bereavement Leave",
+  total: 5,
+  remaining: remaining.bereavement ?? 5,
+  carryForward: currentYearlyBalance?.bereavement?.carryForward ?? 0,
+},
 
   ];
 
   // Show only for Female employees
   if (user?.gender === "Female") {
-    balances.push({
-      title: "Maternity Leave",
-      total: 182,
-      remaining: remaining.maternity ?? 182,
-    });
+   balances.push({
+  title: "Maternity Leave",
+  total: 182,
+  remaining: remaining.maternity ?? 182,
+  carryForward: currentYearlyBalance?.maternity?.carryForward ?? 0,
+});
   }
 
   // Show only for Male employees
   if (user?.gender === "Male") {
-    balances.push({
-      title: "Paternity Leave",
-      total: 15,
-      remaining: remaining.paternity ?? 15,
-    });
+   balances.push({
+  title: "Paternity Leave",
+  total: 15,
+  remaining: remaining.paternity ?? 15,
+  carryForward: currentYearlyBalance?.paternity?.carryForward ?? 0,
+});
   }
 
   return balances.map((leave) => ({
@@ -513,29 +536,23 @@ const leaveBalance = useMemo(() => {
           {leave.title}
         </h3>
 
-        <div className="dashboard-balance-row">
+       <div className="dashboard-balance-row"> 
+        <span>Total</span> 
+          <strong>{leave.total} Days</strong> 
+        </div> 
+ 
 
-          <span>Total</span>
+<div className="dashboard-balance-row"> 
+  <span>Used</span> 
+  <strong>
+    {Math.max(0, Number(leave.total) - Number(leave.remaining))} Days
+  </strong> 
+</div> 
 
-          <strong>{leave.total} Days</strong>
-
-        </div>
-
-        <div className="dashboard-balance-row">
-
-          <span>Used</span>
-
-          <strong>{leave.used} Days</strong>
-
-        </div>
-
-        <div className="dashboard-balance-row">
-
-          <span>Remaining</span>
-
-          <strong>{leave.remaining} Days</strong>
-
-        </div>
+<div className="dashboard-balance-row"> 
+  <span>Remaining</span> 
+  <strong>{leave.remaining} Days</strong> 
+</div>
 
         <div className="dashboard-progress">
 

@@ -32,13 +32,19 @@ const router = express.Router();
 
   Employee submits a new leave request.
 */
-
 router.post(
   "/",
   protect,
-  authorize("employee"),
+  authorize(
+    "employee",
+    "manager",
+    "departmentHead",
+    "hr",
+    "admin"
+  ),
   applyLeave
 );
+
 
 /*
   GET /api/leaves/my
@@ -49,8 +55,13 @@ router.post(
 router.get(
   "/my",
   protect,
-  authorize("employee"),
-  getMyLeaves
+  authorize(
+  "employee",
+  "manager",
+  "departmentHead",
+  "hr",
+  "admin"
+),  getMyLeaves
 );
 
 /* =========================================================
@@ -169,8 +180,12 @@ router.put(
 router.delete(
   "/:id",
   protect,
-  authorize("employee"),
-  cancelLeave
+  authorize(
+  "employee",
+  "manager",
+  "departmentHead",
+  "hr"
+),  cancelLeave
 );
 
 module.exports = router;

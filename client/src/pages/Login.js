@@ -92,9 +92,9 @@ function Login() {
          SAVE LOGIN DATA
       ------------------------- */
 
-      localStorage.setItem("token", token);
+      sessionStorage.setItem("token", token);
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         "user",
         JSON.stringify(user)
       );

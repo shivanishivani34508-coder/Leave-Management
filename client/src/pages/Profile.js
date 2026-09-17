@@ -41,7 +41,7 @@ function Profile() {
       setLoading(true);
       setProfileError("");
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const response = await api.get("/users/profile", {
         headers: {
@@ -108,7 +108,7 @@ function Profile() {
     try {
       setUpdatingProfile(true);
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const response = await api.put(
         "/users/profile",
@@ -126,9 +126,9 @@ function Profile() {
 
       setProfileMessage(response.data.message);
 
-      // Update localStorage user
+      // Update the user data for this browser tab only.
       const storedUser = JSON.parse(
-        localStorage.getItem("user")
+        sessionStorage.getItem("user")
       );
 
       const updatedUser = {
@@ -136,7 +136,7 @@ function Profile() {
         ...response.data.user,
       };
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         "user",
         JSON.stringify(updatedUser)
       );
@@ -210,7 +210,7 @@ function Profile() {
     try {
       setChangingPassword(true);
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const response = await api.put(
         "/users/change-password",
@@ -234,8 +234,8 @@ function Profile() {
 
       // Logout after successful password change
       setTimeout(() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
 
         navigate("/");
       }, 1500);

@@ -51,7 +51,7 @@ function Managers() {
   ========================================================= */
 
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
       headers: {
@@ -66,9 +66,9 @@ function Managers() {
   ========================================================= */
 
   const handleUnauthorized = useCallback(() => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
 
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("user");
 
     navigate("/", {
       replace: true,
@@ -86,7 +86,7 @@ function Managers() {
 
       setError("");
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         handleUnauthorized();

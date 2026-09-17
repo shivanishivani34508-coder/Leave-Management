@@ -86,6 +86,17 @@ const leaveSchema = new mongoose.Schema(
       default: "Pending",
     },
 
+    status: {
+  type: String,
+  enum: ["Pending", "Approved", "Rejected", "Cancelled"],
+  default: "Pending",
+},
+
+requiredApprovals: {
+  type: [String],
+  enum: ["Manager", "DepartmentHead", "HR", "Admin"],  default: ["Manager"],
+},
+
         managerStatus: {
       type: String,
       enum: ["Pending", "Approved", "Rejected"],

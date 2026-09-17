@@ -29,7 +29,7 @@ function ManageLeaves() {
   ========================================================= */
 
   const getAuthConfig = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     return {
       headers: {
@@ -43,8 +43,8 @@ function ManageLeaves() {
   ========================================================= */
 
   const handleUnauthorized = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
 
     navigate("/", {
       replace: true,
@@ -79,7 +79,9 @@ function ManageLeaves() {
       .trim()
       .split(/\s+/)
       .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
+      .map((part) =>
+        part.charAt(0).toUpperCase()
+      )
       .join("");
   };
 
@@ -98,11 +100,14 @@ function ManageLeaves() {
       return "-";
     }
 
-    return parsedDate.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    return parsedDate.toLocaleDateString(
+      "en-GB",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
   };
 
   /* =========================================================
@@ -120,53 +125,435 @@ function ManageLeaves() {
       return "-";
     }
 
-    return parsedDate.toLocaleDateString("en-GB");
+    return parsedDate.toLocaleDateString(
+      "en-GB"
+    );
+  };
+
+  /* =========================================================
+     GET REQUIRED APPROVALS
+
+     NORMAL EMPLOYEE:
+
+     0.5 - 2 days
+       Manager
+
+     3 - 5 days
+       Manager -> Department Head
+
+     6+ days
+       Manager -> Department Head -> HR
+
+     MANAGER SELF LEAVE:
+       Department Head -> HR
+
+     DEPARTMENT HEAD SELF LEAVE:
+       HR
+
+     HR SELF LEAVE:
+       Admin
+
+     ADMIN SELF LEAVE:
+       Admin
+  ========================================================= */
+
+  const getRequiredApprovals = (leave) => {
+    /*
+      Always use database value when available.
+    */
+
+    if (
+      Array.isArray(
+        leave?.requiredApprovals
+      ) &&
+      leave.requiredApprovals.length > 0
+    ) {
+      return leave.requiredApprovals;
+    }
+
+    /*
+      Fallback for older records.
+    */
+
+    const employee = getEmployee(leave);
+
+    const employeeRole =
+      employee?.role;
+
+    const totalDays =
+      Number(leave?.totalDays) || 0;
+
+    /*
+      Manager's own leave
+    */
+
+    if (employeeRole === "manager") {
+      return [
+        "DepartmentHead",
+        "HR",
+      ];
+    }
+
+    /*
+      Department Head's own leave
+    */
+
+    if (
+      employeeRole ===
+      "departmentHead"
+    ) {
+      return ["HR"];
+    }
+
+    /*
+      HR's own leave
+    */
+
+    if (employeeRole === "hr") {
+      return ["Admin"];
+    }
+
+    /*
+      Admin's own leave
+    */
+
+    if (employeeRole === "admin") {
+      return ["Admin"];
+    }
+
+    /*
+      Normal employee
+    */
+
+    if (totalDays > 5) {
+      return [
+        "Manager",
+        "DepartmentHead",
+        "HR",
+      ];
+    }
+
+    if (totalDays > 2) {
+      return [
+        "Manager",
+        "DepartmentHead",
+      ];
+    }
+
+    return ["Manager"];
+  };
+
+  /* =========================================================
+     GET CURRENT WAITING APPROVAL
+  ========================================================= */
+
+  const getWaitingStage = (leave) => {
+    const requiredApprovals =
+      getRequiredApprovals(leave);
+
+    /*
+      Manager
+    */
+
+    if (
+      requiredApprovals.includes(
+        "Manager"
+      ) &&
+      leave?.managerStatus !==
+        "Approved"
+    ) {
+      return "Manager";
+    }
+
+    /*
+      Department Head
+    */
+
+    if (
+      requiredApprovals.includes(
+        "DepartmentHead"
+      ) &&
+      leave?.departmentHeadStatus !==
+        "Approved"
+    ) {
+      return "Department Head";
+    }
+
+    /*
+      HR
+    */
+
+    if (
+      requiredApprovals.includes("HR") &&
+      leave?.hrStatus !== "Approved"
+    ) {
+      return "HR";
+    }
+
+    /*
+      Admin
+    */
+
+    if (
+      requiredApprovals.includes("Admin") &&
+      leave?.adminStatus !== "Approved"
+    ) {
+      return "Admin";
+    }
+
+    return null;
+  };
+
+  /* =========================================================
+     CHECK FULL APPROVAL
+
+     Only required approval stages are checked.
+  ========================================================= */
+
+  const isFullyApproved = (leave) => {
+    const requiredApprovals =
+      getRequiredApprovals(leave);
+
+    return requiredApprovals.every(
+      (approval) => {
+        if (approval === "Manager") {
+          return (
+            leave?.managerStatus ===
+            "Approved"
+          );
+        }
+
+        if (
+          approval ===
+          "DepartmentHead"
+        ) {
+          return (
+            leave?.departmentHeadStatus ===
+            "Approved"
+          );
+        }
+
+        if (approval === "HR") {
+          return (
+            leave?.hrStatus ===
+            "Approved"
+          );
+        }
+
+        if (approval === "Admin") {
+          return (
+            leave?.adminStatus ===
+            "Approved"
+          );
+        }
+
+        return true;
+      }
+    );
   };
 
   /* =========================================================
      FETCH ALL LEAVES
+
+     Admin can view all leave requests.
   ========================================================= */
 
-  const fetchLeaves = useCallback(async () => {
+  const fetchLeaves = useCallback(
+    async () => {
+      try {
+        setLoading(true);
+        setMessage("");
+
+        const token =
+          sessionStorage.getItem("token");
+
+        if (!token) {
+          handleUnauthorized();
+          return;
+        }
+
+        const response =
+          await api.get(
+            "/leaves",
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        const leaveData =
+          Array.isArray(response.data)
+            ? response.data
+            : response.data?.leaves ||
+              [];
+
+        console.log(
+          "ADMIN - ALL LEAVES:",
+          leaveData
+        );
+
+        setLeaves(leaveData);
+      } catch (error) {
+        console.error(
+          "FETCH ALL LEAVES ERROR:",
+          error
+        );
+
+        if (
+          error.response?.status ===
+            401 ||
+          error.response?.status ===
+            403
+        ) {
+          handleUnauthorized();
+          return;
+        }
+
+        setMessageType("error");
+
+        setMessage(
+          error.response?.data?.message ||
+            "Unable to load employee leave requests."
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleUnauthorized]
+  );
+
+  /* =========================================================
+     ADMIN APPROVAL
+
+     IMPORTANT:
+
+     Admin can approve/reject ONLY HR self-leave.
+
+     Normal employee leave is NOT approved
+     by Admin.
+  ========================================================= */
+
+  const handleAdminStatusUpdate = async (
+    leaveId,
+    newStatus
+  ) => {
+    if (
+      !leaveId ||
+      updatingLeaveId
+    ) {
+      return;
+    }
+
+    const selectedLeave =
+      leaves.find(
+        (leave) =>
+          leave?._id === leaveId
+      );
+
+    if (!selectedLeave) {
+      setMessageType("error");
+
+      setMessage(
+        "Leave request not found."
+      );
+
+      return;
+    }
+
+    const employee =
+      getEmployee(selectedLeave);
+
+    const isHRLeave =
+      employee?.role === "hr";
+
+    const requiresAdmin =
+      getRequiredApprovals(
+        selectedLeave
+      ).includes("Admin");
+
+    const adminPending =
+      selectedLeave?.adminStatus ===
+      "Pending";
+
+    /*
+      Security check on frontend.
+
+      Only HR self-leave that requires
+      Admin approval can be processed here.
+    */
+
+    if (
+      !isHRLeave ||
+      !requiresAdmin ||
+      !adminPending
+    ) {
+      setMessageType("error");
+
+      setMessage(
+        "Admin can only approve or reject HR self-leave."
+      );
+
+      return;
+    }
+
+    const employeeName =
+      employee?.name ||
+      "HR employee";
+
+    const leaveType =
+      selectedLeave?.leaveType ||
+      "leave";
+
+    const confirmed =
+      window.confirm(
+        `Are you sure you want to ${newStatus.toLowerCase()} ${employeeName}'s ${leaveType} request?`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      setLoading(true);
+      setUpdatingLeaveId(
+        leaveId
+      );
+
       setMessage("");
 
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        handleUnauthorized();
-        return;
-      }
-
-      const response = await api.get(
-        "/leaves",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      const response =
+        await api.put(
+          `/leaves/${leaveId}/admin`,
+          {
+            status: newStatus,
           },
-        }
-      );
-
-      const leaveData = Array.isArray(response.data)
-        ? response.data
-        : response.data?.leaves || [];
+          getAuthConfig()
+        );
 
       console.log(
-        "ADMIN - ALL LEAVES:",
-        leaveData
+        "ADMIN LEAVE UPDATE:",
+        response.data
       );
 
-      setLeaves(leaveData);
+      setMessageType("success");
+
+      setMessage(
+        `HR leave ${newStatus.toLowerCase()} successfully by Admin.`
+      );
+
+      await fetchLeaves();
     } catch (error) {
       console.error(
-        "FETCH ALL LEAVES ERROR:",
+        "ADMIN LEAVE UPDATE ERROR:",
         error
       );
 
       if (
-        error.response?.status === 401 ||
-        error.response?.status === 403
+        error.response?.status ===
+          401 ||
+        error.response?.status ===
+          403
       ) {
         handleUnauthorized();
         return;
@@ -176,12 +563,12 @@ function ManageLeaves() {
 
       setMessage(
         error.response?.data?.message ||
-          "Unable to load employee leave requests."
+          "Unable to process HR leave request."
       );
     } finally {
-      setLoading(false);
+      setUpdatingLeaveId(null);
     }
-  }, [handleUnauthorized]);
+  };
 
   /* =========================================================
      LOAD DATA
@@ -198,9 +585,10 @@ function ManageLeaves() {
   const statistics = useMemo(() => {
     return leaves.reduce(
       (result, leave) => {
-        const status = String(
-          leave.status || ""
-        ).toLowerCase();
+        const status =
+          String(
+            leave?.status || ""
+          ).toLowerCase();
 
         result.totalRequests += 1;
 
@@ -217,13 +605,19 @@ function ManageLeaves() {
         }
 
         result.requestedDays +=
-          Number(leave.totalDays) || 0;
+          Number(
+            leave?.totalDays
+          ) || 0;
 
         result.paidDays +=
-          Number(leave.paidDays) || 0;
+          Number(
+            leave?.paidDays
+          ) || 0;
 
         result.unpaidDays +=
-          Number(leave.unpaidDays) || 0;
+          Number(
+            leave?.unpaidDays
+          ) || 0;
 
         return result;
       },
@@ -240,90 +634,51 @@ function ManageLeaves() {
   }, [leaves]);
 
   /* =========================================================
-     ADMIN FINAL APPROVAL CHECK
-     
-     Admin can approve/reject ONLY when:
-     
-     Manager          = Approved
-     Department Head  = Approved
-     HR               = Approved
-     Admin            = Pending
-  ========================================================= */
-
-  const isReadyForAdmin = (leave) => {
-    return (
-      leave?.managerStatus === "Approved" &&
-      leave?.departmentHeadStatus === "Approved" &&
-      leave?.hrStatus === "Approved" &&
-      leave?.adminStatus === "Pending"
-    );
-  };
-
-  /* =========================================================
-     ADMIN PROCESSED CHECK
-  ========================================================= */
-
-  const isAdminApproved = (leave) => {
-    return leave?.adminStatus === "Approved";
-  };
-
-  const isAdminRejected = (leave) => {
-    return leave?.adminStatus === "Rejected";
-  };
-
-  /* =========================================================
-     ADMIN PENDING REQUESTS
-  ========================================================= */
-
-  const pendingAdminLeaves = useMemo(() => {
-    return leaves.filter(
-      (leave) => isReadyForAdmin(leave)
-    );
-  }, [leaves]);
-
-  /* =========================================================
-     ADMIN PROCESSED REQUESTS
-  ========================================================= */
-
-  const processedAdminLeaves = useMemo(() => {
-    return leaves.filter(
-      (leave) =>
-        isAdminApproved(leave) ||
-        isAdminRejected(leave)
-    );
-  }, [leaves]);
-
-  /* =========================================================
      SEARCH + FILTER + SORT
   ========================================================= */
 
   const filteredLeaves = useMemo(() => {
     const normalizedSearch =
-      searchTerm.trim().toLowerCase();
+      searchTerm
+        .trim()
+        .toLowerCase();
 
     return [...leaves]
       .filter((leave) => {
-        const employee = getEmployee(leave);
+        const employee =
+          getEmployee(leave);
 
-        const employeeName = String(
-          employee?.name || ""
-        ).toLowerCase();
+        const employeeName =
+          String(
+            employee?.name || ""
+          ).toLowerCase();
 
-        const employeeEmail = String(
-          employee?.email || ""
-        ).toLowerCase();
+        const employeeEmail =
+          String(
+            employee?.email || ""
+          ).toLowerCase();
 
-        const leaveType = String(
-          leave.leaveType || ""
-        ).toLowerCase();
+        const department =
+          String(
+            employee?.department ||
+              leave?.department ||
+              ""
+          ).toLowerCase();
 
-        const reason = String(
-          leave.reason || ""
-        ).toLowerCase();
+        const leaveType =
+          String(
+            leave?.leaveType || ""
+          ).toLowerCase();
 
-        const status = String(
-          leave.status || ""
-        ).toLowerCase();
+        const reason =
+          String(
+            leave?.reason || ""
+          ).toLowerCase();
+
+        const status =
+          String(
+            leave?.status || ""
+          ).toLowerCase();
 
         const matchesSearch =
           !normalizedSearch ||
@@ -331,6 +686,9 @@ function ManageLeaves() {
             normalizedSearch
           ) ||
           employeeEmail.includes(
+            normalizedSearch
+          ) ||
+          department.includes(
             normalizedSearch
           ) ||
           leaveType.includes(
@@ -354,20 +712,28 @@ function ManageLeaves() {
         );
       })
       .sort(
-        (firstLeave, secondLeave) => {
-          const firstDate = new Date(
-            firstLeave.createdAt ||
-              firstLeave.startDate ||
-              0
-          );
+        (
+          firstLeave,
+          secondLeave
+        ) => {
+          const firstDate =
+            new Date(
+              firstLeave.createdAt ||
+                firstLeave.startDate ||
+                0
+            );
 
-          const secondDate = new Date(
-            secondLeave.createdAt ||
-              secondLeave.startDate ||
-              0
-          );
+          const secondDate =
+            new Date(
+              secondLeave.createdAt ||
+                secondLeave.startDate ||
+                0
+            );
 
-          return secondDate - firstDate;
+          return (
+            secondDate -
+            firstDate
+          );
         }
       );
   }, [
@@ -377,22 +743,25 @@ function ManageLeaves() {
   ]);
 
   /* =========================================================
-     GET STATUS CLASS
+     STATUS CLASS
   ========================================================= */
 
   const getStatusClass = (status) => {
     const normalizedStatus =
-      String(status || "")
-        .toLowerCase();
+      String(
+        status || ""
+      ).toLowerCase();
 
     if (
-      normalizedStatus === "approved"
+      normalizedStatus ===
+      "approved"
     ) {
       return "approved";
     }
 
     if (
-      normalizedStatus === "rejected"
+      normalizedStatus ===
+      "rejected"
     ) {
       return "rejected";
     }
@@ -401,13 +770,14 @@ function ManageLeaves() {
   };
 
   /* =========================================================
-     ALLOCATION LABEL
+     LEAVE BALANCE ALLOCATION LABEL
   ========================================================= */
 
   const getAllocationLabel = (leave) => {
-    const status = String(
-      leave.status || ""
-    ).toLowerCase();
+    const status =
+      String(
+        leave?.status || ""
+      ).toLowerCase();
 
     if (status === "rejected") {
       return "Not Deducted";
@@ -419,7 +789,7 @@ function ManageLeaves() {
 
     if (
       status === "approved" &&
-      leave.balanceDeducted === true
+      leave?.balanceDeducted === true
     ) {
       return "Balance Deducted";
     }
@@ -428,17 +798,20 @@ function ManageLeaves() {
   };
 
   /* =========================================================
-     ALLOCATION CLASS
+     LEAVE BALANCE ALLOCATION CLASS
   ========================================================= */
 
-  const getAllocationClass = (leave) => {
-    const status = String(
-      leave.status || ""
-    ).toLowerCase();
+  const getAllocationClass = (
+    leave
+  ) => {
+    const status =
+      String(
+        leave?.status || ""
+      ).toLowerCase();
 
     if (
       status === "approved" &&
-      leave.balanceDeducted === true
+      leave?.balanceDeducted === true
     ) {
       return "deducted";
     }
@@ -451,10 +824,12 @@ function ManageLeaves() {
   };
 
   /* =========================================================
-     APPROVAL STAGE CLASS
+     APPROVAL STATUS CLASS
   ========================================================= */
 
-  const getApprovalClass = (status) => {
+  const getApprovalClass = (
+    status
+  ) => {
     if (status === "Approved") {
       return "approved";
     }
@@ -467,10 +842,12 @@ function ManageLeaves() {
   };
 
   /* =========================================================
-     APPROVAL STAGE TEXT
+     APPROVAL STATUS ICON
   ========================================================= */
 
-  const getApprovalIcon = (status) => {
+  const getApprovalIcon = (
+    status
+  ) => {
     if (status === "Approved") {
       return "✓";
     }
@@ -483,163 +860,7 @@ function ManageLeaves() {
   };
 
   /* =========================================================
-     WHO IS CURRENTLY WAITING?
-  ========================================================= */
-
-  const getWaitingStage = (leave) => {
-    if (
-      leave.managerStatus !== "Approved"
-    ) {
-      return "Manager";
-    }
-
-    if (
-      leave.departmentHeadStatus !==
-      "Approved"
-    ) {
-      return "Department Head";
-    }
-
-    if (
-      leave.hrStatus !== "Approved"
-    ) {
-      return "HR";
-    }
-
-    if (
-      leave.adminStatus !== "Approved"
-    ) {
-      return "Admin";
-    }
-
-    return null;
-  };
-
-  /* =========================================================
-     APPROVE / REJECT LEAVE
-  ========================================================= */
-
-  const handleStatusUpdate = async (
-    leaveId,
-    newStatus
-  ) => {
-    if (!leaveId || updatingLeaveId) {
-      return;
-    }
-
-    const selectedLeave = leaves.find(
-      (leave) =>
-        leave._id === leaveId
-    );
-
-    if (!selectedLeave) {
-      setMessageType("error");
-
-      setMessage(
-        "Leave request not found."
-      );
-
-      return;
-    }
-
-    /*
-      Frontend safety check.
-
-      Admin can only take final action after:
-      Manager + Department Head + HR
-      have approved the request.
-    */
-
-    if (
-      !isReadyForAdmin(
-        selectedLeave
-      )
-    ) {
-      setMessageType("error");
-
-      setMessage(
-        "This leave is not ready for Admin approval. Manager, Department Head and HR must approve it first."
-      );
-
-      return;
-    }
-
-    const employee =
-      getEmployee(selectedLeave);
-
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to ${newStatus.toLowerCase()} ` +
-          `${employee?.name || "this employee"}'s ` +
-          `${selectedLeave.leaveType || ""} leave request?`
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setUpdatingLeaveId(leaveId);
-      setMessage("");
-
-      const response =
-        await api.put(
-          `/leaves/${leaveId}/status`,
-          {
-            status: newStatus,
-          },
-          getAuthConfig()
-        );
-
-      console.log(
-        "ADMIN STATUS UPDATE:",
-        response.data
-      );
-
-      setMessageType("success");
-
-      setMessage(
-        `Leave ${newStatus.toLowerCase()} successfully.`
-      );
-
-      /*
-        Fetch fresh data so the frontend
-        receives the latest:
-        - status
-        - paidDays
-        - unpaidDays
-        - balanceDeducted
-        - approval statuses
-      */
-
-      await fetchLeaves();
-    } catch (error) {
-      console.error(
-        "ADMIN APPROVAL ERROR:",
-        error
-      );
-
-      if (
-        error.response?.status === 401 ||
-        error.response?.status === 403
-      ) {
-        handleUnauthorized();
-        return;
-      }
-
-      setMessageType("error");
-
-      setMessage(
-        error.response?.data?.message ||
-          "Unable to update leave status."
-      );
-    } finally {
-      setUpdatingLeaveId(null);
-    }
-  };
-
-  /* =========================================================
-     EXPORT TO EXCEL
+     EXCEL EXPORT
   ========================================================= */
 
   const handleExportExcel = () => {
@@ -662,8 +883,14 @@ function ManageLeaves() {
             const employee =
               getEmployee(leave);
 
+            const requiredApprovals =
+              getRequiredApprovals(
+                leave
+              );
+
             return {
-              "Sl. No.": index + 1,
+              "Sl. No.":
+                index + 1,
 
               "Employee Name":
                 employee?.name ||
@@ -675,59 +902,70 @@ function ManageLeaves() {
 
               Department:
                 employee?.department ||
-                leave.department ||
+                leave?.department ||
+                "-",
+
+              Role:
+                employee?.role ||
                 "-",
 
               "Leave Type":
-                leave.leaveType || "-",
+                leave?.leaveType ||
+                "-",
 
               "Start Date":
                 formatExcelDate(
-                  leave.startDate
+                  leave?.startDate
                 ),
 
               "End Date":
                 formatExcelDate(
-                  leave.endDate
+                  leave?.endDate
                 ),
 
               "Total Days":
                 Number(
-                  leave.totalDays
+                  leave?.totalDays
                 ) || 0,
 
               "Paid Days":
                 Number(
-                  leave.paidDays
+                  leave?.paidDays
                 ) || 0,
 
               "Unpaid Days":
                 Number(
-                  leave.unpaidDays
+                  leave?.unpaidDays
                 ) || 0,
 
               Reason:
-                leave.reason || "-",
+                leave?.reason ||
+                "-",
 
               Status:
-                leave.status ||
+                leave?.status ||
                 "Pending",
 
+              "Required Approvals":
+                requiredApprovals.join(
+                  " → "
+                ),
+
               "Manager Status":
-                leave.managerStatus ||
+                leave?.managerStatus ||
                 "Pending",
 
               "Department Head Status":
-                leave.departmentHeadStatus ||
+                leave?.departmentHeadStatus ||
                 "Pending",
 
               "HR Status":
-                leave.hrStatus ||
+                leave?.hrStatus ||
                 "Pending",
 
               "Admin Status":
-                leave.adminStatus ||
-                "Pending",
+                leave?.adminStatus ||
+                "Not Required",
 
               Allocation:
                 getAllocationLabel(
@@ -736,7 +974,7 @@ function ManageLeaves() {
 
               "Applied Date":
                 formatExcelDate(
-                  leave.createdAt
+                  leave?.createdAt
                 ),
             };
           }
@@ -752,6 +990,7 @@ function ManageLeaves() {
         { wch: 24 },
         { wch: 30 },
         { wch: 18 },
+        { wch: 18 },
         { wch: 20 },
         { wch: 16 },
         { wch: 16 },
@@ -760,12 +999,13 @@ function ManageLeaves() {
         { wch: 12 },
         { wch: 35 },
         { wch: 14 },
+        { wch: 35 },
         { wch: 18 },
         { wch: 24 },
-        { wch: 16 },
-        { wch: 16 },
+        { wch: 18 },
         { wch: 25 },
         { wch: 16 },
+        { wch: 18 },
       ];
 
       const workbook =
@@ -808,36 +1048,31 @@ function ManageLeaves() {
   if (loading) {
     return (
       <div className="manage-leaves-page">
-
         <div className="manage-leaves-loading">
-
           <div className="manage-leaves-spinner" />
 
           <span className="manage-leaves-loading-text">
-            Loading employee leave requests...
+            Loading employee leave
+            requests...
           </span>
-
         </div>
-
       </div>
     );
   }
 
   /* =========================================================
-     PAGE
+     MAIN PAGE
   ========================================================= */
 
   return (
     <div className="manage-leaves-page">
-
       <div className="manage-leaves-container">
 
-        {/* =====================================================
-            PAGE HEADER
-        ===================================================== */}
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
         <header className="manage-leaves-header">
-
           <div className="manage-leaves-header-content">
 
             <span className="manage-leaves-label">
@@ -849,9 +1084,11 @@ function ManageLeaves() {
             </h1>
 
             <p className="manage-leaves-description">
-              Review all employee leave requests and
-              complete the final approval after Manager,
-              Department Head and HR approval.
+              Monitor all employee leave
+              requests and track their
+              Manager, Department Head,
+              HR and Admin approval
+              progress.
             </p>
 
           </div>
@@ -867,12 +1104,11 @@ function ManageLeaves() {
           >
             ← Back to Admin Dashboard
           </button>
-
         </header>
 
-        {/* =====================================================
+        {/* =================================================
             MESSAGE
-        ===================================================== */}
+        ================================================= */}
 
         {message && (
           <div
@@ -882,20 +1118,20 @@ function ManageLeaves() {
           </div>
         )}
 
-        {/* =====================================================
-            REQUEST STATISTICS
-        ===================================================== */}
+        {/* =================================================
+            STATISTICS
+        ================================================= */}
 
         <section className="manage-leaves-stats-grid">
 
-          <article className="manage-leaves-stat-card">
+          {/* TOTAL */}
 
+          <article className="manage-leaves-stat-card">
             <div className="manage-leaves-stat-icon total">
               📄
             </div>
 
             <div className="manage-leaves-stat-content">
-
               <span className="manage-leaves-stat-label">
                 Total Requests
               </span>
@@ -903,19 +1139,17 @@ function ManageLeaves() {
               <h2 className="manage-leaves-stat-value">
                 {statistics.totalRequests}
               </h2>
-
             </div>
-
           </article>
 
-          <article className="manage-leaves-stat-card">
+          {/* PENDING */}
 
+          <article className="manage-leaves-stat-card">
             <div className="manage-leaves-stat-icon pending">
               ⏳
             </div>
 
             <div className="manage-leaves-stat-content">
-
               <span className="manage-leaves-stat-label">
                 Pending
               </span>
@@ -923,19 +1157,17 @@ function ManageLeaves() {
               <h2 className="manage-leaves-stat-value">
                 {statistics.pending}
               </h2>
-
             </div>
-
           </article>
 
-          <article className="manage-leaves-stat-card">
+          {/* APPROVED */}
 
+          <article className="manage-leaves-stat-card">
             <div className="manage-leaves-stat-icon approved">
               ✓
             </div>
 
             <div className="manage-leaves-stat-content">
-
               <span className="manage-leaves-stat-label">
                 Approved
               </span>
@@ -943,19 +1175,17 @@ function ManageLeaves() {
               <h2 className="manage-leaves-stat-value">
                 {statistics.approved}
               </h2>
-
             </div>
-
           </article>
 
-          <article className="manage-leaves-stat-card">
+          {/* REJECTED */}
 
+          <article className="manage-leaves-stat-card">
             <div className="manage-leaves-stat-icon rejected">
               ✕
             </div>
 
             <div className="manage-leaves-stat-content">
-
               <span className="manage-leaves-stat-label">
                 Rejected
               </span>
@@ -963,21 +1193,18 @@ function ManageLeaves() {
               <h2 className="manage-leaves-stat-value">
                 {statistics.rejected}
               </h2>
-
             </div>
-
           </article>
 
         </section>
 
-        {/* =====================================================
-            DAY STATISTICS
-        ===================================================== */}
+        {/* =================================================
+            DAYS SUMMARY
+        ================================================= */}
 
         <section className="manage-leaves-days-grid">
 
           <article className="manage-leaves-day-card">
-
             <span className="manage-leaves-day-label">
               Requested Days
             </span>
@@ -985,11 +1212,9 @@ function ManageLeaves() {
             <strong className="manage-leaves-day-value">
               {statistics.requestedDays}
             </strong>
-
           </article>
 
           <article className="manage-leaves-day-card">
-
             <span className="manage-leaves-day-label">
               Paid Days
             </span>
@@ -997,11 +1222,9 @@ function ManageLeaves() {
             <strong className="manage-leaves-day-value">
               {statistics.paidDays}
             </strong>
-
           </article>
 
           <article className="manage-leaves-day-card">
-
             <span className="manage-leaves-day-label">
               Unpaid Days
             </span>
@@ -1009,106 +1232,118 @@ function ManageLeaves() {
             <strong className="manage-leaves-day-value">
               {statistics.unpaidDays}
             </strong>
-
           </article>
 
         </section>
 
-        {/* =====================================================
-            ADMIN FINAL APPROVAL SUMMARY
-        ===================================================== */}
+        {/* =================================================
+            APPROVAL WORKFLOW SUMMARY
+        ================================================= */}
 
         <section className="admin-final-summary">
 
-          <div className="admin-final-summary-card">
+          {/* 0.5 - 2 DAYS */}
 
+          <div className="admin-final-summary-card">
             <span className="admin-final-summary-icon">
-              ⏳
+              1
             </span>
 
             <div>
               <strong>
-                {pendingAdminLeaves.length}
+                Manager
               </strong>
 
               <span>
-                Ready for Admin Final Approval
+                0.5–2 days
               </span>
             </div>
-
           </div>
 
-          <div className="admin-final-summary-card">
+          {/* 3 - 5 DAYS */}
 
+          <div className="admin-final-summary-card">
             <span className="admin-final-summary-icon">
-              ✓
+              2
             </span>
 
             <div>
               <strong>
-                {
-                  processedAdminLeaves.filter(
-                    (leave) =>
-                      leave.adminStatus ===
-                      "Approved"
-                  ).length
-                }
+                Manager → Department Head
               </strong>
 
               <span>
-                Admin Approved
+                3–5 days
               </span>
             </div>
-
           </div>
 
-          <div className="admin-final-summary-card">
+          {/* 6+ DAYS */}
 
+          <div className="admin-final-summary-card">
             <span className="admin-final-summary-icon">
-              ✕
+              3
             </span>
 
             <div>
               <strong>
-                {
-                  processedAdminLeaves.filter(
-                    (leave) =>
-                      leave.adminStatus ===
-                      "Rejected"
-                  ).length
-                }
+                Manager → Department Head → HR
               </strong>
 
               <span>
-                Admin Rejected
+                6+ days
               </span>
             </div>
+          </div>
 
+          {/* HR SELF LEAVE */}
+
+          <div className="admin-final-summary-card">
+            <span className="admin-final-summary-icon">
+              4
+            </span>
+
+            <div>
+              <strong>
+                HR → Admin
+              </strong>
+
+              <span>
+                HR self-leave
+              </span>
+            </div>
           </div>
 
         </section>
 
-        {/* =====================================================
-            MAIN LEAVE REQUEST SECTION
-        ===================================================== */}
+        {/* =================================================
+            LEAVE REQUEST SECTION
+        ================================================= */}
 
         <section className="manage-leaves-section">
 
           <div className="manage-leaves-section-header">
 
             <div>
-
               <h2 className="manage-leaves-section-title">
                 Employee Leave Requests
               </h2>
 
               <p className="manage-leaves-section-subtitle">
-                All employee leave applications are visible
-                to Admin. Final action is available only after
-                all previous approval stages are completed.
+                All employee leave
+                applications are visible
+                to Admin for monitoring.
+                Approval is handled by
+                the appropriate Manager,
+                Department Head and HR.
+                HR self-leave is handled
+                by Admin.
               </p>
-
             </div>
+
+            {/* =================================================
+                TOOLBAR
+            ================================================= */}
 
             <div className="manage-leaves-toolbar">
 
@@ -1161,11 +1396,13 @@ function ManageLeaves() {
               </select>
 
             </div>
-
           </div>
 
-          {filteredLeaves.length === 0 ? (
+          {/* =================================================
+              NO LEAVE REQUESTS
+          ================================================= */}
 
+          {filteredLeaves.length === 0 ? (
             <div className="manage-leaves-empty">
 
               <div className="manage-leaves-empty-icon">
@@ -1177,22 +1414,24 @@ function ManageLeaves() {
               </h3>
 
               <p>
-                No leave requests match your
-                current search or filter.
+                No leave requests match
+                your current search or
+                filter.
               </p>
 
             </div>
-
           ) : (
-
             <>
+
+              {/* =================================================
+                  LEAVE REQUEST TABLE
+              ================================================= */}
 
               <div className="manage-leaves-table-wrapper">
 
                 <table className="manage-leaves-table">
 
                   <thead>
-
                     <tr>
 
                       <th>
@@ -1240,7 +1479,6 @@ function ManageLeaves() {
                       </th>
 
                     </tr>
-
                   </thead>
 
                   <tbody>
@@ -1253,28 +1491,53 @@ function ManageLeaves() {
                             leave
                           );
 
-                        const isReady =
-                          isReadyForAdmin(
+                        const requiredApprovals =
+                          getRequiredApprovals(
                             leave
                           );
-
-                        const isUpdating =
-                          updatingLeaveId ===
-                          leave._id;
 
                         const waitingStage =
                           getWaitingStage(
                             leave
                           );
 
+                        const fullyApproved =
+                          isFullyApproved(
+                            leave
+                          );
+
+                        const leaveStatus =
+                          String(
+                            leave?.status ||
+                              ""
+                          ).toLowerCase();
+
+                        const isHRLeave =
+                          employee?.role ===
+                          "hr";
+
+                        const needsAdminApproval =
+                          isHRLeave &&
+                          requiredApprovals.includes(
+                            "Admin"
+                          ) &&
+                          leave?.adminStatus ===
+                            "Pending";
+
+                        const isUpdating =
+                          updatingLeaveId ===
+                          leave?._id;
+
                         return (
                           <tr
                             key={
-                              leave._id
+                              leave?._id
                             }
                           >
 
-                            {/* EMPLOYEE */}
+                            {/* =================================================
+                                EMPLOYEE
+                            ================================================= */}
 
                             <td>
 
@@ -1298,24 +1561,34 @@ function ManageLeaves() {
                                       "Email unavailable"}
                                   </span>
 
+                                  {employee?.department && (
+                                    <span className="manage-leaves-employee-department">
+                                      {employee.department}
+                                    </span>
+                                  )}
+
                                 </div>
 
                               </div>
 
                             </td>
 
-                            {/* LEAVE TYPE */}
+                            {/* =================================================
+                                LEAVE TYPE
+                            ================================================= */}
 
                             <td>
 
                               <span className="manage-leaves-type">
-                                {leave.leaveType ||
+                                {leave?.leaveType ||
                                   "-"}
                               </span>
 
                             </td>
 
-                            {/* DATES */}
+                            {/* =================================================
+                                DATES
+                            ================================================= */}
 
                             <td>
 
@@ -1323,7 +1596,7 @@ function ManageLeaves() {
 
                                 <span>
                                   {formatDate(
-                                    leave.startDate
+                                    leave?.startDate
                                   )}
                                 </span>
 
@@ -1333,7 +1606,7 @@ function ManageLeaves() {
 
                                 <span>
                                   {formatDate(
-                                    leave.endDate
+                                    leave?.endDate
                                   )}
                                 </span>
 
@@ -1341,69 +1614,79 @@ function ManageLeaves() {
 
                             </td>
 
-                            {/* TOTAL DAYS */}
+                            {/* =================================================
+                                TOTAL DAYS
+                            ================================================= */}
 
                             <td>
 
                               <span className="manage-leaves-total-days">
                                 {Number(
-                                  leave.totalDays
+                                  leave?.totalDays
                                 ) || 0}
                               </span>
 
                             </td>
 
-                            {/* PAID DAYS */}
+                            {/* =================================================
+                                PAID DAYS
+                            ================================================= */}
 
                             <td>
 
                               <span className="manage-leaves-paid-days">
                                 {Number(
-                                  leave.paidDays
+                                  leave?.paidDays
                                 ) || 0}
                               </span>
 
                             </td>
 
-                            {/* UNPAID DAYS */}
+                            {/* =================================================
+                                UNPAID DAYS
+                            ================================================= */}
 
                             <td>
 
                               <span className="manage-leaves-unpaid-days">
                                 {Number(
-                                  leave.unpaidDays
+                                  leave?.unpaidDays
                                 ) || 0}
                               </span>
 
                             </td>
 
-                            {/* REASON */}
+                            {/* =================================================
+                                REASON
+                            ================================================= */}
 
                             <td>
 
                               <span
                                 className="manage-leaves-reason"
                                 title={
-                                  leave.reason ||
+                                  leave?.reason ||
                                   ""
                                 }
                               >
-                                {leave.reason ||
+                                {leave?.reason ||
                                   "-"}
                               </span>
 
                             </td>
 
-                            {/* OVERALL STATUS */}
+                            {/* =================================================
+                                OVERALL STATUS
+                            ================================================= */}
 
                             <td>
 
                               <span
                                 className={`manage-leaves-status ${getStatusClass(
-                                  leave.status
+                                  leave?.status
                                 )}`}
                               >
-                                {leave.status ||
+                                {leave?.status ||
                                   "Pending"}
                               </span>
 
@@ -1417,75 +1700,109 @@ function ManageLeaves() {
 
                               <div className="admin-approval-flow">
 
-                                <span
-                                  className={`admin-approval-stage ${getApprovalClass(
-                                    leave.managerStatus
-                                  )}`}
-                                >
-                                  <span>
-                                    {getApprovalIcon(
-                                      leave.managerStatus
-                                    )}
+                                {/* MANAGER */}
+
+                                {requiredApprovals.includes(
+                                  "Manager"
+                                ) && (
+                                  <span
+                                    className={`admin-approval-stage ${getApprovalClass(
+                                      leave?.managerStatus
+                                    )}`}
+                                  >
+
+                                    <span>
+                                      {getApprovalIcon(
+                                        leave?.managerStatus
+                                      )}
+                                    </span>
+
+                                    Manager:{" "}
+                                    {leave?.managerStatus ||
+                                      "Pending"}
+
                                   </span>
+                                )}
 
-                                  Manager:{" "}
-                                  {leave.managerStatus ||
-                                    "Pending"}
-                                </span>
+                                {/* DEPARTMENT HEAD */}
 
-                                <span
-                                  className={`admin-approval-stage ${getApprovalClass(
-                                    leave.departmentHeadStatus
-                                  )}`}
-                                >
-                                  <span>
-                                    {getApprovalIcon(
-                                      leave.departmentHeadStatus
-                                    )}
+                                {requiredApprovals.includes(
+                                  "DepartmentHead"
+                                ) && (
+                                  <span
+                                    className={`admin-approval-stage ${getApprovalClass(
+                                      leave?.departmentHeadStatus
+                                    )}`}
+                                  >
+
+                                    <span>
+                                      {getApprovalIcon(
+                                        leave?.departmentHeadStatus
+                                      )}
+                                    </span>
+
+                                    Department Head:{" "}
+                                    {leave?.departmentHeadStatus ||
+                                      "Pending"}
+
                                   </span>
+                                )}
 
-                                  Department Head:{" "}
-                                  {leave.departmentHeadStatus ||
-                                    "Pending"}
-                                </span>
+                                {/* HR */}
 
-                                <span
-                                  className={`admin-approval-stage ${getApprovalClass(
-                                    leave.hrStatus
-                                  )}`}
-                                >
-                                  <span>
-                                    {getApprovalIcon(
-                                      leave.hrStatus
-                                    )}
+                                {requiredApprovals.includes(
+                                  "HR"
+                                ) && (
+                                  <span
+                                    className={`admin-approval-stage ${getApprovalClass(
+                                      leave?.hrStatus
+                                    )}`}
+                                  >
+
+                                    <span>
+                                      {getApprovalIcon(
+                                        leave?.hrStatus
+                                      )}
+                                    </span>
+
+                                    HR:{" "}
+                                    {leave?.hrStatus ||
+                                      "Pending"}
+
                                   </span>
+                                )}
 
-                                  HR:{" "}
-                                  {leave.hrStatus ||
-                                    "Pending"}
-                                </span>
+                                {/* ADMIN */}
 
-                                <span
-                                  className={`admin-approval-stage ${getApprovalClass(
-                                    leave.adminStatus
-                                  )}`}
-                                >
-                                  <span>
-                                    {getApprovalIcon(
-                                      leave.adminStatus
-                                    )}
+                                {requiredApprovals.includes(
+                                  "Admin"
+                                ) && (
+                                  <span
+                                    className={`admin-approval-stage ${getApprovalClass(
+                                      leave?.adminStatus
+                                    )}`}
+                                  >
+
+                                    <span>
+                                      {getApprovalIcon(
+                                        leave?.adminStatus
+                                      )}
+                                    </span>
+
+                                    Admin:{" "}
+                                    {leave?.adminStatus ||
+                                      "Pending"}
+
                                   </span>
-
-                                  Admin:{" "}
-                                  {leave.adminStatus ||
-                                    "Pending"}
-                                </span>
+                                )}
 
                               </div>
 
                             </td>
 
-                            {/* ALLOCATION */}
+                            {/* =================================================
+                                BALANCE ALLOCATION
+                            ================================================= */}
 
                             <td>
 
@@ -1501,11 +1818,16 @@ function ManageLeaves() {
 
                             </td>
 
-                            {/* ACTIONS */}
+                            {/* =================================================
+                                ACTIONS
+
+                                ADMIN CAN PROCESS ONLY
+                                HR SELF-LEAVE.
+                            ================================================= */}
 
                             <td>
 
-                              {isReady ? (
+                              {needsAdminApproval ? (
 
                                 <div className="manage-leaves-actions">
 
@@ -1516,7 +1838,7 @@ function ManageLeaves() {
                                       isUpdating
                                     }
                                     onClick={() =>
-                                      handleStatusUpdate(
+                                      handleAdminStatusUpdate(
                                         leave._id,
                                         "Approved"
                                       )
@@ -1524,7 +1846,7 @@ function ManageLeaves() {
                                   >
                                     {isUpdating
                                       ? "Updating..."
-                                      : "Approve"}
+                                      : "✓ Approve"}
                                   </button>
 
                                   <button
@@ -1534,7 +1856,7 @@ function ManageLeaves() {
                                       isUpdating
                                     }
                                     onClick={() =>
-                                      handleStatusUpdate(
+                                      handleAdminStatusUpdate(
                                         leave._id,
                                         "Rejected"
                                       )
@@ -1542,35 +1864,30 @@ function ManageLeaves() {
                                   >
                                     {isUpdating
                                       ? "Updating..."
-                                      : "Reject"}
+                                      : "✕ Reject"}
                                   </button>
 
                                 </div>
 
-                              ) : isAdminApproved(
-                                  leave
-                                ) ? (
-
-                                <span className="manage-leaves-reviewed-text approved-text">
-                                  ✓ Admin Approved
-                                </span>
-
-                              ) : isAdminRejected(
-                                  leave
-                                ) ? (
+                              ) : leaveStatus ===
+                                "rejected" ? (
 
                                 <span className="manage-leaves-reviewed-text rejected-text">
-                                  ✕ Admin Rejected
+                                  ✕ Rejected
+                                </span>
+
+                              ) : fullyApproved ? (
+
+                                <span className="manage-leaves-reviewed-text approved-text">
+                                  ✓ Fully Approved
                                 </span>
 
                               ) : (
 
                                 <span className="manage-leaves-waiting-text">
-
                                   ⏳ Waiting for{" "}
                                   {waitingStage ||
                                     "approval"}
-
                                 </span>
 
                               )}
@@ -1589,49 +1906,46 @@ function ManageLeaves() {
               </div>
 
               {/* =================================================
-                  FOOTER
+                  TABLE FOOTER
               ================================================= */}
 
               <div className="manage-leaves-footer">
 
                 <span className="manage-leaves-result-text">
+
                   Showing{" "}
-                  {
-                    filteredLeaves.length
-                  }{" "}
+                  {filteredLeaves.length}{" "}
                   of{" "}
                   {leaves.length}{" "}
                   leave request
-                  {leaves.length ===
-                  1
+                  {leaves.length === 1
                     ? ""
                     : "s"}
+
                 </span>
 
                 <span className="manage-leaves-result-text">
 
-                  {pendingAdminLeaves.length >
+                  {statistics.pending >
                   0
-                    ? `${pendingAdminLeaves.length} leave request${
-                        pendingAdminLeaves.length ===
+                    ? `${statistics.pending} leave request${
+                        statistics.pending ===
                         1
                           ? ""
                           : "s"
-                      } ready for Admin final approval.`
-                    : "No leave requests are currently ready for Admin final approval."}
+                      } currently pending approval.`
+                    : "No pending leave requests."}
 
                 </span>
 
               </div>
 
             </>
-
           )}
 
         </section>
 
       </div>
-
     </div>
   );
 }

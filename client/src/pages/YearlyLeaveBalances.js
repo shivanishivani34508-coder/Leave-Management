@@ -23,7 +23,7 @@ function YearlyLeaveBalances() {
       setLoading(true);
       setErrorMessage("");
 
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         setErrorMessage("Authentication token not found.");
