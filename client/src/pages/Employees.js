@@ -203,37 +203,6 @@ setEmployees(employeeUsers);
 
 
   /* =========================================================
-     OPEN EDIT MODAL
-  ========================================================= */
-
-  const openEditBalance = (employee) => {
-    const balances = getBalances(employee);
-
-    setSelectedEmployee(employee);
-
-    setEditBalances({
-      casual: balances.casual,
-
-      sick: balances.sick,
-
-      earned: balances.earned,
-
-      marriage: balances.marriage,
-
-      maternity: balances.maternity,
-
-      paternity: balances.paternity,
-
-      bereavement: balances.bereavement,
-    });
-
-    setError("");
-
-    setMessage("");
-  };
-
-
-  /* =========================================================
      CLOSE EDIT MODAL
   ========================================================= */
 

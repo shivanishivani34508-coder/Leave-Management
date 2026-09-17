@@ -372,6 +372,7 @@ const availableBalance = useMemo(() => {
   }, [
     formData.leaveType,
     duration,
+    finalDuration,
     availableBalance,
   ]);
 

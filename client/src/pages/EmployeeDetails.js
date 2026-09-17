@@ -37,8 +37,6 @@ function EmployeeDetails() {
     approvedUnpaidDays: 0,
   });
 
-  const [leaves, setLeaves] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
@@ -90,11 +88,6 @@ function EmployeeDetails() {
         }
       );
 
-      setLeaves(
-        Array.isArray(response.data.leaves)
-          ? response.data.leaves
-          : []
-      );
     } catch (err) {
       console.error(err);
 

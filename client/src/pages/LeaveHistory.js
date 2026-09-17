@@ -15,12 +15,12 @@ function LeaveHistory() {
   const [loading, setLoading] = useState(true);
   const [leaveBalance, setLeaveBalance] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage] = useState("");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  const [cancellingId, setCancellingId] = useState(null);
+  const [cancellingId] = useState(null);
 
   /* =========================================================
      AUTH CONFIG

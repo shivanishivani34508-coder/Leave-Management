@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
 import "./EditEmployee.css";
@@ -23,11 +23,11 @@ function EditEmployee() {
     departmentHead: "",
   });
 
-  const getAuthConfig = () => ({
+  const getAuthConfig = useCallback(() => ({
     headers: {
       Authorization: `Bearer ${sessionStorage.getItem("token")}`,
     },
-  });
+  }), []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -36,11 +36,7 @@ function EditEmployee() {
     }));
   };
 
-  useEffect(() => {
-    fetchEmployee();
-  }, []);
-
-  const fetchEmployee = async () => {
+  const fetchEmployee = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -91,7 +87,11 @@ function EditEmployee() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthConfig, id, navigate]);
+
+  useEffect(() => {
+    fetchEmployee();
+  }, [fetchEmployee]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

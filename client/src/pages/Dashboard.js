@@ -15,20 +15,6 @@ function Dashboard() {
   const [yearlyBalance, setYearlyBalance] = useState(null);
 
   /* =========================================================
-     AUTH CONFIG
-  ========================================================= */
-
-  const getAuthConfig = () => {
-    const token = sessionStorage.getItem("token");
-
-    return {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    };
-  };
-
-  /* =========================================================
      UNAUTHORIZED
   ========================================================= */
 
