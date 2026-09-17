@@ -57,22 +57,29 @@ app.use("/api/yearly-leave-balances",yearlyLeaveBalanceRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-// Connect Database and Start Server
+// Shared startup work for local development and the Vercel function.
+const initializeApp = async () => {
+  await connectDB();
+  await seedHolidays();
+};
+
+// Connect Database and Start Server locally. Vercel imports the Express app
+// through api/index.js and must not start a separate listening server.
 const startServer = async () => {
   try {
-    await connectDB();
-
-    await seedHolidays();
+    await initializeApp();
 
     app.listen(PORT, async () => {
       console.log(`Server is running on port ${PORT}`);
-
     });
-
   } catch (error) {
     console.error("Failed to start server:");
     console.error(error);
   }
 };
 
-startServer();
+if (process.env.VERCEL !== "1") {
+  startServer();
+}
+
+module.exports = { app, initializeApp };
