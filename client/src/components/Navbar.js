@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import api from "../services/api";
 import "./Navbar.css";
 
 const Navbar = () => {
@@ -7,6 +8,7 @@ const Navbar = () => {
 
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const loadUser = () => {
@@ -25,6 +27,34 @@ const Navbar = () => {
   }, []);
 
   const role = user?.role;
+
+  const fetchUnreadCount = useCallback(async () => {
+    if (role !== "admin") return;
+
+    try {
+      const response = await api.get("/notifications/unread-count");
+      setUnreadCount(response.data?.unread || 0);
+    } catch (error) {
+      console.error("Unable to load notification count:", error);
+    }
+  }, [role]);
+
+  useEffect(() => {
+    if (role === "admin") {
+      fetchUnreadCount();
+
+      const timer = setInterval(() => {
+        fetchUnreadCount();
+      }, 30000);
+
+      window.addEventListener("focus", fetchUnreadCount);
+
+      return () => {
+        clearInterval(timer);
+        window.removeEventListener("focus", fetchUnreadCount);
+      };
+    }
+  }, [role, fetchUnreadCount]);
 
   const getRoleName = () => {
     switch (role) {
@@ -157,6 +187,27 @@ const Navbar = () => {
               >
                 <span className="nav-icon">📋</span>
                 <span>Manage Leaves</span>
+              </NavLink>
+
+              <NavLink
+                to="/notifications"
+                onClick={() => {
+                  closeMenu();
+                  fetchUnreadCount();
+                }}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="nav-icon notification-icon-container">
+                  🔔
+                  {unreadCount > 0 && (
+                    <span className="notification-badge">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </span>
+                <span>Notifications</span>
               </NavLink>
 
               <NavLink
