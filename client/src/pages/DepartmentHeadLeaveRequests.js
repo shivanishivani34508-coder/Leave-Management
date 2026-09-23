@@ -57,7 +57,7 @@ function DepartmentHeadLeaveRequests() {
   ===================================================== */
   const pendingLeaves = leaves.filter(
   (leave) =>
-    leave.requiredApprovals?.includes("DepartmentHead") &&
+    (leave.requiredApprovals?.includes("DepartmentHead") || leave.employee?.role === "manager" || leave.totalDays > 2) &&
     leave.departmentHeadStatus === "Pending" &&
     (
       leave.employee?.role === "manager" ||
@@ -72,11 +72,13 @@ function DepartmentHeadLeaveRequests() {
 
 const processedLeaves = leaves.filter(
   (leave) =>
-    leave.requiredApprovals?.includes("DepartmentHead") &&
+    (leave.requiredApprovals?.includes("DepartmentHead") || leave.departmentHeadStatus === "Approved" || leave.departmentHeadStatus === "Rejected") &&
     leave.departmentHeadStatus !== "Pending" &&
     (
       leave.employee?.role === "manager" ||
-      leave.managerStatus === "Approved"
+      leave.managerStatus === "Approved" ||
+      leave.departmentHeadStatus === "Approved" ||
+      leave.departmentHeadStatus === "Rejected"
     )
 );
 

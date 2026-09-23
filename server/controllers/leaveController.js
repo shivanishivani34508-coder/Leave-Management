@@ -91,16 +91,17 @@ const getLeaveYear = (dateValue) => {
 
   return date.getUTCFullYear();
 };
-
 /* =========================================================
    CHECK WHETHER PENDING LEAVE HAS EXPIRED
+   A Pending leave expires when its START DATE is
+   today or has already passed.
 ========================================================= */
 
-const isLeaveExpired = (endDate) => {
-  const normalizedEndDate =
-    normalizeDate(endDate);
+const isLeaveExpired = (startDate) => {
+  const normalizedStartDate =
+    normalizeDate(startDate);
 
-  if (!normalizedEndDate) {
+  if (!normalizedStartDate) {
     return false;
   }
 
@@ -115,34 +116,8 @@ const isLeaveExpired = (endDate) => {
   );
 
   return (
-    normalizedEndDate.getTime() <
+    normalizedStartDate.getTime() <=
     today.getTime()
-  );
-}; 
-
-/* =========================================================
-   GET AVAILABLE BALANCE
-========================================================= */
-
-const getAvailableBalance = (
-  user,
-  leaveType
-) => {
-  if (
-    leaveType === "Leave Without Pay"
-  ) {
-    return 0;
-  }
-
-  const balanceKey =
-    LEAVE_BALANCE_KEYS[leaveType];
-
-  if (!balanceKey) {
-    return 0;
-  }
-
-  return Number(
-    user.leaveBalances?.[balanceKey] ?? 0
   );
 };
 
@@ -1125,11 +1100,27 @@ const getTodayStart = () => {
   );
 };
 
+const isLeavePastEndDate = (endDate) => {
+  const normalizedEndDate = normalizeDate(endDate);
+  if (!normalizedEndDate) {
+    return false;
+  }
+  const now = new Date();
+  const today = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate()
+    )
+  );
+  return normalizedEndDate.getTime() < today.getTime();
+};
+
 // A request is only hidden after its end date when no final decision was made.
 // Approved and rejected requests remain available as leave history.
 const shouldDisplayLeave = (leave) =>
   leave.status !== "Pending" ||
-  !isLeaveExpired(leave.endDate);
+  !isLeavePastEndDate(leave.endDate);
 
 /* =========================================================
    MANAGER - GET TEAM LEAVE REQUESTS
@@ -1208,51 +1199,69 @@ const getDepartmentHeadLeaves = async (
           "Unauthorized. Please login again.",
       });
     }
+    const departmentHeadUser = await User.findById(departmentHeadId);
 
- const leaves = (
-  await Leave.find({
-    requiredApprovals:
-      "DepartmentHead",
+    const deptHeadDepartment = (departmentHeadUser?.department || "").trim();
+    const inferredDept = deptHeadDepartment || (
+      departmentHeadUser?.name?.toLowerCase().includes("finance") ? "Finance" :
+      departmentHeadUser?.name?.toLowerCase().includes("hr") ? "HR" :
+      departmentHeadUser?.name?.toLowerCase().includes("it") ? "IT" :
+      departmentHeadUser?.name?.toLowerCase().includes("marketing") ? "Marketing" :
+      departmentHeadUser?.name?.toLowerCase().includes("sales") ? "Sales" : ""
+    );
 
-    status: {
-      $ne: "Cancelled",
-    },
+    const queryConditions = [
+      { requiredApprovals: "DepartmentHead" },
+    ];
 
-    $or: [
-      {
-        requiredApprovals: "Manager",
-        managerStatus: "Approved",
-      },
+    if (inferredDept) {
+      queryConditions.push({
+        department: { $regex: new RegExp(`^${inferredDept}$`, "i") },
+      });
+    }
 
-      {
-        requiredApprovals: {
-          $ne: "Manager",
-        },
-      },
-    ],
-  })
-        .populate(
-          "employee",
-          "name email department role departmentHead hr"
-        )
-        .sort({
-          createdAt: -1,
-        })
-    ).filter(shouldDisplayLeave);
+    const leaves = await Leave.find({
+      status: { $ne: "Cancelled" },
+      $or: queryConditions,
+    })
+      .populate(
+        "employee",
+        "name email department role departmentHead hr manager"
+      )
+      .sort({
+        createdAt: -1,
+      });
 
     const assignedLeaves =
       leaves.filter(
         (leave) => {
-          if (
-            !leave.employee ||
-            !leave.employee.departmentHead
-          ) {
+          if (!leave.employee) {
             return false;
           }
 
-          return (
+          const isDirectlyAssigned =
+            leave.employee.departmentHead &&
             leave.employee.departmentHead.toString() ===
-            departmentHeadId.toString()
+              departmentHeadId.toString();
+
+          const isSameDepartment = inferredDept && (
+            (leave.employee.department &&
+              leave.employee.department.trim().toLowerCase() ===
+                inferredDept.toLowerCase()) ||
+            (leave.department &&
+              leave.department.trim().toLowerCase() ===
+                inferredDept.toLowerCase())
+          );
+
+          const isManagerOf =
+            leave.employee.manager &&
+            leave.employee.manager.toString() ===
+              departmentHeadId.toString();
+
+          return (
+            isDirectlyAssigned ||
+            Boolean(isSameDepartment) ||
+            isManagerOf
           );
         }
       );
@@ -1398,6 +1407,15 @@ const managerApproval = async (
           "This leave request was cancelled by the employee and cannot be approved or rejected.",
       });
     }
+    if (
+  leave.status === "Pending" &&
+  isLeaveExpired(leave.startDate)
+) {
+  return res.status(400).json({
+    message:
+      "This leave request has expired and can no longer be approved or rejected.",
+  });
+}
 
     if (
       leave.managerStatus !==
@@ -1632,6 +1650,16 @@ const departmentHeadApproval = async (req,res) => {
   });
 }
 
+if (
+  leave.status === "Pending" &&
+  isLeaveExpired(leave.startDate)
+) {
+  return res.status(400).json({
+    message:
+      "This leave request has expired and can no longer be approved or rejected.",
+  });
+}
+
     if (
       !leave.requiredApprovals.includes(
         "DepartmentHead"
@@ -1658,11 +1686,38 @@ const departmentHeadApproval = async (req,res) => {
     const departmentHeadId =
       getLoggedInUserId(req);
 
-    if (
-      !employee.departmentHead ||
-      employee.departmentHead.toString() !==
-        departmentHeadId.toString()
-    ) {
+    const departmentHeadUser =
+      await User.findById(departmentHeadId);
+
+    const deptHeadDepartment = (departmentHeadUser?.department || "").trim();
+    const inferredDept = deptHeadDepartment || (
+      departmentHeadUser?.name?.toLowerCase().includes("finance") ? "Finance" :
+      departmentHeadUser?.name?.toLowerCase().includes("hr") ? "HR" :
+      departmentHeadUser?.name?.toLowerCase().includes("it") ? "IT" :
+      departmentHeadUser?.name?.toLowerCase().includes("marketing") ? "Marketing" :
+      departmentHeadUser?.name?.toLowerCase().includes("sales") ? "Sales" : ""
+    );
+
+    const isDirectlyAssigned =
+      employee.departmentHead &&
+      employee.departmentHead.toString() ===
+        departmentHeadId.toString();
+
+    const isSameDepartment = inferredDept && (
+      (employee.department &&
+        employee.department.trim().toLowerCase() ===
+          inferredDept.toLowerCase()) ||
+      (leave.department &&
+        leave.department.trim().toLowerCase() ===
+          inferredDept.toLowerCase())
+    );
+
+    const isManagerOf =
+      employee.manager &&
+      employee.manager.toString() ===
+        departmentHeadId.toString();
+
+    if (!isDirectlyAssigned && !isSameDepartment && !isManagerOf) {
       return res.status(403).json({
         message:
           "You are not authorized to review this employee's leave.",
@@ -2051,6 +2106,15 @@ const hrApproval = async (
   return res.status(400).json({
     message:
       "This leave request was cancelled by the employee and cannot be approved or rejected.",
+  });
+}
+if (
+  leave.status === "Pending" &&
+  isLeaveExpired(leave.startDate)
+) {
+  return res.status(400).json({
+    message:
+      "This leave request has expired and can no longer be approved or rejected.",
   });
 }
 
