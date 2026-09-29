@@ -165,7 +165,7 @@ if (!/[0-9]/.test(password)) {
   return;
 }
 
-if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(password)) {
+if (!/[!@#$%^&*(),.?":{}|<>_-]/.test(password)) {
   setError(
     "Password must contain at least one special character."
   );

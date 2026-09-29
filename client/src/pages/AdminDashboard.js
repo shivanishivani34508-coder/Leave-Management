@@ -177,12 +177,6 @@ function AdminDashboard() {
     return "Employee";
   };
 
-  const getInitial = (name) => {
-    return name
-      ? name.charAt(0).toUpperCase()
-      : "E";
-  };
-
   const getLeaveDays = (leave) => {
     if (leave.totalDays) {
       return leave.totalDays;
