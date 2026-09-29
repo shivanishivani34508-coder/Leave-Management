@@ -19,6 +19,17 @@ function AdminDashboard() {
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
+
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -31,10 +42,12 @@ function AdminDashboard() {
         leaveResponse,
         employeeResponse,
         holidayResponse,
+        profileResponse,
       ] = await Promise.all([
         api.get("/leaves"),
         api.get("/users"),
         api.get("/holidays"),
+        api.get("/users/profile").catch(() => null),
       ]);
 
       const leaves = Array.isArray(leaveResponse.data)
@@ -66,7 +79,9 @@ function AdminDashboard() {
         pending: pendingLeaves.length,
         approved: approvedLeaves.length,
         rejected: rejectedLeaves.length,
-        employees: employees.length,
+        employees: employees.filter(
+          (user) => user.role === "employee"
+        ).length,
       });
 
       setRecentLeaves(leaves.slice(0, 5));
@@ -99,6 +114,12 @@ function AdminDashboard() {
 
       setHolidays(upcomingHolidays);
 
+      const profileData = profileResponse?.data?.user || profileResponse?.data;
+      if (profileData) {
+        setUser(profileData);
+        sessionStorage.setItem("user", JSON.stringify(profileData));
+      }
+
     } catch (error) {
       console.error(
         "Admin Dashboard Error:",
@@ -109,13 +130,36 @@ function AdminDashboard() {
     }
   };
 
-    const leaveTypeCounts = allLeaves.reduce((counts, leave) => {
-    const type = leave.leaveType || "Other";
+  const getInitials = (name) => {
+    if (!name) return "A";
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+  };
 
-    counts[type] = (counts[type] || 0) + 1;
+  const getPhotoUrl = (photoPath) => {
+    if (!photoPath) return null;
+    if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
+      return photoPath;
+    }
+    const baseUrl = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
+    return `${baseUrl}${photoPath.startsWith("/") ? "" : "/"}${photoPath}`;
+  };
 
-    return counts;
-  }, {});
+  const leaveTypeCounts = allLeaves.reduce(
+    (counts, leave) => {
+      const type = leave.leaveType || "Other";
+
+      counts[type] = (counts[type] || 0) + 1;
+
+      return counts;
+    },
+    {}
+  );
 
   const topLeaveTypes = Object.entries(leaveTypeCounts)
     .sort((a, b) => b[1] - a[1])
@@ -155,7 +199,7 @@ function AdminDashboard() {
       const difference =
         Math.ceil(
           (end - start) /
-          (1000 * 60 * 60 * 24)
+            (1000 * 60 * 60 * 24)
         ) + 1;
 
       return difference;
@@ -366,137 +410,162 @@ function AdminDashboard() {
 
           {/* REQUESTS BY STATUS */}
 
-<div className="admin-panel status-panel">
+          <div className="admin-panel status-panel">
 
-  <div className="panel-header">
-    <div>
-      <h2>Requests by Status</h2>
-      <p>Current request distribution</p>
-    </div>
-  </div>
+            <div className="panel-header">
+              <div>
+                <h2>Requests by Status</h2>
+                <p>Current request distribution</p>
+              </div>
+            </div>
 
-  <div className="status-circle-container">
-    <div
-      className="status-circle"
-      style={{
-        background: `conic-gradient(
-          #34806f 0deg ${
-            stats.totalRequests
-              ? (stats.approved / stats.totalRequests) * 360
-              : 0
-          }deg,
+            <div className="status-circle-container">
 
-          #e8a01c ${
-            stats.totalRequests
-              ? (stats.approved / stats.totalRequests) * 360
-              : 0
-          }deg ${
-            stats.totalRequests
-              ? ((stats.approved + stats.pending) /
-                  stats.totalRequests) *
-                360
-              : 0
-          }deg,
+              <div
+                className="status-circle"
+                style={{
+                  background: `conic-gradient(
+                    #34806f 0deg ${
+                      stats.totalRequests
+                        ? (stats.approved / stats.totalRequests) * 360
+                        : 0
+                    }deg,
 
-          #cf5555 ${
-            stats.totalRequests
-              ? ((stats.approved + stats.pending) /
-                  stats.totalRequests) *
-                360
-              : 0
-          }deg 360deg
-        )`,
-      }}
-    >
-      <div className="status-circle-center">
-        <strong>{stats.totalRequests}</strong>
-        <span>Total</span>
-      </div>
-    </div>
-  </div>
+                    #e8a01c ${
+                      stats.totalRequests
+                        ? (stats.approved / stats.totalRequests) * 360
+                        : 0
+                    }deg ${
+                      stats.totalRequests
+                        ? ((stats.approved + stats.pending) /
+                            stats.totalRequests) *
+                          360
+                        : 0
+                    }deg,
 
-  <div className="status-list">
+                    #cf5555 ${
+                      stats.totalRequests
+                        ? ((stats.approved + stats.pending) /
+                            stats.totalRequests) *
+                          360
+                        : 0
+                    }deg 360deg
+                  )`,
+                }}
+              >
 
-    <div>
-      <span className="status-dot approved-dot"></span>
-      <p>Approved</p>
-      <strong>{stats.approved}</strong>
-    </div>
+                <div className="status-circle-center">
+                  <strong>
+                    {stats.totalRequests}
+                  </strong>
 
-    <div>
-      <span className="status-dot pending-dot"></span>
-      <p>Pending</p>
-      <strong>{stats.pending}</strong>
-    </div>
+                  <span>
+                    Total
+                  </span>
+                </div>
 
-    <div>
-      <span className="status-dot rejected-dot"></span>
-      <p>Rejected</p>
-      <strong>{stats.rejected}</strong>
-    </div>
+              </div>
 
-  </div>
+            </div>
 
-</div>
+            <div className="status-list">
 
+              <div>
+                <span className="status-dot approved-dot"></span>
+                <p>Approved</p>
+                <strong>{stats.approved}</strong>
+              </div>
 
-{/* TOP LEAVE TYPES */}
+              <div>
+                <span className="status-dot pending-dot"></span>
+                <p>Pending</p>
+                <strong>{stats.pending}</strong>
+              </div>
 
-<div className="admin-panel leave-types-panel">
+              <div>
+                <span className="status-dot rejected-dot"></span>
+                <p>Rejected</p>
+                <strong>{stats.rejected}</strong>
+              </div>
 
-  <div className="panel-header">
-    <div>
-      <h2>Top Leave Types</h2>
-      <p>Most requested leave categories</p>
-    </div>
-  </div>
-
-  {topLeaveTypes.length > 0 ? (
-
-    <div className="leave-types-list">
-
-      {topLeaveTypes.map(([type, count]) => (
-
-        <div
-          className="leave-type-row"
-          key={type}
-        >
-
-          <div className="leave-type-name">
-            <span>{type}</span>
-            <strong>{count}</strong>
-          </div>
-
-          <div className="leave-type-track">
-
-            <div
-              className="leave-type-progress"
-              style={{
-                width: `${
-                  topLeaveTypes[0][1]
-                    ? (count / topLeaveTypes[0][1]) * 100
-                    : 0
-                }%`,
-              }}
-            ></div>
+            </div>
 
           </div>
 
-        </div>
 
-      ))}
+          {/* TOP LEAVE TYPES */}
 
-    </div>
+          <div className="admin-panel leave-types-panel">
 
-  ) : (
+            <div className="panel-header">
 
-    <div className="no-data">
-      No leave data available.
-    </div>
+              <div>
+                <h2>Top Leave Types</h2>
 
-  )}
+                <p>
+                  Most requested leave categories
+                </p>
+              </div>
 
-</div>
+            </div>
+
+            {topLeaveTypes.length > 0 ? (
+
+              <div className="leave-types-list">
+
+                {topLeaveTypes.map(
+                  ([type, count]) => (
+
+                    <div
+                      className="leave-type-row"
+                      key={type}
+                    >
+
+                      <div className="leave-type-name">
+
+                        <span>
+                          {type}
+                        </span>
+
+                        <strong>
+                          {count}
+                        </strong>
+
+                      </div>
+
+                      <div className="leave-type-track">
+
+                        <div
+                          className="leave-type-progress"
+                          style={{
+                            width: `${
+                              topLeaveTypes[0][1]
+                                ? (count /
+                                    topLeaveTypes[0][1]) *
+                                  100
+                                : 0
+                            }%`,
+                          }}
+                        ></div>
+
+                      </div>
+
+                    </div>
+
+                  )
+                )}
+
+              </div>
+
+            ) : (
+
+              <div className="no-data">
+                No leave data available.
+              </div>
+
+            )}
+
+          </div>
 
 
           {/* ===================================================
@@ -504,7 +573,6 @@ function AdminDashboard() {
           =================================================== */}
 
           <div className="admin-left-column">
-
 
             {/* ===================================================
                 RECENT LEAVE REQUESTS
@@ -515,6 +583,7 @@ function AdminDashboard() {
               <div className="panel-header">
 
                 <div>
+
                   <h2>
                     Recent Leave Requests
                   </h2>
@@ -522,6 +591,7 @@ function AdminDashboard() {
                   <p>
                     Latest leave applications from employees
                   </p>
+
                 </div>
 
 
@@ -559,12 +629,14 @@ function AdminDashboard() {
                     {recentLeaves.length === 0 ? (
 
                       <tr>
+
                         <td
                           colSpan="5"
                           className="no-data"
                         >
                           No leave requests found.
                         </td>
+
                       </tr>
 
                     ) : (
@@ -581,10 +653,6 @@ function AdminDashboard() {
                             <td>
 
                               <div className="employee-info">
-
-                                <div className="employee-avatar">
-                                  {getInitial(employeeName)}
-                                </div>
 
                                 <strong>
                                   {employeeName}
@@ -650,6 +718,7 @@ function AdminDashboard() {
               <div className="panel-header">
 
                 <div>
+
                   <h2>
                     Leave Insights
                   </h2>
@@ -657,14 +726,19 @@ function AdminDashboard() {
                   <p>
                     Overview of leave request status
                   </p>
+
                 </div>
 
                 <div className="insight-total">
-                  <span>Total</span>
+
+                  <span>
+                    Total
+                  </span>
 
                   <strong>
                     {stats.totalRequests}
                   </strong>
+
                 </div>
 
               </div>
@@ -820,6 +894,7 @@ function AdminDashboard() {
                   </span>
 
                   <strong>
+
                     {stats.totalRequests
                       ? Math.round(
                           (
@@ -829,6 +904,7 @@ function AdminDashboard() {
                         )
                       : 0}
                     %
+
                   </strong>
 
                 </div>
@@ -865,14 +941,102 @@ function AdminDashboard() {
 
 
           </div>
-
-
-          {/* ===================================================
+                    {/* ===================================================
               RIGHT COLUMN
           =================================================== */}
 
           <div className="admin-right-column">
 
+            {/* ===================================================
+                MY PROFILE
+            =================================================== */}
+
+            <div className="admin-panel admin-profile-panel">
+
+              <div className="panel-header">
+                <div>
+                  <h2>My Profile</h2>
+                  <p>Administrator account details</p>
+                </div>
+
+                <span className="admin-profile-status-badge">
+                  Active
+                </span>
+              </div>
+
+              <div className="admin-profile-card">
+
+                <div className="admin-profile-top">
+                  <div className="admin-profile-avatar">
+                    {user?.profilePhoto && !photoError ? (
+                      <img
+                        src={getPhotoUrl(user.profilePhoto)}
+                        alt={user?.name || "Admin"}
+                        className="admin-profile-img"
+                        onError={() => setPhotoError(true)}
+                      />
+                    ) : (
+                      getInitials(user?.name || "Admin")
+                    )}
+                  </div>
+
+                  <div className="admin-profile-meta">
+                    <h3>{user?.name || "Administrator"}</h3>
+                    <p>{user?.email || "admin@leave.com"}</p>
+                    <span className="admin-role-pill">Administrator</span>
+                  </div>
+                </div>
+
+                <div className="admin-profile-stats-row">
+                  <div className="admin-profile-stat-box">
+                    <span className="admin-stat-num">{stats.employees}</span>
+                    <span className="admin-stat-lbl">Employees</span>
+                  </div>
+
+                  <div className="admin-profile-stat-box">
+                    <span className="admin-stat-num">{stats.totalRequests}</span>
+                    <span className="admin-stat-lbl">Total Requests</span>
+                  </div>
+
+                  <div className="admin-profile-stat-box">
+                    <span className="admin-stat-num">{stats.pending}</span>
+                    <span className="admin-stat-lbl">Pending</span>
+                  </div>
+                </div>
+
+                <div className="admin-profile-info-list">
+                  <div className="admin-profile-info-item">
+                    <span>Role</span>
+                    <strong>Administrator</strong>
+                  </div>
+
+                  <div className="admin-profile-info-item">
+                    <span>Employee ID</span>
+                    <strong>{user?.employeeId || "ADM-001"}</strong>
+                  </div>
+
+                  <div className="admin-profile-info-item">
+                    <span>Department</span>
+                    <strong>{user?.department || "Administration"}</strong>
+                  </div>
+
+                  <div className="admin-profile-info-item">
+                    <span>Gender</span>
+                    <strong>{user?.gender || "Not Specified"}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="admin-view-profile-btn"
+                  onClick={() => setShowProfileModal(true)}
+                >
+                  👁 View Full Profile
+                </button>
+
+              </div>
+
+            </div>
 
             {/* ===================================================
                 QUICK ACTIONS
@@ -883,6 +1047,7 @@ function AdminDashboard() {
               <div className="panel-header">
 
                 <div>
+
                   <h2>
                     Quick Actions
                   </h2>
@@ -890,6 +1055,7 @@ function AdminDashboard() {
                   <p>
                     Manage your organization
                   </p>
+
                 </div>
 
               </div>
@@ -1013,7 +1179,8 @@ function AdminDashboard() {
 
                 <button
                   className="holiday-calendar-btn"
-                  onClick={() => navigate("/admin/holiday-calendar")
+                  onClick={() =>
+                    navigate("/admin/holiday-calendar")
                   }
                 >
                   📅 Calendar
@@ -1089,6 +1256,7 @@ function AdminDashboard() {
                           <div className="holiday-date">
 
                             <strong>
+
                               {holidayDate
                                 .getDate()
                                 .toString()
@@ -1096,9 +1264,11 @@ function AdminDashboard() {
                                   2,
                                   "0"
                                 )}
+
                             </strong>
 
                             <span>
+
                               {holidayDate
                                 .toLocaleDateString(
                                   "en-US",
@@ -1107,6 +1277,7 @@ function AdminDashboard() {
                                   }
                                 )
                                 .toUpperCase()}
+
                             </span>
 
                           </div>
@@ -1120,6 +1291,7 @@ function AdminDashboard() {
                             </h4>
 
                             <p>
+
                               {holidayDate.toLocaleDateString(
                                 "en-IN",
                                 {
@@ -1133,6 +1305,7 @@ function AdminDashboard() {
                                     "numeric",
                                 }
                               )}
+
                             </p>
 
                           </div>
@@ -1167,6 +1340,120 @@ function AdminDashboard() {
         </div>
 
       </div>
+
+      {/* ===================================================
+          PROFILE DETAILS MODAL
+      =================================================== */}
+      {showProfileModal && (
+        <div
+          className="admin-modal-overlay"
+          onClick={() => setShowProfileModal(false)}
+        >
+          <div
+            className="admin-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="admin-modal-header">
+              <div>
+                <span className="admin-modal-tag">ADMINISTRATOR PROFILE</span>
+                <h2>Account Information</h2>
+                <p>Complete profile details for your account</p>
+              </div>
+
+              <button
+                type="button"
+                className="admin-modal-close-btn"
+                onClick={() => setShowProfileModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="admin-modal-body">
+              <div className="admin-modal-user-summary">
+                <div className="admin-modal-avatar">
+                  {user?.profilePhoto && !photoError ? (
+                    <img
+                      src={getPhotoUrl(user.profilePhoto)}
+                      alt={user?.name || "Admin"}
+                      className="admin-modal-img"
+                      onError={() => setPhotoError(true)}
+                    />
+                  ) : (
+                    getInitials(user?.name || "Admin")
+                  )}
+                </div>
+
+                <div className="admin-modal-user-titles">
+                  <h3>{user?.name || "Administrator"}</h3>
+                  <p>{user?.email || "admin@leave.com"}</p>
+                  <span className="admin-badge-role">System Administrator</span>
+                </div>
+              </div>
+
+              <div className="admin-modal-details-grid">
+                <div className="admin-modal-field">
+                  <label>Full Name</label>
+                  <span>{user?.name || "-"}</span>
+                </div>
+
+                <div className="admin-modal-field">
+                  <label>Email Address</label>
+                  <span>{user?.email || "-"}</span>
+                </div>
+
+                <div className="admin-modal-field">
+                  <label>Role</label>
+                  <span>Administrator</span>
+                </div>
+
+                <div className="admin-modal-field">
+                  <label>Employee ID</label>
+                  <span>{user?.employeeId || "ADM-001"}</span>
+                </div>
+
+                <div className="admin-modal-field">
+                  <label>Department</label>
+                  <span>{user?.department || "Administration"}</span>
+                </div>
+
+                <div className="admin-modal-field">
+                  <label>Gender</label>
+                  <span>{user?.gender || "Not Specified"}</span>
+                </div>
+
+                <div className="admin-modal-field">
+                  <label>Account Status</label>
+                  <span className="admin-modal-status-active">Active</span>
+                </div>
+
+                <div className="admin-modal-field">
+                  <label>Member Since</label>
+                  <span>
+                    {user?.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : "System Administrator"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-modal-footer">
+              <button
+                type="button"
+                className="admin-modal-done-btn"
+                onClick={() => setShowProfileModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,4 +1,6 @@
 const express = require("express");
+const uploadEmployeePhoto = require("../middleware/uploadMiddleware");
+
 const {
   getUsers,
   createEmployee,
@@ -13,6 +15,7 @@ const {
   deleteUser,
   getMyTeam,
 } = require("../controllers/userController");
+
 const {
   protect,
 } = require("../middleware/authMiddleware");
@@ -53,6 +56,7 @@ router.post(
   "/employee",
   protect,
   authorize("admin"),
+  uploadEmployeePhoto.single("profilePhoto"),
   createEmployee
 );
 
@@ -66,7 +70,6 @@ router.get(
   authorize("admin"),
   getUsers
 );
-
 
 /* =========================================================
    GET ALL MANAGERS
@@ -101,16 +104,17 @@ router.get(
   getMyTeam
 );
 
-
 /* =========================================================
    GET ONE EMPLOYEE
 ========================================================= */
+
 router.get(
   "/:id",
   protect,
   authorize("admin", "manager"),
   getUserById
 );
+
 /* =========================================================
    UPDATE EMPLOYEE
 ========================================================= */
@@ -119,6 +123,7 @@ router.put(
   "/:id",
   protect,
   authorize("admin"),
+  uploadEmployeePhoto.single("profilePhoto"),
   updateEmployee
 );
 

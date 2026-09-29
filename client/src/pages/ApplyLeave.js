@@ -153,10 +153,11 @@ setUser(profile);
           `/yearly-leave-balances/my?year=${currentYear}`,
           getAuthConfig()
         );
-
         setYearlyBalance(
-          yearlyBalanceResponse.data?.balance || null
-        );
+    yearlyBalanceResponse.data?.balance ||
+      yearlyBalanceResponse.data ||
+      null
+  );
 
 console.log("PROFILE:", profile);
 console.log("GENDER:", profile.gender);
@@ -320,29 +321,75 @@ if (
         leaveType.value === formData.leaveType
     );
   }, [formData.leaveType]);
-
-  /* =========================================================
-     CURRENT AVAILABLE BALANCE
-  ========================================================= */
+/* =========================================================
+   CURRENT AVAILABLE BALANCE
+========================================================= */
 
 const availableBalance = useMemo(() => {
+  console.log("========== LEAVE BALANCE DEBUG ==========");
 
   console.log("USER:", user);
-  console.log("LEAVE BALANCES:", user?.leaveBalances);
-  console.log("SELECTED TYPE:", formData.leaveType);
-  console.log("BALANCE KEY:", selectedLeaveType?.balanceKey);
 
-  if (!selectedLeaveType || !selectedLeaveType.balanceKey) {
+  console.log("YEARLY BALANCE:", yearlyBalance);
+
+  console.log("SELECTED TYPE:", formData.leaveType);
+
+  console.log(
+    "BALANCE KEY:",
+    selectedLeaveType?.balanceKey
+  );
+
+  if (
+    !selectedLeaveType ||
+    !selectedLeaveType.balanceKey
+  ) {
     return 0;
   }
 
-  return Number(
-    yearlyBalance?.[selectedLeaveType.balanceKey]?.remaining ??
-      user?.leaveBalances?.[selectedLeaveType.balanceKey] ??
-      0
+  const balanceKey =
+    selectedLeaveType.balanceKey;
+
+  const yearlyRemaining =
+    yearlyBalance?.[balanceKey]?.remaining;
+
+  const profileRemaining =
+    user?.leaveBalance?.[balanceKey];
+
+  console.log(
+    "YEARLY REMAINING:",
+    yearlyRemaining
   );
 
-}, [user, yearlyBalance, selectedLeaveType, formData.leaveType]);
+  console.log(
+    "PROFILE REMAINING:",
+    profileRemaining
+  );
+
+  /*
+    Current year's yearly balance is the main source.
+    Profile balance is only used as a fallback.
+  */
+
+  const balance =
+    yearlyRemaining !== undefined &&
+    yearlyRemaining !== null
+      ? yearlyRemaining
+      : profileRemaining ?? 0;
+
+  console.log(
+    "FINAL AVAILABLE BALANCE:",
+    balance
+  );
+
+  console.log("=========================================");
+
+  return Number(balance);
+}, [
+  user,
+  yearlyBalance,
+  selectedLeaveType,
+  formData.leaveType,
+]);
   /* =========================================================
      PAID / UNPAID PREVIEW
 

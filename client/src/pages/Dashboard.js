@@ -1167,6 +1167,17 @@ const leaveBalance = useMemo(() => {
                   </div>
 
                 </div>
+                <div className="dashboard-profile-detail">
+
+              <span className="dashboard-profile-detail-label">
+                Department
+              </span>
+
+              <span className="dashboard-profile-detail-value">
+                {user?.department || "Not Assigned"}
+              </span>
+
+            </div>
 
               </div>
 

@@ -4,6 +4,7 @@ const Notification = require("../models/Notification");
 const Holiday = require("../models/Holiday");
 const YearlyLeaveBalance = require("../models/YearlyLeaveBalance");
 const sendEmail = require("../utils/sendEmail");
+const Department = require("../models/Department");
 
 /* =========================================================
    CONFIGURATION
@@ -472,26 +473,6 @@ const excludedHolidayDates =
       )
   );
 
-/* =====================================================
-   EXCLUDE SUNDAYS
-===================================================== */
-
-let sundayCount = 0;
-
-const currentDate = new Date(start);
-
-while (
-  currentDate.getTime() <= end.getTime()
-) {
-  // 0 = Sunday
-  if (currentDate.getUTCDay() === 0) {
-    sundayCount++;
-  }
-
-  currentDate.setUTCDate(
-    currentDate.getUTCDate() + 1
-  );
-}
 
 /* =====================================================
    CALCULATE REQUESTED DAYS
@@ -508,15 +489,13 @@ if (
 ) {
   requestedDays = 0.5;
 }
-
 /* =====================================================
    TOTAL WORKING LEAVE DAYS
 ===================================================== */
 
 const totalDays =
   requestedDays -
-  excludedHolidayDates.length -
-  sundayCount;
+  excludedHolidayDates.length;
     /* =====================================================
        GET USER
     ===================================================== */
@@ -530,7 +509,28 @@ const totalDays =
           "Employee not found.",
       });
     }
+/* =====================================================
+   CHECK EMPLOYEE DEPARTMENT
+===================================================== */
 
+if (!user.department) {
+  return res.status(400).json({
+    message:
+      "You are not assigned to any department. Please contact HR.",
+  });
+}
+
+const departmentExists = await Department.findOne({
+  name: user.department,
+  status: "Active",
+});
+
+if (!departmentExists) {
+  return res.status(400).json({
+    message:
+      "Your department has been deleted or is inactive. You cannot apply for leave. Please contact HR.",
+  });
+}
     /* =====================================================
        DETERMINE APPROVAL FLOW
     ===================================================== */
@@ -797,19 +797,25 @@ const totalDays =
           "Pending",
 
         requiredApprovals,
+managerStatus:
+  requiredApprovals.includes("Manager")
+    ? "Pending"
+    : "Not Required",
 
-        managerStatus:
-          "Pending",
+departmentHeadStatus:
+  requiredApprovals.includes("DepartmentHead")
+    ? "Pending"
+    : "Not Required",
 
-        departmentHeadStatus:
-          "Pending",
+hrStatus:
+  requiredApprovals.includes("HR")
+    ? "Pending"
+    : "Not Required",
 
-        hrStatus:
-          "Pending",
-
-        adminStatus:
-          "Pending",
-
+adminStatus:
+  requiredApprovals.includes("Admin")
+    ? "Pending"
+    : "Not Required",
         balanceDeducted,
       });
 
@@ -1099,28 +1105,19 @@ const getTodayStart = () => {
     )
   );
 };
+/* =========================================================
+   CONTROL WHICH LEAVES ARE SHOWN TO APPROVERS
 
-const isLeavePastEndDate = (endDate) => {
-  const normalizedEndDate = normalizeDate(endDate);
-  if (!normalizedEndDate) {
-    return false;
-  }
-  const now = new Date();
-  const today = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate()
-    )
-  );
-  return normalizedEndDate.getTime() < today.getTime();
-};
+   - Approved → show
+   - Rejected → show
+   - Cancelled → already excluded by queries
+   - Pending + future start date → show
+   - Pending + start date today/past → hide
+========================================================= */
 
-// A request is only hidden after its end date when no final decision was made.
-// Approved and rejected requests remain available as leave history.
 const shouldDisplayLeave = (leave) =>
   leave.status !== "Pending" ||
-  !isLeavePastEndDate(leave.endDate);
+  !isLeaveExpired(leave.startDate);
 
 /* =========================================================
    MANAGER - GET TEAM LEAVE REQUESTS
@@ -1181,6 +1178,7 @@ const getManagerLeaves = async (req, res) => {
     });
   }
 };
+
 /* =========================================================
    DEPARTMENT HEAD - GET LEAVE REQUESTS
 ========================================================= */
@@ -1199,69 +1197,52 @@ const getDepartmentHeadLeaves = async (
           "Unauthorized. Please login again.",
       });
     }
-    const departmentHeadUser = await User.findById(departmentHeadId);
+const leaves = (
+  await Leave.find({
+    requiredApprovals: "DepartmentHead",
+    status: { $ne: "Cancelled" },
+  })
+    .populate(
+      "employee",
+      "name email department role departmentHead hr"
+    )
+   .sort({
+  createdAt: -1,
+})
+).filter(shouldDisplayLeave);
+console.log("========== ALL DH LEAVES FROM DATABASE ==========");
 
-    const deptHeadDepartment = (departmentHeadUser?.department || "").trim();
-    const inferredDept = deptHeadDepartment || (
-      departmentHeadUser?.name?.toLowerCase().includes("finance") ? "Finance" :
-      departmentHeadUser?.name?.toLowerCase().includes("hr") ? "HR" :
-      departmentHeadUser?.name?.toLowerCase().includes("it") ? "IT" :
-      departmentHeadUser?.name?.toLowerCase().includes("marketing") ? "Marketing" :
-      departmentHeadUser?.name?.toLowerCase().includes("sales") ? "Sales" : ""
-    );
+leaves.forEach((leave) => {
+  console.log("====================================");
+  console.log("Leave ID:", leave._id);
+  console.log("Employee:", leave.employee?.name);
+  console.log("Role:", leave.employee?.role);
+  console.log("Department:", leave.employee?.department);
+  console.log("Employee Department Head:", leave.employee?.departmentHead);
+  console.log("Logged-in Department Head:", departmentHeadId);
+  console.log("Required Approvals:", leave.requiredApprovals);
+  console.log("Manager Status:", leave.managerStatus);
+  console.log("Department Head Status:", leave.departmentHeadStatus);
+  console.log("Leave Status:", leave.status);
+  console.log("Start Date:", leave.startDate);
+  console.log("End Date:", leave.endDate);
+});
 
-    const queryConditions = [
-      { requiredApprovals: "DepartmentHead" },
-    ];
-
-    if (inferredDept) {
-      queryConditions.push({
-        department: { $regex: new RegExp(`^${inferredDept}$`, "i") },
-      });
-    }
-
-    const leaves = await Leave.find({
-      status: { $ne: "Cancelled" },
-      $or: queryConditions,
-    })
-      .populate(
-        "employee",
-        "name email department role departmentHead hr manager"
-      )
-      .sort({
-        createdAt: -1,
-      });
+console.log("==============================================");
 
     const assignedLeaves =
       leaves.filter(
         (leave) => {
-          if (!leave.employee) {
+          if (
+            !leave.employee ||
+            !leave.employee.departmentHead
+          ) {
             return false;
           }
 
-          const isDirectlyAssigned =
-            leave.employee.departmentHead &&
-            leave.employee.departmentHead.toString() ===
-              departmentHeadId.toString();
-
-          const isSameDepartment = inferredDept && (
-            (leave.employee.department &&
-              leave.employee.department.trim().toLowerCase() ===
-                inferredDept.toLowerCase()) ||
-            (leave.department &&
-              leave.department.trim().toLowerCase() ===
-                inferredDept.toLowerCase())
-          );
-
-          const isManagerOf =
-            leave.employee.manager &&
-            leave.employee.manager.toString() ===
-              departmentHeadId.toString();
-
           return (
-            isDirectlyAssigned ||
-            Boolean(isSameDepartment) ||
-            isManagerOf
+            leave.employee.departmentHead.toString() ===
+            departmentHeadId.toString()
           );
         }
       );
@@ -1686,38 +1667,11 @@ if (
     const departmentHeadId =
       getLoggedInUserId(req);
 
-    const departmentHeadUser =
-      await User.findById(departmentHeadId);
-
-    const deptHeadDepartment = (departmentHeadUser?.department || "").trim();
-    const inferredDept = deptHeadDepartment || (
-      departmentHeadUser?.name?.toLowerCase().includes("finance") ? "Finance" :
-      departmentHeadUser?.name?.toLowerCase().includes("hr") ? "HR" :
-      departmentHeadUser?.name?.toLowerCase().includes("it") ? "IT" :
-      departmentHeadUser?.name?.toLowerCase().includes("marketing") ? "Marketing" :
-      departmentHeadUser?.name?.toLowerCase().includes("sales") ? "Sales" : ""
-    );
-
-    const isDirectlyAssigned =
-      employee.departmentHead &&
-      employee.departmentHead.toString() ===
-        departmentHeadId.toString();
-
-    const isSameDepartment = inferredDept && (
-      (employee.department &&
-        employee.department.trim().toLowerCase() ===
-          inferredDept.toLowerCase()) ||
-      (leave.department &&
-        leave.department.trim().toLowerCase() ===
-          inferredDept.toLowerCase())
-    );
-
-    const isManagerOf =
-      employee.manager &&
-      employee.manager.toString() ===
-        departmentHeadId.toString();
-
-    if (!isDirectlyAssigned && !isSameDepartment && !isManagerOf) {
+    if (
+      !employee.departmentHead ||
+      employee.departmentHead.toString() !==
+        departmentHeadId.toString()
+    ) {
       return res.status(403).json({
         message:
           "You are not authorized to review this employee's leave.",
@@ -2808,6 +2762,239 @@ const updateLeaveStatus = async (
     });
   }
 };
+/* =========================================================
+   GET EMPLOYEES ON LEAVE TODAY
+   ---------------------------------------------------------
+   Manager        -> Their assigned employees
+   DepartmentHead -> Their department employees
+   HR             -> All employees
+   Admin          -> All employees
+
+   Only APPROVED leaves covering today's date are shown.
+========================================================= */
+
+const getEmployeesOnLeaveToday = async (req, res) => {
+  try {
+    const userId = getLoggedInUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Unauthorized. Please login again.",
+      });
+    }
+
+    const user = await User.findById(userId).select(
+      "_id role department"
+    );
+    // CHECK EMPLOYEE DEPARTMENT
+if (!user) {
+  return res.status(404).json({
+    message: "User not found.",
+  });
+}
+
+if (!user.department) {
+  return res.status(400).json({
+    message: "You are not assigned to any department. Please contact HR.",
+  });
+}
+
+const departmentExists = await Department.findOne({
+  name: user.department,
+  status: "Active",
+});
+
+if (!departmentExists) {
+  return res.status(400).json({
+    message:
+      "Your department has been deleted or is inactive. You cannot apply for leave. Please contact HR.",
+  });
+}
+    // CHECK WHETHER EMPLOYEE'S DEPARTMENT IS STILL ACTIVE
+if (user?.department) {
+  const departmentExists = await Department.findOne({
+    name: user.department,
+    status: "Active",
+  });
+
+  if (!departmentExists) {
+    return res.status(400).json({
+      message:
+        "Your department is no longer active. Please contact HR.",
+    });
+  }
+}
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found.",
+      });
+    }
+
+    /* =====================================================
+       TODAY'S DATE
+    ===================================================== */
+
+    const now = new Date();
+
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0
+    );
+
+    const todayEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999
+    );
+
+    /* =====================================================
+       FIND EMPLOYEES BASED ON LOGGED-IN ROLE
+    ===================================================== */
+
+    let employeeQuery = {
+      role: "employee",
+    };
+
+    /* -----------------------------------------------------
+       MANAGER
+       ----------------------------------------------------- */
+
+    if (user.role === "manager") {
+      employeeQuery.manager = userId;
+    }
+
+    /* -----------------------------------------------------
+       DEPARTMENT HEAD
+       ----------------------------------------------------- */
+
+    else if (user.role === "departmentHead") {
+      employeeQuery.departmentHead = userId;
+    }
+
+    /* -----------------------------------------------------
+       HR / ADMIN
+       ----------------------------------------------------- */
+
+    else if (
+      user.role === "hr" ||
+      user.role === "admin"
+    ) {
+      // No additional filter.
+      // They can see all employees.
+    }
+
+    /* -----------------------------------------------------
+       OTHER ROLES ARE NOT ALLOWED
+       ----------------------------------------------------- */
+
+    else {
+      return res.status(403).json({
+        message:
+          "You are not authorized to view today's leave information.",
+      });
+    }
+
+    const employees = await User.find(
+      employeeQuery
+    ).select(
+      "_id name email department role"
+    );
+
+    const employeeIds = employees.map(
+      (employee) => employee._id
+    );
+
+    /* =====================================================
+       FIND APPROVED LEAVES COVERING TODAY
+    ===================================================== */
+
+    const leaves = await Leave.find({
+      employee: {
+        $in: employeeIds,
+      },
+
+      status: "Approved",
+
+      startDate: {
+        $lte: todayEnd,
+      },
+
+      endDate: {
+        $gte: todayStart,
+      },
+    })
+      .populate(
+        "employee",
+        "name email department role"
+      )
+      .sort({
+        startDate: 1,
+      });
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
+
+    return res.status(200).json({
+      success: true,
+
+      date: todayStart,
+
+      totalEmployeesOnLeave: leaves.length,
+
+      employeesOnLeave: leaves.map(
+        (leave) => ({
+          leaveId: leave._id,
+
+          employeeId:
+            leave.employee?._id,
+
+          employeeName:
+            leave.employee?.name || "Unknown",
+
+          email:
+            leave.employee?.email || "",
+
+          department:
+            leave.employee?.department || "",
+
+          leaveType:
+            leave.leaveType,
+
+          startDate:
+            leave.startDate,
+
+          endDate:
+            leave.endDate,
+
+          totalDays:
+            leave.totalDays || 0,
+        })
+      ),
+    });
+
+  } catch (error) {
+    console.error(
+      "GET EMPLOYEES ON LEAVE TODAY ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Server error while loading employees on leave today.",
+    });
+  }
+};
 
 /* =========================================================
    EXPORTS
@@ -2830,4 +3017,5 @@ module.exports = {
 
   adminApproval,
   updateLeaveStatus,
+  getEmployeesOnLeaveToday,
 };

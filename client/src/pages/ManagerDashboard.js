@@ -16,6 +16,17 @@ function ManagerDashboard() {
   const [team, setTeam] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
+
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -53,6 +64,17 @@ function ManagerDashboard() {
       );
 
       const leaveData = leaveResponse.data || [];
+
+      try {
+        const profileResponse = await api.get("/users/profile", config);
+        const profileData = profileResponse.data?.user || profileResponse.data;
+        if (profileData) {
+          setUser(profileData);
+          sessionStorage.setItem("user", JSON.stringify(profileData));
+        }
+      } catch (err) {
+        console.log("Manager profile load error:", err.message);
+      }
 
       /* =========================================
          CALCULATE REQUEST STATUS
@@ -159,6 +181,26 @@ function ManagerDashboard() {
     if (!name) return "E";
 
     return name.charAt(0).toUpperCase();
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "M";
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+  };
+
+  const getPhotoUrl = (photoPath) => {
+    if (!photoPath) return null;
+    if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
+      return photoPath;
+    }
+    const baseUrl = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
+    return `${baseUrl}${photoPath.startsWith("/") ? "" : "/"}${photoPath}`;
   };
 
   const getStatusClass = (status) => {
@@ -814,7 +856,94 @@ function ManagerDashboard() {
           </div>
 
 
-          {/* TEAM MEMBERS */}
+          {/* RIGHT SIDE OF BOTTOM GRID: PROFILE & TEAM */}
+          <div className="manager-bottom-side">
+
+            {/* MY PROFILE */}
+            <div className="manager-panel manager-profile-panel">
+              <div className="panel-header">
+                <div>
+                  <h2>My Profile</h2>
+                  <p>Logged-in manager details</p>
+                </div>
+
+                <span className="manager-profile-status-badge">
+                  Active
+                </span>
+              </div>
+
+              <div className="manager-profile-card">
+                <div className="manager-profile-top">
+                  <div className="manager-profile-avatar">
+                    {user?.profilePhoto && !photoError ? (
+                      <img
+                        src={getPhotoUrl(user.profilePhoto)}
+                        alt={user?.name || "Manager"}
+                        className="manager-profile-img"
+                        onError={() => setPhotoError(true)}
+                      />
+                    ) : (
+                      getInitials(user?.name || "Manager")
+                    )}
+                  </div>
+
+                  <div className="manager-profile-meta">
+                    <h3>{user?.name || "Manager"}</h3>
+                    <p>{user?.email || "manager@leave.com"}</p>
+                    <span className="manager-role-pill">Team Manager</span>
+                  </div>
+                </div>
+
+                <div className="manager-profile-stats-row">
+                  <div className="manager-profile-stat-box">
+                    <span className="manager-stat-num">{stats.teamMembers}</span>
+                    <span className="manager-stat-lbl">Team Members</span>
+                  </div>
+
+                  <div className="manager-profile-stat-box">
+                    <span className="manager-stat-num">{stats.totalRequests}</span>
+                    <span className="manager-stat-lbl">Team Requests</span>
+                  </div>
+
+                  <div className="manager-profile-stat-box">
+                    <span className="manager-stat-num">{stats.pending}</span>
+                    <span className="manager-stat-lbl">Pending</span>
+                  </div>
+                </div>
+
+                <div className="manager-profile-info-list">
+                  <div className="manager-profile-info-item">
+                    <span>Role</span>
+                    <strong>Manager</strong>
+                  </div>
+
+                  <div className="manager-profile-info-item">
+                    <span>Employee ID</span>
+                    <strong>{user?.employeeId || "MGR-001"}</strong>
+                  </div>
+
+                  <div className="manager-profile-info-item">
+                    <span>Department</span>
+                    <strong>{user?.department || "Management"}</strong>
+                  </div>
+
+                  <div className="manager-profile-info-item">
+                    <span>Gender</span>
+                    <strong>{user?.gender || "Not Specified"}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="manager-view-profile-btn"
+                  onClick={() => setShowProfileModal(true)}
+                >
+                  👁 View Full Profile
+                </button>
+              </div>
+            </div>
+
+            {/* TEAM MEMBERS */}
 
           <div className="manager-panel team-panel">
 
@@ -897,9 +1026,117 @@ function ManagerDashboard() {
 
           </div>
 
+          </div>
+
         </div>
 
       </div>
+
+      {/* ===================================================
+          PROFILE DETAILS MODAL
+      =================================================== */}
+      {showProfileModal && (
+        <div
+          className="manager-modal-overlay"
+          onClick={() => setShowProfileModal(false)}
+        >
+          <div
+            className="manager-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="manager-modal-header">
+              <div>
+                <span className="manager-modal-tag">MANAGER PROFILE</span>
+                <h2>Account Information</h2>
+                <p>Complete profile details for your account</p>
+              </div>
+
+              <button
+                type="button"
+                className="manager-modal-close-btn"
+                onClick={() => setShowProfileModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="manager-modal-body">
+              <div className="manager-modal-user-summary">
+                <div className="manager-modal-avatar">
+                  {user?.profilePhoto && !photoError ? (
+                    <img
+                      src={getPhotoUrl(user.profilePhoto)}
+                      alt={user?.name || "Manager"}
+                      className="manager-modal-img"
+                      onError={() => setPhotoError(true)}
+                    />
+                  ) : (
+                    getInitials(user?.name || "Manager")
+                  )}
+                </div>
+
+                <div className="manager-modal-user-titles">
+                  <h3>{user?.name || "Manager"}</h3>
+                  <p>{user?.email || "manager@leave.com"}</p>
+                  <span className="manager-badge-role">Team Manager</span>
+                </div>
+              </div>
+
+              <div className="manager-modal-details-grid">
+                <div className="manager-modal-field">
+                  <label>Full Name</label>
+                  <span>{user?.name || "-"}</span>
+                </div>
+
+                <div className="manager-modal-field">
+                  <label>Email Address</label>
+                  <span>{user?.email || "-"}</span>
+                </div>
+
+                <div className="manager-modal-field">
+                  <label>Role</label>
+                  <span>Manager</span>
+                </div>
+
+                <div className="manager-modal-field">
+                  <label>Employee ID</label>
+                  <span>{user?.employeeId || "MGR-001"}</span>
+                </div>
+
+                <div className="manager-modal-field">
+                  <label>Department</label>
+                  <span>{user?.department || "Management"}</span>
+                </div>
+
+                <div className="manager-modal-field">
+                  <label>Gender</label>
+                  <span>{user?.gender || "Not Specified"}</span>
+                </div>
+
+                <div className="manager-modal-field">
+                  <label>Team Members</label>
+                  <span>{stats.teamMembers} assigned</span>
+                </div>
+
+                <div className="manager-modal-field">
+                  <label>Account Status</label>
+                  <span className="manager-modal-status-active">Active</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="manager-modal-footer">
+              <button
+                type="button"
+                className="manager-modal-done-btn"
+                onClick={() => setShowProfileModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

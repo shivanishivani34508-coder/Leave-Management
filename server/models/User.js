@@ -47,13 +47,20 @@ const leaveBalanceSchema = new mongoose.Schema(
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+  employeeId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+  },
 
-    email: {
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  email: {
       type: String,
       required: true,
       unique: true,
@@ -85,6 +92,7 @@ const userSchema = new mongoose.Schema(
     },
 
     departmentHead: {
+      
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       default: null,
@@ -106,6 +114,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Male", "Female", "Other"],
       required: true,
+    },
+
+    profilePhoto: {
+      type: String,
+      default: "",
     },
 
     leaveBalances: {

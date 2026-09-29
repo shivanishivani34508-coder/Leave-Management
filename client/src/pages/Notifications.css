@@ -307,3 +307,92 @@
 .clear-all-btn:hover {
   background: #b91c1c;
 }
+/* ==========================================
+   READ / UNREAD NOTIFICATION COLUMNS
+========================================== */
+
+.notifications-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+  align-items: start;
+  margin-top: 25px;
+}
+
+.notification-column {
+  min-width: 0;
+}
+
+.notification-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.notification-column-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.notification-column-header span {
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.unread-header {
+  border-left: 5px solid #2563eb;
+}
+
+.unread-header span {
+  background: #2563eb;
+}
+
+.read-header {
+  border-left: 5px solid #10b981;
+}
+
+.read-header span {
+  background: #10b981;
+}
+
+.notification-empty-column {
+  background: #ffffff;
+  padding: 35px 20px;
+  text-align: center;
+  border-radius: 12px;
+  color: #64748b;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.notification-empty-column p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Keep notification cards inside their column */
+
+.notification-column .notification-card {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 18px;
+}
+
+/* Responsive design */
+
+@media (max-width: 900px) {
+  .notifications-columns {
+    grid-template-columns: 1fr;
+  }
+}

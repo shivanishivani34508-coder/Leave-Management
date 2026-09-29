@@ -817,13 +817,11 @@ return (
 
               <table className="employees-table">
 
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-
-                    <th>Role</th>
-
-                    <th>Casual</th>
+               <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Role</th>
+                     <th>Casual</th>
 
                     <th>Sick</th>
 
@@ -858,7 +856,7 @@ return (
 
                         <tr key={employee._id}>
 
-                          <td>
+                           <td>
 
                             <div className="employees-user">
 

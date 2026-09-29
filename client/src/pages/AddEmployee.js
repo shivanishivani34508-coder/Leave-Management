@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import "./AddEmployee.css";
 
+
 function AddEmployee() {
   const navigate = useNavigate();
 
@@ -27,7 +28,7 @@ const [formData, setFormData] = useState({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
+  const [profilePhoto, setProfilePhoto] = useState(null);
   /* =========================================================
    LOAD MANAGERS, DEPARTMENT HEADS & DEPARTMENTS
 ========================================================= */
@@ -104,34 +105,103 @@ const handleChange = async (e) => {
     const name = formData.name.trim();
     const email = formData.email.trim().toLowerCase();
     const password = formData.password;
+/* =========================================================
+   VALIDATION
+========================================================= */
 
-    if (!name || !email || !password) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+if (!name || !email || !password) {
+  setError("Please fill in all required fields.");
+  return;
+}
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
+/* NAME VALIDATION */
+const nameRegex = /^[A-Za-z][A-Za-z\s.'-]*$/;
 
+if (!nameRegex.test(name)) {
+  setError(
+    "Name can contain only letters, spaces, dots, apostrophes and hyphens."
+  );
+  return;
+}
+
+if (name.length < 2) {
+  setError("Name must contain at least 2 characters.");
+  return;
+}
+
+/* EMAIL VALIDATION */
+const emailRegex =
+  /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+if (!emailRegex.test(email)) {
+  setError("Please enter a valid email address.");
+  return;
+}
+
+/* PASSWORD VALIDATION */
+if (password.length < 8) {
+  setError("Password must be at least 8 characters.");
+  return;
+}
+
+if (!/[A-Z]/.test(password)) {
+  setError(
+    "Password must contain at least one uppercase letter."
+  );
+  return;
+}
+
+if (!/[a-z]/.test(password)) {
+  setError(
+    "Password must contain at least one lowercase letter."
+  );
+  return;
+}
+
+if (!/[0-9]/.test(password)) {
+  setError(
+    "Password must contain at least one number."
+  );
+  return;
+}
+
+if (!/[!@#$%^&*(),.?":{}|<>_\-]/.test(password)) {
+  setError(
+    "Password must contain at least one special character."
+  );
+  return;
+}
     try {
       setLoading(true);
+const data = new FormData();
 
-      const response = await api.post(
-        "/users/employee",
-        {
-          name,
-          email,
-          password,
-          role: formData.role,
-          gender: formData.gender,
-          department: formData.department,
-          manager: formData.manager || null,
-          departmentHead:
-            formData.departmentHead || null,
-        }
-      );
+data.append("name", name);
+data.append("email", email);
+data.append("password", password);
+data.append("role", formData.role);
+data.append("gender", formData.gender);
+data.append("department", formData.department);
+data.append("manager", formData.manager || "");
+data.append(
+  "departmentHead",
+  formData.departmentHead || ""
+);
+
+if (profilePhoto) {
+  data.append("profilePhoto", profilePhoto);
+}
+
+const token = sessionStorage.getItem("token");
+
+const response = await api.post(
+  "/users/employee",
+  data,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
       setMessage(
         response.data.message ||
@@ -148,6 +218,7 @@ const handleChange = async (e) => {
         manager: "",
         departmentHead: "",
       });
+      setProfilePhoto(null);
     } catch (error) {
       console.error(error);
 
@@ -270,7 +341,17 @@ const handleChange = async (e) => {
     onChange={handleChange}
     required
   />
+  </div>
+  <div className="form-group">
+  <label>Employee Photo</label>
 
+  <input
+    type="file"
+    accept="image/jpeg,image/jpg,image/png,image/webp"
+    onChange={(e) =>
+      setProfilePhoto(e.target.files[0] || null)
+    }
+  />
 </div>
 
          
@@ -429,15 +510,13 @@ const handleChange = async (e) => {
               Email Address
             </label>
 
-            <input
-              id="email"
-              type="email"
-              name="email"
-              placeholder="employee@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+              <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  autoComplete="new-email"
+                />
 
           </div>
 
@@ -451,16 +530,13 @@ const handleChange = async (e) => {
             <label htmlFor="password">
               Temporary Password
             </label>
-
-            <input
-              id="password"
-              type="password"
-              name="password"
-              placeholder="Minimum 6 characters"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
+          <input
+            type="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
 
           </div>
                     {/* =====================================================

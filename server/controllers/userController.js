@@ -4,7 +4,32 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const YearlyLeaveBalance = require("../models/YearlyLeaveBalance");
 const Leave = require("../models/Leave");
+/* =========================================================
+   GENERATE NEXT EMPLOYEE ID
+========================================================= */
 
+const generateEmployeeId = async () => {
+  const employees = await User.find({
+    role: "employee",
+    employeeId: { $exists: true, $ne: null },
+  }).select("employeeId");
+
+  let maxNumber = 0;
+
+  employees.forEach((employee) => {
+    const match = employee.employeeId?.match(/^EMP(\d+)$/);
+
+    if (match) {
+      const number = Number(match[1]);
+
+      if (number > maxNumber) {
+        maxNumber = number;
+      }
+    }
+  });
+
+  return `EMP${String(maxNumber + 1).padStart(3, "0")}`;
+};
 
 /* =========================================================
    GET ALL USERS
@@ -224,6 +249,7 @@ const getUserById = async (req, res) => {
 
 const createEmployee = async (req, res) => {
   try {
+console.log("UPLOADED FILE:", req.file);
     const {
       name,
       email,
@@ -282,17 +308,25 @@ const createEmployee = async (req, res) => {
       departmentHead,
     });
 
-    const employee = await User.create({
-      name,
-      email: normalizedEmail,
-      password: hashedPassword,
-      role,
-      gender,
-      department,
-      manager,
-      departmentHead,
-    });
+    const employeeId =
+  role === "employee"
+    ? await generateEmployeeId()
+    : undefined;
 
+const employee = await User.create({
+  name,
+  employeeId,
+  email: normalizedEmail,
+  password: hashedPassword,
+  role,
+  gender,
+  department,
+  manager,
+  departmentHead,
+  profilePhoto: req.file
+    ? `/uploads/employees/${req.file.filename}`
+    : "",
+});
     /* =====================================================
        CREATE CURRENT YEAR LEAVE BALANCE
     ===================================================== */
@@ -878,6 +912,11 @@ const updateEmployee = async (req, res) => {
       role,
     } = req.body;
 
+    console.log("========== PHOTO DEBUG ==========");
+    console.log("REQ BODY:", req.body);
+    console.log("REQ FILE:", req.file);
+    console.log("================================");
+
     const employee = await User.findById(req.params.id);
 
     if (!employee) {
@@ -897,7 +936,12 @@ const updateEmployee = async (req, res) => {
       departmentHead || employee.departmentHead;
     employee.role = role || employee.role;
 
-    await employee.save();
+  /* UPDATE PROFILE PHOTO ONLY IF A NEW PHOTO IS UPLOADED */
+  if (req.file) {
+    employee.profilePhoto = `/uploads/employees/${req.file.filename}`;
+  }
+
+  await employee.save();
 
     return res.status(200).json({
       message: "Employee updated successfully.",

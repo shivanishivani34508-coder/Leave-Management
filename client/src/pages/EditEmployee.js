@@ -9,6 +9,7 @@ function EditEmployee() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profilePhoto, setProfilePhoto] = useState(null);
 
   const [managers, setManagers] = useState([]);
   const [departmentHeads, setDepartmentHeads] = useState([]);
@@ -99,11 +100,25 @@ function EditEmployee() {
     try {
       setSaving(true);
 
-      await api.put(
-        `/users/${id}`,
-        formData,
-        getAuthConfig()
-      );
+     const data = new FormData();
+
+data.append("name", formData.name);
+data.append("email", formData.email);
+data.append("gender", formData.gender);
+data.append("role", formData.role);
+data.append("department", formData.department);
+data.append("manager", formData.manager || "");
+data.append("departmentHead", formData.departmentHead || "");
+
+if (profilePhoto) {
+  data.append("profilePhoto", profilePhoto);
+}
+
+await api.put(
+  `/users/${id}`,
+  data,
+  getAuthConfig()
+);
 
       alert("Employee updated successfully.");
 
@@ -262,6 +277,21 @@ function EditEmployee() {
             </select>
 
           </div>
+          <div className="form-field">
+
+          <label>Profile Photo</label>
+
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp"
+            onChange={(e) => setProfilePhoto(e.target.files[0])}
+          />
+
+          <small>
+            JPG, JPEG, PNG or WEBP — maximum 5MB
+          </small>
+
+        </div>
 
           <div className="form-field">
 

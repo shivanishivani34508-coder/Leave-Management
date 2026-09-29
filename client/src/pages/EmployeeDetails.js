@@ -40,6 +40,7 @@ function EmployeeDetails() {
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
+  const [photoError, setPhotoError] = useState(false);
 
   /* =========================================================
       AUTH CONFIG
@@ -70,6 +71,7 @@ function EmployeeDetails() {
       );
 
       setEmployee(response.data.user);
+      setPhotoError(false);
 
       setStatistics(
         response.data.statistics || {
@@ -87,7 +89,6 @@ function EmployeeDetails() {
           approvedUnpaidDays: 0,
         }
       );
-
     } catch (err) {
       console.error(err);
 
@@ -143,7 +144,10 @@ function EmployeeDetails() {
   /* =========================================================
       LEAVE BALANCE CARDS
   ========================================================= */
-  const employeeGender = String(employee?.gender || "").toLowerCase();
+
+  const employeeGender = String(
+    employee?.gender || ""
+  ).toLowerCase();
 
   const leaveCards = [
     {
@@ -170,27 +174,27 @@ function EmployeeDetails() {
       icon: "💍",
       color: "#ec4899",
     },
-   ...(employeeGender === "female"
-  ? [
-      {
-        title: "Maternity",
-        value: balances.maternity ?? 0,
-        icon: "🤱",
-        color: "#8b5cf6",
-      },
-    ]
-  : []),
+    ...(employeeGender === "female"
+      ? [
+          {
+            title: "Maternity",
+            value: balances.maternity ?? 0,
+            icon: "🤱",
+            color: "#8b5cf6",
+          },
+        ]
+      : []),
 
-...(employeeGender === "male"
-  ? [
-      {
-        title: "Paternity",
-        value: balances.paternity ?? 0,
-        icon: "👨‍👦",
-        color: "#f97316",
-      },
-    ]
-  : []),
+    ...(employeeGender === "male"
+      ? [
+          {
+            title: "Paternity",
+            value: balances.paternity ?? 0,
+            icon: "👨‍👦",
+            color: "#f97316",
+          },
+        ]
+      : []),
     {
       title: "Bereavement",
       value: balances.bereavement ?? 0,
@@ -258,14 +262,16 @@ function EmployeeDetails() {
   }
 
   /* =========================================================
-      MAIN PAGE JSX STARTS IN PART 1B
+      MAIN PAGE JSX
   ========================================================= */
-   return (
+
+  return (
     <div className="employee-details-page">
 
       {/* Background Shapes */}
 
       <div className="employee-bg-circle employee-bg-circle1"></div>
+
       <div className="employee-bg-circle employee-bg-circle2"></div>
 
       <div className="employee-details-container">
@@ -288,9 +294,27 @@ function EmployeeDetails() {
             {/* Avatar */}
 
             <div className="employee-avatar">
-
-              {employeeInitials}
-
+              {employee.profilePhoto && !photoError ? (
+                <img
+                  src={
+                    employee.profilePhoto.startsWith("http")
+                      ? employee.profilePhoto
+                      : `${(
+                          process.env.REACT_APP_API_URL ||
+                          "http://localhost:5000/api"
+                        ).replace(/\/api\/?$/, "")}${
+                          employee.profilePhoto.startsWith("/")
+                            ? ""
+                            : "/"
+                        }${employee.profilePhoto}`
+                  }
+                  alt={employee.name}
+                  className="employee-profile-photo"
+                  onError={() => setPhotoError(true)}
+                />
+              ) : (
+                employeeInitials
+              )}
             </div>
 
             {/* Employee Details */}
@@ -301,10 +325,24 @@ function EmployeeDetails() {
 
               <p>{employee.email}</p>
 
+              {/* Employee ID */}
+
+              <p>
+                <strong>Employee ID:</strong>{" "}
+                {employee.employeeId || "-"}
+              </p>
+
+              {/* Department */}
+
+              <p>
+                <strong>Department:</strong>{" "}
+                {employee.department || "Not Assigned"}
+              </p>
+
+              {/* Role */}
+
               <div className="employee-role-badge">
-
                 {employee.role}
-
               </div>
 
             </div>
@@ -316,9 +354,7 @@ function EmployeeDetails() {
               <span>Joined On</span>
 
               <strong>
-
                 {formatDate(employee.createdAt)}
-
               </strong>
 
             </div>
@@ -327,7 +363,7 @@ function EmployeeDetails() {
 
         </div>
 
-        
+
         {/* =========================================
             LEAVE BALANCES
         ========================================== */}
@@ -351,9 +387,7 @@ function EmployeeDetails() {
                     background: leave.color,
                   }}
                 >
-
                   {leave.icon}
-
                 </div>
 
                 <h3>{leave.title}</h3>
@@ -369,7 +403,9 @@ function EmployeeDetails() {
           </div>
 
         </section>
-                {/* =========================================
+
+
+        {/* =========================================
             APPROVED LEAVE USAGE
         ========================================== */}
 
@@ -383,7 +419,9 @@ function EmployeeDetails() {
 
               <h3>Total Approved Days</h3>
 
-              <h1>{leaveUsage.approvedTotalDays}</h1>
+              <h1>
+                {leaveUsage.approvedTotalDays}
+              </h1>
 
               <div className="usage-progress">
 
@@ -401,11 +439,14 @@ function EmployeeDetails() {
 
             </div>
 
+
             <div className="employee-usage-card">
 
               <h3>Paid Leave Used</h3>
 
-              <h1>{leaveUsage.approvedPaidDays}</h1>
+              <h1>
+                {leaveUsage.approvedPaidDays}
+              </h1>
 
               <div className="usage-progress">
 
@@ -423,11 +464,14 @@ function EmployeeDetails() {
 
             </div>
 
+
             <div className="employee-usage-card">
 
               <h3>Unpaid Leave Used</h3>
 
-              <h1>{leaveUsage.approvedUnpaidDays}</h1>
+              <h1>
+                {leaveUsage.approvedUnpaidDays}
+              </h1>
 
               <div className="usage-progress">
 
@@ -449,6 +493,7 @@ function EmployeeDetails() {
 
         </section>
 
+
         {/* =========================================
             PERFORMANCE SUMMARY
         ========================================== */}
@@ -463,9 +508,12 @@ function EmployeeDetails() {
 
               <span>Total Leave Requests</span>
 
-              <h2>{statistics.total}</h2>
+              <h2>
+                {statistics.total}
+              </h2>
 
             </div>
+
 
             <div className="summary-card">
 
@@ -487,19 +535,25 @@ function EmployeeDetails() {
 
             </div>
 
+
             <div className="summary-card">
 
               <span>Pending Requests</span>
 
-              <h2>{statistics.pending}</h2>
+              <h2>
+                {statistics.pending}
+              </h2>
 
             </div>
+
 
             <div className="summary-card">
 
               <span>Rejected Requests</span>
 
-              <h2>{statistics.rejected}</h2>
+              <h2>
+                {statistics.rejected}
+              </h2>
 
             </div>
 
@@ -507,13 +561,10 @@ function EmployeeDetails() {
 
         </section>
 
-       
-              </div>
+      </div>
 
     </div>
-
   );
-
 }
 
 export default EmployeeDetails;

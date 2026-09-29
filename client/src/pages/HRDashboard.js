@@ -6,6 +6,17 @@ function HRDashboard() {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem("user");
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [photoError, setPhotoError] = useState(false);
+
   useEffect(() => {
     fetchLeaves();
   }, []);
@@ -23,12 +34,47 @@ function HRDashboard() {
       console.log("HR Leaves:", res.data);
 
       setLeaves(Array.isArray(res.data) ? res.data : []);
+
+      try {
+        const profileRes = await api.get("/users/profile", {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+          },
+        });
+        const profileData = profileRes.data?.user || profileRes.data;
+        if (profileData) {
+          setUser(profileData);
+          sessionStorage.setItem("user", JSON.stringify(profileData));
+        }
+      } catch (err) {
+        console.log("HR profile load error:", err.message);
+      }
     } catch (error) {
       console.error("Error fetching HR leaves:", error);
       setLeaves([]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "H";
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((w) => w[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+  };
+
+  const getPhotoUrl = (photoPath) => {
+    if (!photoPath) return null;
+    if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
+      return photoPath;
+    }
+    const baseUrl = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
+    return `${baseUrl}${photoPath.startsWith("/") ? "" : "/"}${photoPath}`;
   };
 
   const pendingLeaves = leaves.filter(
@@ -438,7 +484,9 @@ function HRDashboard() {
 
         {/* ================= RECENT REQUESTS ================= */}
 
-        <div className="hr-recent-panel">
+        <div className="hr-bottom-grid">
+
+          <div className="hr-recent-panel">
 
           <div className="hr-panel-header">
 
@@ -556,7 +604,199 @@ function HRDashboard() {
 
           </div>
 
+          </div>
+
+          {/* ================= MY PROFILE ================= */}
+          <div className="hr-panel hr-profile-panel">
+            <div className="hr-panel-header">
+              <div>
+                <h2>My Profile</h2>
+                <p>HR Administrator account details</p>
+              </div>
+
+              <span className="hr-profile-status-badge">
+                Active
+              </span>
+            </div>
+
+            <div className="hr-profile-card">
+              <div className="hr-profile-top">
+                <div className="hr-profile-avatar">
+                  {user?.profilePhoto && !photoError ? (
+                    <img
+                      src={getPhotoUrl(user.profilePhoto)}
+                      alt={user?.name || "HR Officer"}
+                      className="hr-profile-img"
+                      onError={() => setPhotoError(true)}
+                    />
+                  ) : (
+                    getInitials(user?.name || "HR Officer")
+                  )}
+                </div>
+
+                <div className="hr-profile-meta">
+                  <h3>{user?.name || "HR Officer"}</h3>
+                  <p>{user?.email || "hr@leave.com"}</p>
+                  <span className="hr-role-pill">Human Resources</span>
+                </div>
+              </div>
+
+              <div className="hr-profile-stats-row">
+                <div className="hr-profile-stat-box">
+                  <span className="hr-stat-num">{totalRequests}</span>
+                  <span className="hr-stat-lbl">HR Requests</span>
+                </div>
+
+                <div className="hr-profile-stat-box">
+                  <span className="hr-stat-num">{approvedLeaves}</span>
+                  <span className="hr-stat-lbl">Approved</span>
+                </div>
+
+                <div className="hr-profile-stat-box">
+                  <span className="hr-stat-num">{pendingLeaves}</span>
+                  <span className="hr-stat-lbl">Pending</span>
+                </div>
+              </div>
+
+              <div className="hr-profile-info-list">
+                <div className="hr-profile-info-item">
+                  <span>Role</span>
+                  <strong>HR Officer</strong>
+                </div>
+
+                <div className="hr-profile-info-item">
+                  <span>Employee ID</span>
+                  <strong>{user?.employeeId || "HR-001"}</strong>
+                </div>
+
+                <div className="hr-profile-info-item">
+                  <span>Department</span>
+                  <strong>{user?.department || "Human Resources"}</strong>
+                </div>
+
+                <div className="hr-profile-info-item">
+                  <span>Gender</span>
+                  <strong>{user?.gender || "Not Specified"}</strong>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="hr-view-profile-btn"
+                onClick={() => setShowProfileModal(true)}
+              >
+                👁 View Full Profile
+              </button>
+            </div>
+          </div>
+
         </div>
+
+      {/* ===================================================
+          PROFILE DETAILS MODAL
+      =================================================== */}
+      {showProfileModal && (
+        <div
+          className="hr-modal-overlay"
+          onClick={() => setShowProfileModal(false)}
+        >
+          <div
+            className="hr-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="hr-modal-header">
+              <div>
+                <span className="hr-modal-tag">HR PROFILE</span>
+                <h2>Account Information</h2>
+                <p>Complete profile details for your account</p>
+              </div>
+
+              <button
+                type="button"
+                className="hr-modal-close-btn"
+                onClick={() => setShowProfileModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="hr-modal-body">
+              <div className="hr-modal-user-summary">
+                <div className="hr-modal-avatar">
+                  {user?.profilePhoto && !photoError ? (
+                    <img
+                      src={getPhotoUrl(user.profilePhoto)}
+                      alt={user?.name || "HR Officer"}
+                      className="hr-modal-img"
+                      onError={() => setPhotoError(true)}
+                    />
+                  ) : (
+                    getInitials(user?.name || "HR Officer")
+                  )}
+                </div>
+
+                <div className="hr-modal-user-titles">
+                  <h3>{user?.name || "HR Officer"}</h3>
+                  <p>{user?.email || "hr@leave.com"}</p>
+                  <span className="hr-badge-role">Human Resources</span>
+                </div>
+              </div>
+
+              <div className="hr-modal-details-grid">
+                <div className="hr-modal-field">
+                  <label>Full Name</label>
+                  <span>{user?.name || "-"}</span>
+                </div>
+
+                <div className="hr-modal-field">
+                  <label>Email Address</label>
+                  <span>{user?.email || "-"}</span>
+                </div>
+
+                <div className="hr-modal-field">
+                  <label>Role</label>
+                  <span>HR Officer</span>
+                </div>
+
+                <div className="hr-modal-field">
+                  <label>Employee ID</label>
+                  <span>{user?.employeeId || "HR-001"}</span>
+                </div>
+
+                <div className="hr-modal-field">
+                  <label>Department</label>
+                  <span>{user?.department || "Human Resources"}</span>
+                </div>
+
+                <div className="hr-modal-field">
+                  <label>Gender</label>
+                  <span>{user?.gender || "Not Specified"}</span>
+                </div>
+
+                <div className="hr-modal-field">
+                  <label>Total Verification Requests</label>
+                  <span>{totalRequests} total</span>
+                </div>
+
+                <div className="hr-modal-field">
+                  <label>Account Status</label>
+                  <span className="hr-modal-status-active">Active</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="hr-modal-footer">
+              <button
+                type="button"
+                className="hr-modal-done-btn"
+                onClick={() => setShowProfileModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       </div>
     </div>

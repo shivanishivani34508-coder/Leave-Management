@@ -431,22 +431,7 @@ const handleForgotPassword = () => {
         </form>
                 {/* REGISTER */}
 
-        <div className="login-register-section">
-
-          <span>
-            Don't have an account?
-          </span>
-
-          <Link
-            to="/register"
-            className="login-register-link"
-          >
-            Create account
-          </Link>
-
-        </div>
-
-      </div>
+              </div>
 
     </section>
 

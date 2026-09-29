@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import "./HolidayCalendar.css";
 import api from "../services/api";
 
 function HolidayCalendar() {
+  const navigate = useNavigate();
+
   const [date, setDate] = useState(new Date());
   const [holidays, setHolidays] = useState([]);
   const [selectedHoliday, setSelectedHoliday] = useState(null);
@@ -86,116 +89,112 @@ function HolidayCalendar() {
   };
 
   /* =====================================================
-   EDIT HOLIDAY
-===================================================== */
+     EDIT HOLIDAY
+  ===================================================== */
 
-const handleEditHoliday = (holiday) => {
-  setEditingHoliday(holiday);
+  const handleEditHoliday = (holiday) => {
+    setEditingHoliday(holiday);
 
-  setEditHolidayName(holiday.holidayName);
+    setEditHolidayName(holiday.holidayName);
 
-  const formattedDate = new Date(holiday.holidayDate)
-    .toISOString()
-    .split("T")[0];
+    const formattedDate = new Date(holiday.holidayDate)
+      .toISOString()
+      .split("T")[0];
 
-  setEditHolidayDate(formattedDate);
+    setEditHolidayDate(formattedDate);
 
-  setEditHolidayType(holiday.holidayType);
+    setEditHolidayType(holiday.holidayType);
 
-  setEditDescription(holiday.description || "");
+    setEditDescription(holiday.description || "");
 
-  setMessage("");
-};
-
-
-/* =====================================================
-   UPDATE HOLIDAY
-===================================================== */
-
-const handleUpdateHoliday = async (e) => {
-  e.preventDefault();
-
-  try {
     setMessage("");
+  };
 
-    const response = await api.put(
-      `/holidays/${editingHoliday._id}`,
-      {
-        holidayName: editHolidayName,
-        holidayDate: editHolidayDate,
-        holidayType: editHolidayType,
-        description: editDescription,
-      }
+  /* =====================================================
+     UPDATE HOLIDAY
+  ===================================================== */
+
+  const handleUpdateHoliday = async (e) => {
+    e.preventDefault();
+
+    try {
+      setMessage("");
+
+      const response = await api.put(
+        `/holidays/${editingHoliday._id}`,
+        {
+          holidayName: editHolidayName,
+          holidayDate: editHolidayDate,
+          holidayType: editHolidayType,
+          description: editDescription,
+        }
+      );
+
+      setMessage(
+        response.data.message ||
+          "Holiday updated successfully!"
+      );
+
+      setEditingHoliday(null);
+
+      setEditHolidayName("");
+      setEditHolidayDate("");
+      setEditHolidayType("");
+      setEditDescription("");
+
+      await fetchHolidays();
+    } catch (error) {
+      console.error("Error updating holiday:", error);
+
+      setMessage(
+        error.response?.data?.message ||
+          "Failed to update holiday."
+      );
+    }
+  };
+
+  /* =====================================================
+     DELETE HOLIDAY
+  ===================================================== */
+
+  const handleDeleteHoliday = async (holiday) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${holiday.holidayName}"?`
     );
 
-    setMessage(
-      response.data.message ||
-        "Holiday updated successfully!"
-    );
-
-    setEditingHoliday(null);
-
-    setEditHolidayName("");
-    setEditHolidayDate("");
-    setEditHolidayType("");
-    setEditDescription("");
-
-    await fetchHolidays();
-
-  } catch (error) {
-    console.error("Error updating holiday:", error);
-
-    setMessage(
-      error.response?.data?.message ||
-        "Failed to update holiday."
-    );
-  }
-};
-
-
-/* =====================================================
-   DELETE HOLIDAY
-===================================================== */
-
-const handleDeleteHoliday = async (holiday) => {
-  const confirmDelete = window.confirm(
-    `Are you sure you want to delete "${holiday.holidayName}"?`
-  );
-
-  if (!confirmDelete) {
-    return;
-  }
-
-  try {
-    setMessage("");
-
-    const response = await api.delete(
-      `/holidays/${holiday._id}`
-    );
-
-    setMessage(
-      response.data.message ||
-        "Holiday deleted successfully!"
-    );
-
-    if (
-      selectedHoliday &&
-      selectedHoliday._id === holiday._id
-    ) {
-      setSelectedHoliday(null);
+    if (!confirmDelete) {
+      return;
     }
 
-    await fetchHolidays();
+    try {
+      setMessage("");
 
-  } catch (error) {
-    console.error("Error deleting holiday:", error);
+      const response = await api.delete(
+        `/holidays/${holiday._id}`
+      );
 
-    setMessage(
-      error.response?.data?.message ||
-        "Failed to delete holiday."
-    );
-  }
-};
+      setMessage(
+        response.data.message ||
+          "Holiday deleted successfully!"
+      );
+
+      if (
+        selectedHoliday &&
+        selectedHoliday._id === holiday._id
+      ) {
+        setSelectedHoliday(null);
+      }
+
+      await fetchHolidays();
+    } catch (error) {
+      console.error("Error deleting holiday:", error);
+
+      setMessage(
+        error.response?.data?.message ||
+          "Failed to delete holiday."
+      );
+    }
+  };
 
   const getHolidayStatus = (holidayDateValue) => {
     const today = new Date();
@@ -241,11 +240,55 @@ const handleDeleteHoliday = async (holiday) => {
     return hDate >= today;
   });
 
+  /* =====================================================
+     GROUP UPCOMING HOLIDAYS BY DATE
+     ONLY USED FOR DISPLAY
+  ===================================================== */
+
+  const groupedUpcomingHolidays = upcomingHolidays.reduce(
+    (groups, holiday) => {
+      const holidayDateObject = new Date(
+        holiday.holidayDate
+      );
+
+      const dateKey =
+        holidayDateObject.getFullYear() +
+        "-" +
+        String(
+          holidayDateObject.getMonth() + 1
+        ).padStart(2, "0") +
+        "-" +
+        String(
+          holidayDateObject.getDate()
+        ).padStart(2, "0");
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+
+      groups[dateKey].push(holiday);
+
+      return groups;
+    },
+    {}
+  );
+
   return (
     <div className="holiday-calendar-page">
       <div className="holiday-page-container">
 
+      {/* BACK BUTTON */}
+
+      <button
+        type="button"
+        className="holiday-back-btn"
+        onClick={() => navigate(-1)}
+      >
+        ← Back
+      </button>
+
         {/* HEADER */}
+
         <div className="holiday-calendar-header">
           <div>
             <span className="page-label">
@@ -266,9 +309,11 @@ const handleDeleteHoliday = async (holiday) => {
         </div>
 
         {/* MAIN GRID */}
+
         <div className="holiday-main-grid">
 
           {/* ADD HOLIDAY */}
+
           <div className="add-holiday-card">
             <div className="section-heading">
               <div className="section-icon">
@@ -371,6 +416,7 @@ const handleDeleteHoliday = async (holiday) => {
           </div>
 
           {/* CALENDAR */}
+
           <div className="calendar-card">
 
             <div className="section-heading">
@@ -409,145 +455,146 @@ const handleDeleteHoliday = async (holiday) => {
         </div>
 
         {/* =====================================================
-    EDIT HOLIDAY FORM
-===================================================== */}
+            EDIT HOLIDAY FORM
+        ===================================================== */}
 
-{editingHoliday && (
-  <div className="edit-holiday-overlay">
-    <div className="edit-holiday-modal">
+        {editingHoliday && (
+          <div className="edit-holiday-overlay">
+            <div className="edit-holiday-modal">
 
-      <div className="edit-holiday-header">
-        <div>
-          <span className="page-label">
-            EDIT HOLIDAY
-          </span>
+              <div className="edit-holiday-header">
+                <div>
+                  <span className="page-label">
+                    EDIT HOLIDAY
+                  </span>
 
-          <h2>✏️ Edit Holiday</h2>
+                  <h2>✏️ Edit Holiday</h2>
 
-          <p>
-            Update the company holiday details.
-          </p>
-        </div>
+                  <p>
+                    Update the company holiday details.
+                  </p>
+                </div>
 
-        <button
-          type="button"
-          className="close-edit-btn"
-          onClick={() => {
-            setEditingHoliday(null);
-            setEditHolidayName("");
-            setEditHolidayDate("");
-            setEditHolidayType("");
-            setEditDescription("");
-          }}
-        >
-          ✕
-        </button>
-      </div>
+                <button
+                  type="button"
+                  className="close-edit-btn"
+                  onClick={() => {
+                    setEditingHoliday(null);
+                    setEditHolidayName("");
+                    setEditHolidayDate("");
+                    setEditHolidayType("");
+                    setEditDescription("");
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
 
-      <form onSubmit={handleUpdateHoliday}>
+              <form onSubmit={handleUpdateHoliday}>
 
-        <div className="form-group">
-          <label>Holiday Name</label>
+                <div className="form-group">
+                  <label>Holiday Name</label>
 
-          <input
-            type="text"
-            value={editHolidayName}
-            onChange={(e) =>
-              setEditHolidayName(e.target.value)
-            }
-            required
-          />
-        </div>
+                  <input
+                    type="text"
+                    value={editHolidayName}
+                    onChange={(e) =>
+                      setEditHolidayName(e.target.value)
+                    }
+                    required
+                  />
+                </div>
 
-        <div className="form-row">
+                <div className="form-row">
 
-          <div className="form-group">
-            <label>Holiday Date</label>
+                  <div className="form-group">
+                    <label>Holiday Date</label>
 
-            <input
-              type="date"
-              value={editHolidayDate}
-              onChange={(e) =>
-                setEditHolidayDate(e.target.value)
-              }
-              required
-            />
+                    <input
+                      type="date"
+                      value={editHolidayDate}
+                      onChange={(e) =>
+                        setEditHolidayDate(e.target.value)
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Holiday Type</label>
+
+                    <select
+                      value={editHolidayType}
+                      onChange={(e) =>
+                        setEditHolidayType(e.target.value)
+                      }
+                      required
+                    >
+                      <option value="National">
+                        National
+                      </option>
+
+                      <option value="Festival">
+                        Festival
+                      </option>
+
+                      <option value="Company">
+                        Company
+                      </option>
+
+                      <option value="Optional">
+                        Optional
+                      </option>
+                    </select>
+                  </div>
+
+                </div>
+
+                <div className="form-group">
+                  <label>Description</label>
+
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) =>
+                      setEditDescription(e.target.value)
+                    }
+                    placeholder="Enter description (optional)"
+                  />
+                </div>
+
+                <div className="edit-holiday-actions">
+
+                  <button
+                    type="button"
+                    className="cancel-edit-btn"
+                    onClick={() => {
+                      setEditingHoliday(null);
+                      setEditHolidayName("");
+                      setEditHolidayDate("");
+                      setEditHolidayType("");
+                      setEditDescription("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="save-edit-btn"
+                  >
+                    💾 Save Changes
+                  </button>
+
+                </div>
+
+              </form>
+
+            </div>
           </div>
-
-          <div className="form-group">
-            <label>Holiday Type</label>
-
-            <select
-              value={editHolidayType}
-              onChange={(e) =>
-                setEditHolidayType(e.target.value)
-              }
-              required
-            >
-              <option value="National">
-                National
-              </option>
-
-              <option value="Festival">
-                Festival
-              </option>
-
-              <option value="Company">
-                Company
-              </option>
-
-              <option value="Optional">
-                Optional
-              </option>
-            </select>
-          </div>
-
-        </div>
-
-        <div className="form-group">
-          <label>Description</label>
-
-          <textarea
-            value={editDescription}
-            onChange={(e) =>
-              setEditDescription(e.target.value)
-            }
-            placeholder="Enter description (optional)"
-          />
-        </div>
-
-        <div className="edit-holiday-actions">
-
-          <button
-            type="button"
-            className="cancel-edit-btn"
-            onClick={() => {
-              setEditingHoliday(null);
-              setEditHolidayName("");
-              setEditHolidayDate("");
-              setEditHolidayType("");
-              setEditDescription("");
-            }}
-          >
-            Cancel
-          </button>
-
-          <button
-            type="submit"
-            className="save-edit-btn"
-          >
-            💾 Save Changes
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-  </div>
-)}
+        )}
 
         {/* SELECTED HOLIDAY */}
+
         <div className="selected-holiday-section">
 
           <div className="selected-date-card">
@@ -621,6 +668,7 @@ const handleDeleteHoliday = async (holiday) => {
         </div>
 
         {/* UPCOMING HOLIDAYS */}
+
         <div className="upcoming-holidays-section">
 
           <div className="upcoming-section-header">
@@ -648,96 +696,146 @@ const handleDeleteHoliday = async (holiday) => {
           ) : (
             <div className="upcoming-holidays-grid">
 
-              {upcomingHolidays.map((holiday) => {
-                const holidayDateObject = new Date(
-                  holiday.holidayDate
-                );
+              {/* ==========================================
+                  ONE CARD FOR EACH DATE
+              ========================================== */}
 
-                return (
-                  <div
-                    key={holiday._id}
-                    className="upcoming-holiday-card"
-                    onClick={() => {
-                      setDate(holidayDateObject);
-                      setSelectedHoliday(holiday);
-                    }}
-                  >
+              {Object.entries(groupedUpcomingHolidays).map(
+                ([dateKey, holidaysOnSameDate]) => {
 
-                    <div className="holiday-date-box">
-                      <strong>
-                        {String(
-                          holidayDateObject.getDate()
-                        ).padStart(2, "0")}
-                      </strong>
+                  const firstHoliday =
+                    holidaysOnSameDate[0];
 
-                      <span>
-                        {holidayDateObject
-                          .toLocaleString("default", {
-                            month: "short",
-                          })
-                          .toUpperCase()}
-                      </span>
-                    </div>
+                  const holidayDateObject =
+                    new Date(firstHoliday.holidayDate);
 
-                    <div className="upcoming-holiday-info">
+                  return (
+                    <div
+                      key={dateKey}
+                      className="upcoming-holiday-card"
+                      onClick={() => {
+                        setDate(holidayDateObject);
+                        setSelectedHoliday(firstHoliday);
+                      }}
+                    >
 
-                      <h3>
-                        🎉 {holiday.holidayName}
-                      </h3>
+                      {/* DATE BOX */}
 
-                      <p>
-                        {holidayDateObject.toLocaleDateString(
-                          "en-US",
-                          {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
+                      <div className="holiday-date-box">
+
+                        <strong>
+                          {String(
+                            holidayDateObject.getDate()
+                          ).padStart(2, "0")}
+                        </strong>
+
+                        <span>
+                          {holidayDateObject
+                            .toLocaleString("default", {
+                              month: "short",
+                            })
+                            .toUpperCase()}
+                        </span>
+
+                      </div>
+
+                      {/* ALL HOLIDAYS ON SAME DATE */}
+
+                      <div className="same-date-holidays">
+
+                        {holidaysOnSameDate.map(
+                          (holiday) => {
+
+                            const currentHolidayDate =
+                              new Date(
+                                holiday.holidayDate
+                              );
+
+                            return (
+                              <div
+                                key={holiday._id}
+                                className="same-date-holiday-item"
+                              >
+
+                                <div className="upcoming-holiday-info">
+
+                                  <h3>
+                                    🎉 {holiday.holidayName}
+                                  </h3>
+
+                                  <p>
+                                    {currentHolidayDate.toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        weekday: "long",
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                      }
+                                    )}
+                                  </p>
+
+                                  <span
+                                    className={`holiday-type-badge ${holiday.holidayType.toLowerCase()}`}
+                                  >
+                                    {holiday.holidayType}
+                                  </span>
+
+                                </div>
+
+                                {/* EDIT / DELETE */}
+
+                                <div className="upcoming-actions">
+
+                                  <button
+                                    type="button"
+                                    className="edit-holiday-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditHoliday(
+                                        holiday
+                                      );
+                                    }}
+                                  >
+                                    ✏️ Edit
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="delete-holiday-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteHoliday(
+                                        holiday
+                                      );
+                                    }}
+                                  >
+                                    🗑️ Delete
+                                  </button>
+
+                                </div>
+
+                              </div>
+                            );
                           }
                         )}
-                      </p>
 
-                      <span
-                        className={`holiday-type-badge ${holiday.holidayType.toLowerCase()}`}
-                      >
-                        {holiday.holidayType}
-                      </span>
+                      </div>
+
+                      {/* STATUS */}
+
+                      <div className="upcoming-status">
+
+                        {getHolidayStatus(
+                          firstHoliday.holidayDate
+                        )}
+
+                      </div>
 
                     </div>
-
-                   <div className="upcoming-actions">
-                    <button
-                      type="button"
-                      className="edit-holiday-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditHoliday(holiday);
-                      }}
-                    >
-                      ✏️ Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      className="delete-holiday-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteHoliday(holiday);
-                      }}
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
-
-                  <div className="upcoming-status">
-                    {getHolidayStatus(
-                      holiday.holidayDate
-                    )}
-                  </div>
-
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
 
             </div>
           )}

@@ -111,3 +111,24 @@
   border-radius: 8px;
   margin-bottom: 20px;
 }
+/* Employee Photo */
+.add-employee-form-group input[type="file"] {
+  padding: 10px;
+  cursor: pointer;
+  background: #f8fafc;
+}
+
+.add-employee-form-group input[type="file"]::file-selector-button {
+  padding: 8px 14px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-employee-form-group input[type="file"]::file-selector-button:hover {
+  background: #1d4ed8;
+}

@@ -12,6 +12,7 @@ const {
   departmentHeadApproval,
   hrApproval,
   adminApproval,
+  getEmployeesOnLeaveToday,
 } = require("../controllers/leaveController");
 const {
   protect,
@@ -123,6 +124,22 @@ router.get(
   protect,
   authorize("departmentHead"),
   getDepartmentHeadLeaves
+);
+
+/* =========================================================
+   EMPLOYEES ON LEAVE TODAY
+========================================================= */
+
+router.get(
+  "/today",
+  protect,
+  authorize(
+    "manager",
+    "departmentHead",
+    "hr",
+    "admin"
+  ),
+  getEmployeesOnLeaveToday
 );
 /* =========================================================
    DEPARTMENT HEAD APPROVAL

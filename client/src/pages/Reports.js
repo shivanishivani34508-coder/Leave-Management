@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import {useCallback,useEffect,useMemo,useState,} from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -128,7 +123,8 @@ function Reports() {
     search,
     statusFilter,
   ]);
-    /* ==========================================
+
+  /* ==========================================
       EXPORT PDF
   ========================================== */
 
@@ -266,7 +262,8 @@ function Reports() {
       </div>
     );
   }
-    /* ==========================================
+
+  /* ==========================================
       PAGE UI
   ========================================== */
 
@@ -339,7 +336,6 @@ function Reports() {
           PIE CHART
       ========================================== */}
 
-    
 
       {/* ==========================================
           SEARCH & FILTER
@@ -378,6 +374,10 @@ function Reports() {
 
           <option value="Rejected">
             Rejected
+          </option>
+
+          <option value="Cancelled">
+            Cancelled
           </option>
 
         </select>
@@ -456,10 +456,35 @@ function Reports() {
                   <td>
 
                     <span
-                      className={`status ${report.status.toLowerCase()}`}
+                      className={`status ${(report.status || "pending").toLowerCase()}`}
                     >
-                      {report.status}
+                      {report.status || "Pending"}
                     </span>
+
+                    {/* ==========================================
+                        CANCEL BUTTON FOR PENDING LEAVE
+                    ========================================== */}
+
+                    {report.status === "Pending" && (
+                      <button
+                        type="button"
+                        style={{
+                          display: "block",
+                          margin: "8px auto 0",
+                          padding: "7px 14px",
+                          border: "none",
+                          borderRadius: "7px",
+                          background: "#ef4444",
+                          color: "#ffffff",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        ❌ Cancel
+                      </button>
+                    )}
 
                   </td>
 
@@ -474,7 +499,8 @@ function Reports() {
         </table>
 
       </div>
-            {/* ==========================================
+
+      {/* ==========================================
           ACTION BUTTONS
       ========================================== */}
 

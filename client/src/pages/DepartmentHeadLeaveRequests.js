@@ -55,20 +55,26 @@ function DepartmentHeadLeaveRequests() {
   /* =====================================================
      SEPARATE PENDING AND PROCESSED REQUESTS
   ===================================================== */
-  const pendingLeaves = leaves.filter(
+ const pendingLeaves = leaves.filter(
   (leave) =>
-    (leave.requiredApprovals?.includes("DepartmentHead") || leave.employee?.role === "manager" || leave.totalDays > 2) &&
-    leave.departmentHeadStatus === "Pending" &&
-    (
-      leave.employee?.role === "manager" ||
-      leave.managerStatus === "Approved" ||
-      (
-        leave.employee?._id &&
-        leave.managerStatus === "Pending" &&
-        leave.departmentHeadStatus === "Pending"
-      )
-    )
+    leave.requiredApprovals?.includes("DepartmentHead") &&
+    leave.departmentHeadStatus === "Pending"
 );
+console.log("========== PENDING LEAVE DEBUG ==========");
+console.log("ALL LEAVES:", leaves);
+console.log("PENDING LEAVES:", pendingLeaves);
+
+leaves.forEach((leave) => {
+  console.log("Leave ID:", leave._id);
+  console.log("Employee:", leave.employee?.name);
+  console.log("Employee Role:", leave.employee?.role);
+  console.log("Required Approvals:", leave.requiredApprovals);
+  console.log(
+    "Department Head Status:",
+    leave.departmentHeadStatus
+  );
+});
+console.log("==========================================");
 
 const processedLeaves = leaves.filter(
   (leave) =>
@@ -275,9 +281,9 @@ const processedLeaves = leaves.filter(
                         <td>
 
                          <div className="approval-flow">
-
-                          {/* MANAGER */}
-                          {leave.requiredApprovals?.includes("Manager") && (
+                        {/* MANAGER */}
+                        {leave.employee?.role !== "manager" &&
+                          leave.requiredApprovals?.includes("Manager") && (
                             <span
                               className={
                                 leave.managerStatus === "Approved"
@@ -289,8 +295,7 @@ const processedLeaves = leaves.filter(
                             >
                               Manager: {leave.managerStatus || "Pending"}
                             </span>
-                          )}
-
+                        )}
                           {/* DEPARTMENT HEAD */}
                           {leave.requiredApprovals?.includes("DepartmentHead") && (
                             <span
@@ -486,21 +491,19 @@ const processedLeaves = leaves.filter(
 
                           <div className="approval-flow">
 
-                            <span
-                              className={
-                                leave.managerStatus ===
-                                "Approved"
-                                  ? "stage approved"
-                                  : leave.managerStatus ===
-                                    "Rejected"
-                                  ? "stage rejected"
-                                  : "stage pending"
-                              }
-                            >
-                              Manager:{" "}
-                              {leave.managerStatus ||
-                                "Pending"}
-                            </span>
+                          {leave.employee?.role !== "manager" && (
+                          <span
+                            className={
+                              leave.managerStatus === "Approved"
+                                ? "stage approved"
+                                : leave.managerStatus === "Rejected"
+                                ? "stage rejected"
+                                : "stage pending"
+                            }
+                          >
+                            Manager: {leave.managerStatus || "Pending"}
+                          </span>
+                        )}
 
                             <span
                               className={

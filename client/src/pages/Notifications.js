@@ -109,6 +109,13 @@ function Notifications() {
     alert("Failed to clear notifications");
   }
 };
+const unreadNotifications = notifications.filter(
+  (notification) => !notification.isRead
+);
+
+const readNotifications = notifications.filter(
+  (notification) => notification.isRead
+);
 
   /* ==========================================
      LOADING
@@ -163,27 +170,50 @@ function Notifications() {
         </div>
       )}
 
-      {notifications.length === 0 ? (
-        <div
-          style={{
-            background: "#fff",
-            padding: "40px",
-            textAlign: "center",
-            borderRadius: "10px",
-            boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
-          }}
-        >
-          <h2>No Notifications</h2>
-          <p>You don't have any notifications.</p>
+     {notifications.length === 0 ? (
+  <div
+    style={{
+      background: "#fff",
+      padding: "40px",
+      textAlign: "center",
+      borderRadius: "10px",
+      boxShadow: "0 3px 10px rgba(0,0,0,0.1)",
+    }}
+  >
+    <h2>No Notifications</h2>
+    <p>You don't have any notifications.</p>
+  </div>
+) : (
+  <div
+  style={{
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "25px",
+    alignItems: "start",
+    width: "100%",
+  }}
+>
+
+    {/* ==============================
+        UNREAD NOTIFICATIONS
+    ============================== */}
+    <div className="notification-column">
+
+      <div className="notification-column-header unread-header">
+        <h2>🔴 Unread Notifications</h2>
+        <span>{unreadNotifications.length}</span>
+      </div>
+
+      {unreadNotifications.length === 0 ? (
+        <div className="notification-empty-column">
+          <p>🎉 No unread notifications</p>
         </div>
       ) : (
-        notifications.map((notification) => (
-         <div
-  key={notification._id}
-  className={`notification-card ${
-    notification.isRead ? "read" : "unread"
-  }`}
->
+        unreadNotifications.map((notification) => (
+          <div
+            key={notification._id}
+            className="notification-card unread"
+          >
             <h3>{notification.title}</h3>
 
             <p>{notification.message}</p>
@@ -198,14 +228,10 @@ function Notifications() {
               style={{
                 marginTop: "12px",
                 fontWeight: "bold",
-                color: notification.isRead
-                  ? "green"
-                  : "orangered",
+                color: "orangered",
               }}
             >
-              {notification.isRead
-                ? "✅ Read"
-                : "🔴 Unread"}
+              🔴 Unread
             </p>
 
             <div
@@ -215,24 +241,22 @@ function Notifications() {
                 marginTop: "18px",
               }}
             >
-              {!notification.isRead && (
-                <button
-                  onClick={() =>
-                    markAsRead(notification._id)
-                  }
-                  style={{
-                    padding: "10px 18px",
-                    background: "#2563eb",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                  }}
-                >
-                  ✓ Mark as Read
-                </button>
-              )}
+              <button
+                onClick={() =>
+                  markAsRead(notification._id)
+                }
+                style={{
+                  padding: "10px 18px",
+                  background: "#2563eb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                ✓ Mark as Read
+              </button>
 
               <button
                 onClick={() =>
@@ -254,6 +278,82 @@ function Notifications() {
           </div>
         ))
       )}
+
+    </div>
+
+
+    {/* ==============================
+        READ NOTIFICATIONS
+    ============================== */}
+    <div className="notification-column">
+
+      <div className="notification-column-header read-header">
+        <h2>🟢 Read Notifications</h2>
+        <span>{readNotifications.length}</span>
+      </div>
+
+      {readNotifications.length === 0 ? (
+        <div className="notification-empty-column">
+          <p>📭 No read notifications</p>
+        </div>
+      ) : (
+        readNotifications.map((notification) => (
+          <div
+            key={notification._id}
+            className="notification-card read"
+          >
+            <h3>{notification.title}</h3>
+
+            <p>{notification.message}</p>
+
+            <small>
+              {new Date(
+                notification.createdAt
+              ).toLocaleString()}
+            </small>
+
+            <p
+              style={{
+                marginTop: "12px",
+                fontWeight: "bold",
+                color: "green",
+              }}
+            >
+              ✅ Read
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                marginTop: "18px",
+              }}
+            >
+              <button
+                onClick={() =>
+                  deleteNotification(notification._id)
+                }
+                style={{
+                  padding: "10px 18px",
+                  background: "#dc2626",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "600",
+                }}
+              >
+                🗑 Delete
+              </button>
+            </div>
+          </div>
+        ))
+      )}
+
+    </div>
+
+  </div>
+)}
     </div>
   );
 }

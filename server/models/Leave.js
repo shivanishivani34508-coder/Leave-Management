@@ -9,9 +9,10 @@ const leaveSchema = new mongoose.Schema(
     },
 
     department: {
-  type: String,
-  required: true,
-},
+      type: String,
+      default: "",
+      trim: true,
+    },
 
     leaveType: {
       type: String,
@@ -28,6 +29,18 @@ const leaveSchema = new mongoose.Schema(
       ],
     },
 
+    durationType: {
+      type: String,
+      enum: ["Full Day", "Half Day"],
+      default: "Full Day",
+    },
+
+    halfDaySession: {
+      type: String,
+      enum: ["First Half", "Second Half"],
+      default: null,
+    },
+
     startDate: {
       type: Date,
       required: true,
@@ -38,34 +51,23 @@ const leaveSchema = new mongoose.Schema(
       required: true,
     },
 
-    excludedHolidayDates: {
-  type: [Date],
-  default: [],
-},
+    excludedHolidayDates: [
+      {
+        type: Date,
+      },
+    ],
 
     reason: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 500,
     },
 
     totalDays: {
       type: Number,
       required: true,
-      min: 0.5,
-    },
-
-        durationType: {
-      type: String,
-      enum: ["Full Day", "Half Day"],
-      default: "Full Day",
-    },
-
-    halfDaySession: {
-      type: String,
-      enum: ["First Half", "Second Half", null],
-      default: null,
+      min: 0,
+      default: 0,
     },
 
     paidDays: {
@@ -86,38 +88,32 @@ const leaveSchema = new mongoose.Schema(
       default: "Pending",
     },
 
-    status: {
-  type: String,
-  enum: ["Pending", "Approved", "Rejected", "Cancelled"],
-  default: "Pending",
-},
+    requiredApprovals: {
+      type: [String],
+      default: ["Manager"],
+    },
 
-requiredApprovals: {
-  type: [String],
-  enum: ["Manager", "DepartmentHead", "HR", "Admin"],  default: ["Manager"],
-},
-
-        managerStatus: {
+    managerStatus: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected", "Not Required"],
       default: "Pending",
     },
 
     departmentHeadStatus: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected", "Not Required"],
       default: "Pending",
     },
 
     hrStatus: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected", "Not Required"],
       default: "Pending",
     },
 
     adminStatus: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
+      enum: ["Pending", "Approved", "Rejected", "Not Required"],
       default: "Pending",
     },
 
@@ -127,19 +123,16 @@ requiredApprovals: {
         ref: "User",
         default: null,
       },
-
       departmentHead: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default: null,
       },
-
       hr: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default: null,
       },
-
       admin: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
@@ -152,17 +145,14 @@ requiredApprovals: {
         type: Date,
         default: null,
       },
-
       departmentHead: {
         type: Date,
         default: null,
       },
-
       hr: {
         type: Date,
         default: null,
       },
-
       admin: {
         type: Date,
         default: null,
@@ -179,5 +169,7 @@ requiredApprovals: {
   }
 );
 
-module.exports =
+const Leave =
   mongoose.models.Leave || mongoose.model("Leave", leaveSchema);
+
+module.exports = Leave;
