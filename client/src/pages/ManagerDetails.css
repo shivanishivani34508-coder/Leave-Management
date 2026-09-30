@@ -1,0 +1,260 @@
+.manager-details-page {
+  min-height: 100vh;
+  padding: 30px;
+  background: #f4f7fb;
+}
+
+.manager-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 25px 30px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+}
+
+.manager-details-header h1 {
+  margin: 0;
+  color: #14213d;
+  font-size: 30px;
+}
+
+.manager-details-header p {
+  margin-top: 8px;
+  color: #667085;
+}
+
+.manager-details-back-btn {
+  border: none;
+  background: #2864dc;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.manager-details-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+}
+
+.manager-details-avatar {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  background: #2864dc;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.manager-details-profile-info h2 {
+  margin: 0 0 8px;
+  color: #14213d;
+}
+
+.manager-details-profile-info p {
+  margin: 0 0 12px;
+  color: #667085;
+}
+
+.manager-details-tags {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.manager-details-tags span {
+  background: #e8f0ff;
+  color: #2864dc;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.manager-details-section {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+}
+
+.manager-details-section h2 {
+  margin-top: 0;
+  color: #14213d;
+}
+
+.manager-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.manager-details-item {
+  padding: 18px;
+  background: #f7f9fc;
+  border-radius: 10px;
+}
+
+.manager-details-item span,
+.manager-balance-card span,
+.manager-stat-card span,
+.manager-usage-grid span {
+  display: block;
+  color: #667085;
+  margin-bottom: 8px;
+}
+
+.manager-details-item strong {
+  color: #14213d;
+}
+
+.manager-balance-grid,
+.manager-statistics-grid,
+.manager-usage-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.manager-balance-card,
+.manager-stat-card {
+  padding: 20px;
+  background: #f7f9fc;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.manager-balance-card strong,
+.manager-stat-card strong {
+  display: block;
+  font-size: 30px;
+  color: #2864dc;
+}
+
+.manager-balance-card small {
+  color: #667085;
+}
+
+.manager-usage-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.manager-usage-grid > div {
+  padding: 20px;
+  background: #f7f9fc;
+  border-radius: 12px;
+}
+
+.manager-usage-grid strong {
+  font-size: 25px;
+  color: #14213d;
+}
+
+.manager-leave-table-wrapper {
+  overflow-x: auto;
+}
+
+.manager-leave-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.manager-leave-table th,
+.manager-leave-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.manager-leave-table th {
+  background: #2864dc;
+  color: white;
+}
+
+.manager-leave-status {
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-weight: 600;
+}
+
+.manager-leave-status.approved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.manager-leave-status.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.manager-leave-status.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.manager-leave-status.cancelled {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.manager-no-leaves {
+  padding: 25px;
+  text-align: center;
+  color: #667085;
+  background: #f7f9fc;
+  border-radius: 10px;
+}
+
+.manager-details-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: #2864dc;
+}
+
+@media (max-width: 900px) {
+  .manager-details-grid,
+  .manager-balance-grid,
+  .manager-statistics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .manager-details-page {
+    padding: 15px;
+  }
+
+  .manager-details-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+
+  .manager-details-grid,
+  .manager-balance-grid,
+  .manager-statistics-grid,
+  .manager-usage-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-details-profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

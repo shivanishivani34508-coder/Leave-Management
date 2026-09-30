@@ -51,41 +51,23 @@ function DepartmentHeadLeaveRequests() {
         useEffect(() => {
           fetchLeaves();
         }, []);
+/* =====================================================
+   SEPARATE PENDING AND PROCESSED REQUESTS
+===================================================== */
 
-  /* =====================================================
-     SEPARATE PENDING AND PROCESSED REQUESTS
-  ===================================================== */
- const pendingLeaves = leaves.filter(
+const pendingLeaves = (leaves || []).filter(
   (leave) =>
-    leave.requiredApprovals?.includes("DepartmentHead") &&
-    leave.departmentHeadStatus === "Pending"
-);
-console.log("========== PENDING LEAVE DEBUG ==========");
-console.log("ALL LEAVES:", leaves);
-console.log("PENDING LEAVES:", pendingLeaves);
-
-leaves.forEach((leave) => {
-  console.log("Leave ID:", leave._id);
-  console.log("Employee:", leave.employee?.name);
-  console.log("Employee Role:", leave.employee?.role);
-  console.log("Required Approvals:", leave.requiredApprovals);
-  console.log(
-    "Department Head Status:",
-    leave.departmentHeadStatus
-  );
-});
-console.log("==========================================");
-
-const processedLeaves = leaves.filter(
-  (leave) =>
-    (leave.requiredApprovals?.includes("DepartmentHead") || leave.departmentHeadStatus === "Approved" || leave.departmentHeadStatus === "Rejected") &&
-    leave.departmentHeadStatus !== "Pending" &&
+    leave.departmentHeadStatus === "Pending" &&
     (
       leave.employee?.role === "manager" ||
-      leave.managerStatus === "Approved" ||
-      leave.departmentHeadStatus === "Approved" ||
-      leave.departmentHeadStatus === "Rejected"
+      leave.managerStatus === "Approved"
     )
+);
+
+const processedLeaves = (leaves || []).filter(
+  (leave) =>
+    leave.departmentHeadStatus === "Approved" ||
+    leave.departmentHeadStatus === "Rejected"
 );
 
   /* =====================================================

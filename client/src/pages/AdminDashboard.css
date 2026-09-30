@@ -1513,3 +1513,68 @@
   from { transform: translateY(18px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+.organization-overview-panel {
+  margin-top: 20px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.organization-overview-panel h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #1f2937;
+}
+
+.organization-overview-panel p {
+  margin: 5px 0 18px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.organization-overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.organization-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.organization-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2ff;
+  border-radius: 10px;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.organization-item span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.organization-item strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 20px;
+  color: #111827;
+}
+
+.organization-item:last-child {
+  grid-column: 1 / -1;
+}

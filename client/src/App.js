@@ -22,6 +22,7 @@ import ManagerTeam from "./pages/ManagerTeam";
 import ManageLeaves from "./pages/ManageLeaves";
 import Employees from "./pages/Employees";
 import EmployeeDetails from "./pages/EmployeeDetails";
+import ManagerDetails from "./pages/ManagerDetails";
 import AddEmployee from "./pages/AddEmployee";
 import Reports from "./pages/Reports";
 import Notifications from "./pages/Notifications";
@@ -30,7 +31,10 @@ import Holidays from "./pages/Holidays";
 import HolidayCalendar from "./pages/HolidayCalendar";
 import Managers from "./pages/Managers";
 import DepartmentHeads from "./pages/DepartmentHeads";
+import DepartmentHeadDetails from "./pages/DepartmentHeadDetails";
+
 import HR from "./pages/HR";
+import HRDetails from "./pages/HRDetails";
 import HRDashboard from "./pages/HRDashboard";
 import ManagerLeaveRequests from "./pages/ManagerLeaveRequests";
 import DepartmentHeadDashboard from "./pages/DepartmentHeadDashboard";
@@ -41,8 +45,6 @@ import EditEmployee from "./pages/EditEmployee";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import YearlyLeaveBalances from "./pages/YearlyLeaveBalances";
-
-
 /* =========================================================
    GET USER FROM LOCAL STORAGE
 ========================================================= */
@@ -754,6 +756,16 @@ function App() {
               <DepartmentHeads />
             }
           />
+          <Route
+            path="/admin/department-heads/:id"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <DepartmentHeadDetails />
+                </ProtectedLayout>
+              </AdminRoute>
+            }
+          />
 
 
           {/* =================================================
@@ -764,6 +776,16 @@ function App() {
             path="/admin/hr"
             element={
               <HR />
+            }
+          />
+          <Route
+            path="/admin/hr/:id"
+            element={
+              <AdminRoute>
+                <ProtectedLayout>
+                  <HRDetails />
+                </ProtectedLayout>
+              </AdminRoute>
             }
           />
 
@@ -910,7 +932,16 @@ function App() {
               </AdminRoute>
             }
           />
-
+      <Route
+        path="/admin/managers/:id"
+        element={
+          <AdminRoute>
+            <ProtectedLayout>
+              <ManagerDetails />
+            </ProtectedLayout>
+          </AdminRoute>
+        }
+      />
 
           {/* =================================================
               MANAGER EMPLOYEE DETAILS

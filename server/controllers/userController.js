@@ -1,9 +1,10 @@
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
-const User = require("../models/User");
+const User = require("../models/UserTemp");
 const YearlyLeaveBalance = require("../models/YearlyLeaveBalance");
 const Leave = require("../models/Leave");
+
 /* =========================================================
    GENERATE NEXT EMPLOYEE ID
 ========================================================= */
@@ -48,9 +49,7 @@ const getUsers = async (req, res) => {
         const statistics = await Leave.aggregate([
           {
             $match: {
-              employee: new mongoose.Types.ObjectId(
-                user._id
-              ),
+              employee: new mongoose.Types.ObjectId(user._id),
             },
           },
           {
@@ -130,9 +129,8 @@ const getUsers = async (req, res) => {
   }
 };
 
-
 /* =========================================================
-   GET ONE EMPLOYEE DETAILS
+   GET ONE EMPLOYEE / MANAGER DETAILS
    ADMIN ONLY
 ========================================================= */
 
@@ -142,7 +140,7 @@ const getUserById = async (req, res) => {
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message: "Invalid employee ID.",
+        message: "Invalid user ID.",
       });
     }
 
@@ -152,14 +150,135 @@ const getUserById = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: "Employee not found.",
+        message: "User not found.",
       });
     }
 
-    if (user.role !== "employee") {
+    /*
+      IMPORTANT:
+      Allow both employee and manager here.
+      This keeps the existing employee details function
+      and also allows the admin to edit/view managers.
+    */
+if (
+  user.role !== "employee" &&
+  user.role !== "manager" &&
+  user.role !== "departmentHead" &&
+  user.role !== "hr"
+) {
+  return res.status(400).json({
+    message:
+      "The selected account cannot be edited from this page.",
+  });
+}
+
+    const leaves = await Leave.find({
+      employee: user._id,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .lean();
+
+    const statistics = leaves.reduce(
+      (result, leave) => {
+        result.total += 1;
+
+        if (leave.status === "Pending") {
+          result.pending += 1;
+        }
+
+        if (leave.status === "Approved") {
+          result.approved += 1;
+        }
+
+        if (leave.status === "Rejected") {
+          result.rejected += 1;
+        }
+
+        return result;
+      },
+      {
+        total: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+      }
+    );
+
+    const leaveUsage = leaves.reduce(
+      (result, leave) => {
+        if (leave.status !== "Approved") {
+          return result;
+        }
+
+        result.approvedTotalDays += Number(
+          leave.totalDays || 0
+        );
+
+        result.approvedPaidDays += Number(
+          leave.paidDays || 0
+        );
+
+        result.approvedUnpaidDays += Number(
+          leave.unpaidDays || 0
+        );
+
+        return result;
+      },
+      {
+        approvedTotalDays: 0,
+        approvedPaidDays: 0,
+        approvedUnpaidDays: 0,
+      }
+    );
+
+    return res.status(200).json({
+      user,
+      statistics,
+      leaveUsage,
+      leaves,
+    });
+  } catch (error) {
+    console.error(
+      "GET USER DETAILS ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Unable to get user details.",
+    });
+  }
+};
+
+/* =========================================================
+   GET ONE MANAGER DETAILS
+   ADMIN ONLY
+========================================================= */
+
+const getManagerById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message:
-          "The selected account is not an employee.",
+        message: "Invalid manager ID.",
+      });
+    }
+
+    const user = await User.findById(id)
+      .select("-password")
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Manager not found.",
+      });
+    }
+
+    if (user.role !== "manager") {
+      return res.status(400).json({
+        message: "The selected account is not a manager.",
       });
     }
 
@@ -232,12 +351,12 @@ const getUserById = async (req, res) => {
     });
   } catch (error) {
     console.error(
-      "GET EMPLOYEE DETAILS ERROR:",
+      "GET MANAGER DETAILS ERROR:",
       error
     );
 
     return res.status(500).json({
-      message: "Unable to get employee details.",
+      message: "Unable to get manager details.",
     });
   }
 };
@@ -249,7 +368,8 @@ const getUserById = async (req, res) => {
 
 const createEmployee = async (req, res) => {
   try {
-console.log("UPLOADED FILE:", req.file);
+    console.log("UPLOADED FILE:", req.file);
+
     const {
       name,
       email,
@@ -309,24 +429,25 @@ console.log("UPLOADED FILE:", req.file);
     });
 
     const employeeId =
-  role === "employee"
-    ? await generateEmployeeId()
-    : undefined;
+      role === "employee"
+        ? await generateEmployeeId()
+        : undefined;
 
-const employee = await User.create({
-  name,
-  employeeId,
-  email: normalizedEmail,
-  password: hashedPassword,
-  role,
-  gender,
-  department,
-  manager,
-  departmentHead,
-  profilePhoto: req.file
-    ? `/uploads/employees/${req.file.filename}`
-    : "",
-});
+    const employee = await User.create({
+      name,
+      employeeId,
+      email: normalizedEmail,
+      password: hashedPassword,
+      role,
+      gender,
+      department,
+      manager,
+      departmentHead,
+      profilePhoto: req.file
+        ? `/uploads/employees/${req.file.filename}`
+        : "",
+    });
+
     /* =====================================================
        CREATE CURRENT YEAR LEAVE BALANCE
     ===================================================== */
@@ -391,87 +512,81 @@ const employee = await User.create({
       `Yearly leave balance created for ${name} - ${currentYear}`
     );
 
+    /* =====================================================
+       CREATE NEXT YEAR BALANCE FOR NEW EMPLOYEE
+    ===================================================== */
 
-/* =========================================================
-   CREATE NEXT YEAR BALANCE FOR NEW EMPLOYEE
-   This does NOT change the existing current-year balance.
-========================================================= */
+    const nextYear = currentYear + 1;
 
-const nextYear = currentYear + 1;
+    const existingNextYearBalance =
+      await YearlyLeaveBalance.findOne({
+        employee: employee._id,
+        year: nextYear,
+      });
 
-const existingNextYearBalance =
-  await YearlyLeaveBalance.findOne({
-    employee: employee._id,
-    year: nextYear,
-  });
+    if (!existingNextYearBalance) {
+      await YearlyLeaveBalance.create({
+        employee: employee._id,
+        year: nextYear,
 
-if (!existingNextYearBalance) {
+        casual: {
+          annualAllocation: 12,
+          carryForward: 0,
+          totalAvailable: 12,
+          remaining: 12,
+        },
 
-  await YearlyLeaveBalance.create({
-    employee: employee._id,
-    year: nextYear,
+        sick: {
+          annualAllocation: 12,
+          carryForward: 0,
+          totalAvailable: 12,
+          remaining: 12,
+        },
 
-    casual: {
-      annualAllocation: 12,
-      carryForward: 0,
-      totalAvailable: 12,
-      remaining: 12,
-    },
+        earned: {
+          annualAllocation: 18,
+          carryForward: 0,
+          totalAvailable: 18,
+          remaining: 18,
+        },
 
-    sick: {
-      annualAllocation: 12,
-      carryForward: 0,
-      totalAvailable: 12,
-      remaining: 12,
-    },
+        marriage: {
+          annualAllocation: 5,
+          carryForward: 0,
+          totalAvailable: 5,
+          remaining: 5,
+        },
 
-    earned: {
-      annualAllocation: 18,
-      carryForward: 0,
-      totalAvailable: 18,
-      remaining: 18,
-    },
+        maternity: {
+          annualAllocation: 182,
+          carryForward: 0,
+          totalAvailable: 182,
+          remaining: 182,
+        },
 
-    marriage: {
-      annualAllocation: 5,
-      carryForward: 0,
-      totalAvailable: 5,
-      remaining: 5,
-    },
+        paternity: {
+          annualAllocation: 15,
+          carryForward: 0,
+          totalAvailable: 15,
+          remaining: 15,
+        },
 
-    maternity: {
-      annualAllocation: 182,
-      carryForward: 0,
-      totalAvailable: 182,
-      remaining: 182,
-    },
+        bereavement: {
+          annualAllocation: 5,
+          carryForward: 0,
+          totalAvailable: 5,
+          remaining: 5,
+        },
+      });
 
-    paternity: {
-      annualAllocation: 15,
-      carryForward: 0,
-      totalAvailable: 15,
-      remaining: 15,
-    },
-
-    bereavement: {
-      annualAllocation: 5,
-      carryForward: 0,
-      totalAvailable: 5,
-      remaining: 5,
-    },
-  });
-
-  console.log(
-    `Next year yearly leave balance created for ${name} - ${nextYear}`
-  );
-
-} else {
-
-  console.log(
-    `Next year yearly leave balance already exists for ${name} - ${nextYear}`
-  );
-}
-
+      console.log(
+        `Next year yearly leave balance created for ${name} - ${nextYear}`
+      );
+    } else {
+      console.log(
+        `Next year yearly leave balance already exists for ${name} - ${nextYear}`
+      );
+    }
 
     const createdEmployee = await User.findById(
       employee._id
@@ -498,6 +613,7 @@ if (!existingNextYearBalance) {
 /* =========================================================
    GET LOGGED-IN USER PROFILE
 ========================================================= */
+
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -526,7 +642,6 @@ const getProfile = async (req, res) => {
     });
   }
 };
-
 
 /* =========================================================
    UPDATE LOGGED-IN USER PROFILE
@@ -604,7 +719,6 @@ const updateProfile = async (req, res) => {
   }
 };
 
-
 /* =========================================================
    CHANGE PASSWORD
 ========================================================= */
@@ -670,7 +784,6 @@ const changePassword = async (req, res) => {
     });
   }
 };
-
 
 /* =========================================================
    UPDATE EMPLOYEE LEAVE BALANCE
@@ -790,7 +903,6 @@ const deleteUser = async (req, res) => {
 
     /* =====================================================
        DELETE ALL YEARLY LEAVE BALANCES
-       INCLUDING CURRENT YEAR AND NEXT YEAR
     ===================================================== */
 
     await YearlyLeaveBalance.deleteMany({
@@ -818,6 +930,7 @@ const deleteUser = async (req, res) => {
     });
   }
 };
+
 /* =========================================================
    GET ALL MANAGERS
 ========================================================= */
@@ -870,7 +983,10 @@ const getDepartmentHeads = async (req, res) => {
 
     return res.status(200).json(departmentHeads);
   } catch (error) {
-    console.error("GET DEPARTMENT HEADS ERROR:", error);
+    console.error(
+      "GET DEPARTMENT HEADS ERROR:",
+      error
+    );
 
     return res.status(500).json({
       message: "Unable to get department heads.",
@@ -900,6 +1016,11 @@ const getMyTeam = async (req, res) => {
   }
 };
 
+/* =========================================================
+   UPDATE EMPLOYEE / MANAGER
+   ADMIN ONLY
+========================================================= */
+
 const updateEmployee = async (req, res) => {
   try {
     const {
@@ -926,28 +1047,37 @@ const updateEmployee = async (req, res) => {
     }
 
     employee.name = name || employee.name;
+
     employee.email = email || employee.email;
-    employee.gender = gender || employee.gender;
+
+    employee.gender =
+      gender || employee.gender;
+
     employee.department =
       department || employee.department;
+
     employee.manager =
       manager || employee.manager;
+
     employee.departmentHead =
       departmentHead || employee.departmentHead;
-    employee.role = role || employee.role;
 
-  /* UPDATE PROFILE PHOTO ONLY IF A NEW PHOTO IS UPLOADED */
-  if (req.file) {
-    employee.profilePhoto = `/uploads/employees/${req.file.filename}`;
-  }
+    employee.role =
+      role || employee.role;
 
-  await employee.save();
+    /* UPDATE PROFILE PHOTO ONLY IF A NEW PHOTO IS UPLOADED */
+
+    if (req.file) {
+      employee.profilePhoto =
+        `/uploads/employees/${req.file.filename}`;
+    }
+
+    await employee.save();
 
     return res.status(200).json({
       message: "Employee updated successfully.",
       user: employee,
     });
-
   } catch (error) {
     console.error(
       "UPDATE EMPLOYEE ERROR:",
@@ -959,9 +1089,11 @@ const updateEmployee = async (req, res) => {
     });
   }
 };
+
 /* =========================================================
    EXPORTS
 ========================================================= */
+
 module.exports = {
   getUsers,
   getUserById,
@@ -977,4 +1109,5 @@ module.exports = {
   getMyTeam,
 
   updateEmployee,
+  getManagerById,
 };

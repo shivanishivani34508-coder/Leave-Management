@@ -719,13 +719,12 @@ return (
             </div>
 
             <div className="employees-stat-content">
-              <span>Total Employees</span>
-
+              <span>Total Managers</span>
               <strong>{employees.length}</strong>
 
-              <small>
-                Registered employee accounts
-              </small>
+           <small>
+            Registered manager accounts
+          </small>
             </div>
           </article>
 
@@ -790,12 +789,12 @@ return (
           <div className="employees-card-header">
 
             <div>
-              <h2>Registered Employees</h2>
+              <h2>Registered Manager</h2>
 
-              <p>
-                Search employees, review balances and
-                manage employee accounts.
-              </p>
+            <p>
+            Search managers, review balances and
+            manage manager accounts.
+          </p>
             </div>
 
 
@@ -846,8 +845,7 @@ return (
 
                 <thead>
                   <tr>
-                    <th>Employee</th>
-
+                    <th>Manager</th>
                     <th>Role</th>
 
                     <th>Casual</th>
@@ -913,12 +911,11 @@ return (
 
                           </td>
 
-
-                          <td>
-                            <span className="employees-role">
-                              Employee
-                            </span>
-                          </td>
+                        <td>
+                          <span className="employees-role">
+                            Manager
+                          </span>
+                        </td>
 
 
                           <td>
@@ -971,18 +968,18 @@ return (
   <button
     type="button"
     className="employees-view-btn"
-    onClick={() => navigate(`/employees/${employee._id}`)}
+    onClick={() => navigate(`/admin/managers/${employee._id}`)}
   >
     👁 View Details
   </button>
 
-  <button
-    type="button"
-    className="employees-edit-btn"
-    onClick={() => openEditBalance(employee)}
-  >
-    ✏ Edit
-  </button>
+ <button
+  type="button"
+  className="employees-edit-btn"
+  onClick={() => navigate(`/edit-employee/${employee._id}`)}
+>
+  ✏ Edit Profile
+</button>
 
   <button
     type="button"

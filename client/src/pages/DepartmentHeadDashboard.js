@@ -4,17 +4,7 @@ import "./DepartmentHeadDashboard.css";
 
 function DepartmentHeadDashboard() {
   const [leaves, setLeaves] = useState([]);
-
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem("user");
-      return stored ? JSON.parse(stored) : null;
-    } catch (e) {
-      return null;
-    }
-  });
-  const [showProfileModal, setShowProfileModal] = useState(false);
-  const [photoError, setPhotoError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchLeaves();
@@ -22,6 +12,8 @@ function DepartmentHeadDashboard() {
 
   const fetchLeaves = async () => {
     try {
+      setRefreshing(true);
+
       const res = await api.get("/leaves/department-head", {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -33,44 +25,16 @@ function DepartmentHeadDashboard() {
       console.log("First leave:", res.data[0]);
 
       setLeaves(res.data);
-
-      try {
-        const profileRes = await api.get("/users/profile", {
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-          },
-        });
-        const profileData = profileRes.data?.user || profileRes.data;
-        if (profileData) {
-          setUser(profileData);
-          sessionStorage.setItem("user", JSON.stringify(profileData));
-        }
-      } catch (err) {
-        console.log("Dept head profile load error:", err.message);
-      }
     } catch (error) {
-      console.error(error);
-    }
-  };
+      console.error("Refresh Error:", error);
 
-  const getInitials = (name) => {
-    if (!name) return "D";
-    return name
-      .trim()
-      .split(/\s+/)
-      .map((w) => w[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-  };
-
-  const getPhotoUrl = (photoPath) => {
-    if (!photoPath) return null;
-    if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
-      return photoPath;
+      alert(
+        error.response?.data?.message ||
+          "Unable to refresh department leave requests."
+      );
+    } finally {
+      setRefreshing(false);
     }
-    const baseUrl = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
-    return `${baseUrl}${photoPath.startsWith("/") ? "" : "/"}${photoPath}`;
   };
 
   /* =====================================================
@@ -94,10 +58,9 @@ function DepartmentHeadDashboard() {
   ===================================================== */
 
   const totalRequests = leaves.length;
-
-  const totalRequestedDays = leaves.reduce((total, leave) => {
-    return total + Number(leave.days || 0);
-  }, 0);
+const totalRequestedDays = leaves.reduce((total, leave) => {
+  return total + Number(leave.totalDays || 0);
+}, 0);
 
   const getPercentage = (value) => {
     if (totalRequests === 0) return 0;
@@ -182,11 +145,16 @@ function DepartmentHeadDashboard() {
           </div>
 
           {/* ONLY REFRESH BUTTON */}
+
           <button
+            type="button"
             className="department-refresh-btn"
             onClick={fetchLeaves}
+            disabled={refreshing}
           >
-            ↻ Refresh
+            {refreshing
+              ? "↻ Refreshing..."
+              : "↻ Refresh"}
           </button>
 
         </section>
@@ -647,9 +615,7 @@ function DepartmentHeadDashboard() {
             RECENT DEPARTMENT REQUESTS
         ================================================= */}
 
-        <section className="department-bottom-grid">
-
-          <div className="department-recent-card">
+        <section className="department-recent-card">
 
           <div className="department-section-heading">
 
@@ -666,10 +632,14 @@ function DepartmentHeadDashboard() {
             </div>
 
             <button
+              type="button"
               className="department-refresh-small"
               onClick={fetchLeaves}
+              disabled={refreshing}
             >
-              ↻ Refresh
+              {refreshing
+                ? "↻ Refreshing..."
+                : "↻ Refresh"}
             </button>
 
           </div>
@@ -791,202 +761,7 @@ function DepartmentHeadDashboard() {
 
           </div>
 
-          </div>
-
-          {/* =================================================
-              MY PROFILE
-          ================================================= */}
-
-          <div className="department-profile-card">
-            <div className="department-section-heading">
-              <div>
-                <h2>My Profile</h2>
-                <p>Department Head account information</p>
-              </div>
-
-              <span className="department-profile-status-badge">
-                Active
-              </span>
-            </div>
-
-            <div className="department-profile-inner">
-              <div className="department-profile-top">
-                <div className="department-profile-avatar">
-                  {user?.profilePhoto && !photoError ? (
-                    <img
-                      src={getPhotoUrl(user.profilePhoto)}
-                      alt={user?.name || "Department Head"}
-                      className="department-profile-img"
-                      onError={() => setPhotoError(true)}
-                    />
-                  ) : (
-                    getInitials(user?.name || "Department Head")
-                  )}
-                </div>
-
-                <div className="department-profile-meta">
-                  <h3>{user?.name || "Department Head"}</h3>
-                  <p>{user?.email || "depthead@leave.com"}</p>
-                  <span className="department-role-pill">Department Head</span>
-                </div>
-              </div>
-
-              <div className="department-profile-stats-row">
-                <div className="department-profile-stat-box">
-                  <span className="department-stat-num">{totalRequests}</span>
-                  <span className="department-stat-lbl">Dept Requests</span>
-                </div>
-
-                <div className="department-profile-stat-box">
-                  <span className="department-stat-num">{approvedLeaves}</span>
-                  <span className="department-stat-lbl">Approved</span>
-                </div>
-
-                <div className="department-profile-stat-box">
-                  <span className="department-stat-num">{pendingLeaves}</span>
-                  <span className="department-stat-lbl">Pending</span>
-                </div>
-              </div>
-
-              <div className="department-profile-info-list">
-                <div className="department-profile-info-item">
-                  <span>Role</span>
-                  <strong>Department Head</strong>
-                </div>
-
-                <div className="department-profile-info-item">
-                  <span>Employee ID</span>
-                  <strong>{user?.employeeId || "DHD-001"}</strong>
-                </div>
-
-                <div className="department-profile-info-item">
-                  <span>Department</span>
-                  <strong>{user?.department || "Department Head"}</strong>
-                </div>
-
-                <div className="department-profile-info-item">
-                  <span>Gender</span>
-                  <strong>{user?.gender || "Not Specified"}</strong>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="department-view-profile-btn"
-                onClick={() => setShowProfileModal(true)}
-              >
-                👁 View Full Profile
-              </button>
-            </div>
-          </div>
-
         </section>
-
-      {/* ===================================================
-          PROFILE DETAILS MODAL
-      =================================================== */}
-      {showProfileModal && (
-        <div
-          className="department-modal-overlay"
-          onClick={() => setShowProfileModal(false)}
-        >
-          <div
-            className="department-modal-card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="department-modal-header">
-              <div>
-                <span className="department-modal-tag">DEPARTMENT HEAD PROFILE</span>
-                <h2>Account Information</h2>
-                <p>Complete profile details for your account</p>
-              </div>
-
-              <button
-                type="button"
-                className="department-modal-close-btn"
-                onClick={() => setShowProfileModal(false)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="department-modal-body">
-              <div className="department-modal-user-summary">
-                <div className="department-modal-avatar">
-                  {user?.profilePhoto && !photoError ? (
-                    <img
-                      src={getPhotoUrl(user.profilePhoto)}
-                      alt={user?.name || "Department Head"}
-                      className="department-modal-img"
-                      onError={() => setPhotoError(true)}
-                    />
-                  ) : (
-                    getInitials(user?.name || "Department Head")
-                  )}
-                </div>
-
-                <div className="department-modal-user-titles">
-                  <h3>{user?.name || "Department Head"}</h3>
-                  <p>{user?.email || "depthead@leave.com"}</p>
-                  <span className="department-badge-role">Head of Department</span>
-                </div>
-              </div>
-
-              <div className="department-modal-details-grid">
-                <div className="department-modal-field">
-                  <label>Full Name</label>
-                  <span>{user?.name || "-"}</span>
-                </div>
-
-                <div className="department-modal-field">
-                  <label>Email Address</label>
-                  <span>{user?.email || "-"}</span>
-                </div>
-
-                <div className="department-modal-field">
-                  <label>Role</label>
-                  <span>Department Head</span>
-                </div>
-
-                <div className="department-modal-field">
-                  <label>Employee ID</label>
-                  <span>{user?.employeeId || "DHD-001"}</span>
-                </div>
-
-                <div className="department-modal-field">
-                  <label>Department</label>
-                  <span>{user?.department || "Department Head"}</span>
-                </div>
-
-                <div className="department-modal-field">
-                  <label>Gender</label>
-                  <span>{user?.gender || "Not Specified"}</span>
-                </div>
-
-                <div className="department-modal-field">
-                  <label>Department Requests</label>
-                  <span>{totalRequests} total</span>
-                </div>
-
-                <div className="department-modal-field">
-                  <label>Account Status</label>
-                  <span className="department-modal-status-active">Active</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="department-modal-footer">
-              <button
-                type="button"
-                className="department-modal-done-btn"
-                onClick={() => setShowProfileModal(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       </div>
     </div>

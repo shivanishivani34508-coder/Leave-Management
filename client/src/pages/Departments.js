@@ -347,12 +347,6 @@ onClick={() => handleEdit(department)}
 ✏ Edit
 </button>
 
-<button
-className="delete-btn"
-onClick={() => handleDelete(department._id)}
->
-🗑 Delete
-</button>
 
 </div>
 

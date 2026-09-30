@@ -1,4 +1,9 @@
-import {useCallback,useEffect,useMemo,useState,} from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -7,7 +12,6 @@ import { saveAs } from "file-saver";
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
 
 import api from "../services/api";
 
@@ -132,9 +136,15 @@ function Reports() {
     const doc = new jsPDF();
 
     doc.setFontSize(20);
-    doc.text("Leave Management Report", 14, 18);
+
+    doc.text(
+      "Leave Management Report",
+      14,
+      18
+    );
 
     doc.setFontSize(11);
+
     doc.text(
       `Generated On : ${new Date().toLocaleString()}`,
       14,
@@ -158,17 +168,25 @@ function Reports() {
 
       body: filteredReports.map((report) => [
         report.employee?.name || "-",
+
         report.employee?.email || "-",
+
         report.leaveType,
+
         new Date(
           report.startDate
         ).toLocaleDateString(),
+
         new Date(
           report.endDate
         ).toLocaleDateString(),
+
         report.totalDays,
+
         report.paidDays,
+
         report.unpaidDays,
+
         report.status,
       ]),
     });
@@ -181,7 +199,6 @@ function Reports() {
   ========================================== */
 
   const handleExportExcel = () => {
-
     const excelData = filteredReports.map(
       (report) => ({
         Employee:
@@ -277,11 +294,15 @@ function Reports() {
       <div className="reports-header">
 
         <div>
-          <h1>📊 Reports Dashboard</h1>
+
+          <h1>
+            📊 Reports Dashboard
+          </h1>
 
           <p>
             View employee leave statistics and detailed reports.
           </p>
+
         </div>
 
         <button
@@ -306,36 +327,66 @@ function Reports() {
       <div className="reports-summary-grid">
 
         <div className="summary-card">
-          <h3>Total Employees</h3>
-          <h2>{summary.totalEmployees}</h2>
+
+          <h3>
+            Total Employees
+          </h3>
+
+          <h2>
+            {summary.totalEmployees}
+          </h2>
+
         </div>
 
         <div className="summary-card">
-          <h3>Total Leaves</h3>
-          <h2>{summary.totalLeaves}</h2>
+
+          <h3>
+            Total Leaves
+          </h3>
+
+          <h2>
+            {summary.totalLeaves}
+          </h2>
+
         </div>
 
         <div className="summary-card approved">
-          <h3>Approved Leaves</h3>
-          <h2>{summary.approvedLeaves}</h2>
+
+          <h3>
+            Approved Leaves
+          </h3>
+
+          <h2>
+            {summary.approvedLeaves}
+          </h2>
+
         </div>
 
         <div className="summary-card pending">
-          <h3>Pending Leaves</h3>
-          <h2>{summary.pendingLeaves}</h2>
+
+          <h3>
+            Pending Leaves
+          </h3>
+
+          <h2>
+            {summary.pendingLeaves}
+          </h2>
+
         </div>
 
         <div className="summary-card rejected">
-          <h3>Rejected Leaves</h3>
-          <h2>{summary.rejectedLeaves}</h2>
+
+          <h3>
+            Rejected Leaves
+          </h3>
+
+          <h2>
+            {summary.rejectedLeaves}
+          </h2>
+
         </div>
 
       </div>
-
-      {/* ==========================================
-          PIE CHART
-      ========================================== */}
-
 
       {/* ==========================================
           SEARCH & FILTER
@@ -360,6 +411,7 @@ function Reports() {
             setStatusFilter(e.target.value)
           }
         >
+
           <option value="All">
             All Status
           </option>
@@ -396,15 +448,41 @@ function Reports() {
 
             <tr>
 
-              <th>Employee</th>
-              <th>Email</th>
-              <th>Leave Type</th>
-              <th>Start Date</th>
-              <th>End Date</th>
-              <th>Total</th>
-              <th>Paid</th>
-              <th>Unpaid</th>
-              <th>Status</th>
+              <th>
+                Employee
+              </th>
+
+              <th>
+                Email
+              </th>
+
+              <th>
+                Leave Type
+              </th>
+
+              <th>
+                Start Date
+              </th>
+
+              <th>
+                End Date
+              </th>
+
+              <th>
+                Total
+              </th>
+
+              <th>
+                Paid
+              </th>
+
+              <th>
+                Unpaid
+              </th>
+
+              <th>
+                Status
+              </th>
 
             </tr>
 
@@ -415,12 +493,14 @@ function Reports() {
             {filteredReports.length === 0 ? (
 
               <tr>
+
                 <td
                   colSpan="9"
                   className="no-data"
                 >
                   No reports found.
                 </td>
+
               </tr>
 
             ) : (
@@ -429,11 +509,17 @@ function Reports() {
 
                 <tr key={report._id}>
 
-                  <td>{report.employee?.name}</td>
+                  <td>
+                    {report.employee?.name}
+                  </td>
 
-                  <td>{report.employee?.email}</td>
+                  <td>
+                    {report.employee?.email}
+                  </td>
 
-                  <td>{report.leaveType}</td>
+                  <td>
+                    {report.leaveType}
+                  </td>
 
                   <td>
                     {new Date(
@@ -447,45 +533,26 @@ function Reports() {
                     ).toLocaleDateString()}
                   </td>
 
-                  <td>{report.totalDays}</td>
-
-                  <td>{report.paidDays}</td>
-
-                  <td>{report.unpaidDays}</td>
+                  <td>
+                    {report.totalDays}
+                  </td>
 
                   <td>
+                    {report.paidDays}
+                  </td>
 
-                    <span
-                      className={`status ${(report.status || "pending").toLowerCase()}`}
-                    >
+                  <td>
+                    {report.unpaidDays}
+                  </td>
+
+                  {/* ==========================================
+                      STATUS - INFORMATION ONLY
+                  ========================================== */}
+
+                  <td>
+                    <span className="report-status-text">
                       {report.status || "Pending"}
                     </span>
-
-                    {/* ==========================================
-                        CANCEL BUTTON FOR PENDING LEAVE
-                    ========================================== */}
-
-                    {report.status === "Pending" && (
-                      <button
-                        type="button"
-                        style={{
-                          display: "block",
-                          margin: "8px auto 0",
-                          padding: "7px 14px",
-                          border: "none",
-                          borderRadius: "7px",
-                          background: "#ef4444",
-                          color: "#ffffff",
-                          fontSize: "13px",
-                          fontWeight: "600",
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        ❌ Cancel
-                      </button>
-                    )}
-
                   </td>
 
                 </tr>
@@ -522,7 +589,9 @@ function Reports() {
 
         <button
           className="back-btn"
-          onClick={() => navigate("/admin-dashboard")}
+          onClick={() =>
+            navigate("/admin-dashboard")
+          }
         >
           ⬅ Back to Dashboard
         </button>

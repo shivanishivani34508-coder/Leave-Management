@@ -14,6 +14,7 @@ const {
   updateEmployee,
   deleteUser,
   getMyTeam,
+  getManagerById,
 } = require("../controllers/userController");
 
 const {
@@ -107,7 +108,12 @@ router.get(
 /* =========================================================
    GET ONE EMPLOYEE
 ========================================================= */
-
+router.get(
+  "/manager/:id",
+  protect,
+  authorize("admin"),
+  getManagerById
+);
 router.get(
   "/:id",
   protect,

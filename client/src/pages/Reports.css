@@ -509,3 +509,35 @@
   background: #dc2626;
   transform: translateY(-1px);
 }
+/* ==========================================
+   REPORT STATUS - VIEW ONLY
+   These are information labels, not buttons
+========================================== */
+
+.report-status-text {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: default;
+}
+
+.report-status-text.approved {
+  color: #16a34a;
+}
+
+.report-status-text.pending {
+  color: #d97706;
+}
+
+.report-status-text.rejected {
+  color: #dc2626;
+}
+
+.report-status-text.cancelled {
+  color: #64748b;
+}

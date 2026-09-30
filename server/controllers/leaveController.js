@@ -1,5 +1,5 @@
 const Leave = require("../models/Leave");
-const User = require("../models/User");
+const User = require("../models/UserTemp");
 const Notification = require("../models/Notification");
 const Holiday = require("../models/Holiday");
 const YearlyLeaveBalance = require("../models/YearlyLeaveBalance");

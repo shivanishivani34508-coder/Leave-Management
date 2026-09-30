@@ -19,6 +19,18 @@ function AdminDashboard() {
   const [holidays, setHolidays] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  /* ===================================================
+     ORGANIZATION STATISTICS
+  =================================================== */
+
+  const [organizationStats, setOrganizationStats] = useState({
+    employees: 0,
+    managers: 0,
+    departmentHeads: 0,
+    hr: 0,
+    departments: 0,
+  });
+
   const [user, setUser] = useState(() => {
     try {
       const stored = sessionStorage.getItem("user");
@@ -27,6 +39,7 @@ function AdminDashboard() {
       return null;
     }
   });
+
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [photoError, setPhotoError] = useState(false);
 
@@ -58,6 +71,42 @@ function AdminDashboard() {
         ? employeeResponse.data
         : employeeResponse.data?.users || [];
 
+      /* ===================================================
+         ORGANIZATION COUNTS
+      =================================================== */
+
+      const employeeUsers = employees.filter(
+        (user) => user.role === "employee"
+      );
+
+      const managerUsers = employees.filter(
+        (user) => user.role === "manager"
+      );
+
+      const departmentHeadUsers = employees.filter(
+        (user) => user.role === "departmentHead"
+      );
+
+      const hrUsers = employees.filter(
+        (user) => user.role === "hr"
+      );
+
+      const departmentNames = [
+        ...new Set(
+          employees
+            .map((user) => user.department)
+            .filter(Boolean)
+        ),
+      ];
+
+      setOrganizationStats({
+        employees: employeeUsers.length,
+        managers: managerUsers.length,
+        departmentHeads: departmentHeadUsers.length,
+        hr: hrUsers.length,
+        departments: departmentNames.length,
+      });
+
       const allHolidays = Array.isArray(holidayResponse.data)
         ? holidayResponse.data
         : holidayResponse.data?.holidays || [];
@@ -87,9 +136,9 @@ function AdminDashboard() {
       setRecentLeaves(leaves.slice(0, 5));
       setAllLeaves(leaves);
 
-      /*
-        GET ONLY UPCOMING HOLIDAYS
-      */
+      /* ===================================================
+         GET ONLY UPCOMING HOLIDAYS
+      =================================================== */
 
       const today = new Date();
 
@@ -114,10 +163,17 @@ function AdminDashboard() {
 
       setHolidays(upcomingHolidays);
 
-      const profileData = profileResponse?.data?.user || profileResponse?.data;
+      const profileData =
+        profileResponse?.data?.user ||
+        profileResponse?.data;
+
       if (profileData) {
         setUser(profileData);
-        sessionStorage.setItem("user", JSON.stringify(profileData));
+
+        sessionStorage.setItem(
+          "user",
+          JSON.stringify(profileData)
+        );
       }
 
     } catch (error) {
@@ -132,6 +188,7 @@ function AdminDashboard() {
 
   const getInitials = (name) => {
     if (!name) return "A";
+
     return name
       .trim()
       .split(/\s+/)
@@ -143,11 +200,22 @@ function AdminDashboard() {
 
   const getPhotoUrl = (photoPath) => {
     if (!photoPath) return null;
-    if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
+
+    if (
+      photoPath.startsWith("http://") ||
+      photoPath.startsWith("https://")
+    ) {
       return photoPath;
     }
-    const baseUrl = (process.env.REACT_APP_API_URL || "http://localhost:5000/api").replace(/\/api\/?$/, "");
-    return `${baseUrl}${photoPath.startsWith("/") ? "" : "/"}${photoPath}`;
+
+    const baseUrl = (
+      process.env.REACT_APP_API_URL ||
+      "http://localhost:5000/api"
+    ).replace(/\/api\/?$/, "");
+
+    return `${baseUrl}${
+      photoPath.startsWith("/") ? "" : "/"
+    }${photoPath}`;
   };
 
   const leaveTypeCounts = allLeaves.reduce(
@@ -161,7 +229,9 @@ function AdminDashboard() {
     {}
   );
 
-  const topLeaveTypes = Object.entries(leaveTypeCounts)
+  const topLeaveTypes = Object.entries(
+    leaveTypeCounts
+  )
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4);
 
@@ -233,7 +303,10 @@ function AdminDashboard() {
     return (
       <div className="admin-dashboard-loading">
         <div className="admin-loader"></div>
-        <p>Loading dashboard...</p>
+
+        <p>
+          Loading dashboard...
+        </p>
       </div>
     );
   }
@@ -250,6 +323,7 @@ function AdminDashboard() {
         <div className="admin-welcome">
 
           <div>
+
             <h1>
               Welcome back, Shivani 👋
             </h1>
@@ -257,12 +331,17 @@ function AdminDashboard() {
             <p>
               Here's what's happening in your organization today.
             </p>
+
           </div>
 
           <div className="admin-welcome-date">
-            <span>📅</span>
+
+            <span>
+              📅
+            </span>
 
             <div>
+
               <strong>
                 {new Date().toLocaleDateString(
                   "en-IN",
@@ -277,7 +356,9 @@ function AdminDashboard() {
               <small>
                 Organization overview
               </small>
+
             </div>
+
           </div>
 
         </div>
@@ -296,7 +377,10 @@ function AdminDashboard() {
             </div>
 
             <div>
-              <p>Total Requests</p>
+
+              <p>
+                Total Requests
+              </p>
 
               <h2>
                 {stats.totalRequests}
@@ -305,6 +389,7 @@ function AdminDashboard() {
               <span>
                 All leave applications
               </span>
+
             </div>
 
           </div>
@@ -317,7 +402,10 @@ function AdminDashboard() {
             </div>
 
             <div>
-              <p>Pending</p>
+
+              <p>
+                Pending
+              </p>
 
               <h2>
                 {stats.pending}
@@ -326,6 +414,7 @@ function AdminDashboard() {
               <span>
                 Awaiting final review
               </span>
+
             </div>
 
           </div>
@@ -338,7 +427,10 @@ function AdminDashboard() {
             </div>
 
             <div>
-              <p>Approved</p>
+
+              <p>
+                Approved
+              </p>
 
               <h2>
                 {stats.approved}
@@ -347,6 +439,7 @@ function AdminDashboard() {
               <span>
                 Successfully approved
               </span>
+
             </div>
 
           </div>
@@ -359,7 +452,10 @@ function AdminDashboard() {
             </div>
 
             <div>
-              <p>Rejected</p>
+
+              <p>
+                Rejected
+              </p>
 
               <h2>
                 {stats.rejected}
@@ -368,6 +464,7 @@ function AdminDashboard() {
               <span>
                 Not approved
               </span>
+
             </div>
 
           </div>
@@ -380,7 +477,10 @@ function AdminDashboard() {
             </div>
 
             <div>
-              <p>Employees</p>
+
+              <p>
+                Employees
+              </p>
 
               <h2>
                 {stats.employees}
@@ -389,6 +489,7 @@ function AdminDashboard() {
               <span>
                 Active employees
               </span>
+
             </div>
 
           </div>
@@ -401,17 +502,26 @@ function AdminDashboard() {
         =================================================== */}
 
         <div className="admin-main-grid">
-
-          {/* REQUESTS BY STATUS */}
+                    {/* REQUESTS BY STATUS */}
 
           <div className="admin-panel status-panel">
 
             <div className="panel-header">
+
               <div>
-                <h2>Requests by Status</h2>
-                <p>Current request distribution</p>
+
+                <h2>
+                  Requests by Status
+                </h2>
+
+                <p>
+                  Current request distribution
+                </p>
+
               </div>
+
             </div>
+
 
             <div className="status-circle-container">
 
@@ -421,17 +531,22 @@ function AdminDashboard() {
                   background: `conic-gradient(
                     #34806f 0deg ${
                       stats.totalRequests
-                        ? (stats.approved / stats.totalRequests) * 360
+                        ? (stats.approved /
+                            stats.totalRequests) *
+                          360
                         : 0
                     }deg,
 
                     #e8a01c ${
                       stats.totalRequests
-                        ? (stats.approved / stats.totalRequests) * 360
+                        ? (stats.approved /
+                            stats.totalRequests) *
+                          360
                         : 0
                     }deg ${
                       stats.totalRequests
-                        ? ((stats.approved + stats.pending) /
+                        ? ((stats.approved +
+                            stats.pending) /
                             stats.totalRequests) *
                           360
                         : 0
@@ -439,7 +554,8 @@ function AdminDashboard() {
 
                     #cf5555 ${
                       stats.totalRequests
-                        ? ((stats.approved + stats.pending) /
+                        ? ((stats.approved +
+                            stats.pending) /
                             stats.totalRequests) *
                           360
                         : 0
@@ -449,6 +565,7 @@ function AdminDashboard() {
               >
 
                 <div className="status-circle-center">
+
                   <strong>
                     {stats.totalRequests}
                   </strong>
@@ -456,30 +573,58 @@ function AdminDashboard() {
                   <span>
                     Total
                   </span>
+
                 </div>
 
               </div>
 
             </div>
 
+
             <div className="status-list">
 
               <div>
+
                 <span className="status-dot approved-dot"></span>
-                <p>Approved</p>
-                <strong>{stats.approved}</strong>
+
+                <p>
+                  Approved
+                </p>
+
+                <strong>
+                  {stats.approved}
+                </strong>
+
               </div>
 
+
               <div>
+
                 <span className="status-dot pending-dot"></span>
-                <p>Pending</p>
-                <strong>{stats.pending}</strong>
+
+                <p>
+                  Pending
+                </p>
+
+                <strong>
+                  {stats.pending}
+                </strong>
+
               </div>
 
+
               <div>
+
                 <span className="status-dot rejected-dot"></span>
-                <p>Rejected</p>
-                <strong>{stats.rejected}</strong>
+
+                <p>
+                  Rejected
+                </p>
+
+                <strong>
+                  {stats.rejected}
+                </strong>
+
               </div>
 
             </div>
@@ -494,14 +639,19 @@ function AdminDashboard() {
             <div className="panel-header">
 
               <div>
-                <h2>Top Leave Types</h2>
+
+                <h2>
+                  Top Leave Types
+                </h2>
 
                 <p>
                   Most requested leave categories
                 </p>
+
               </div>
 
             </div>
+
 
             {topLeaveTypes.length > 0 ? (
 
@@ -526,6 +676,7 @@ function AdminDashboard() {
                         </strong>
 
                       </div>
+
 
                       <div className="leave-type-track">
 
@@ -567,6 +718,132 @@ function AdminDashboard() {
           =================================================== */}
 
           <div className="admin-left-column">
+
+            {/* ===================================================
+                ORGANIZATION OVERVIEW
+            =================================================== */}
+
+            <div className="organization-overview-panel">
+
+              <h2>
+                Organization Overview
+              </h2>
+
+              <p>
+                Current organization structure
+              </p>
+
+
+              <div className="organization-overview-grid">
+
+                <div className="organization-item">
+
+                  <div className="organization-icon">
+                    👥
+                  </div>
+
+                  <div>
+
+                    <span>
+                      Employees
+                    </span>
+
+                    <strong>
+                      {organizationStats.employees}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div className="organization-item">
+
+                  <div className="organization-icon">
+                    👔
+                  </div>
+
+                  <div>
+
+                    <span>
+                      Managers
+                    </span>
+
+                    <strong>
+                      {organizationStats.managers}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div className="organization-item">
+
+                  <div className="organization-icon">
+                    🧑‍💼
+                  </div>
+
+                  <div>
+
+                    <span>
+                      Department Heads
+                    </span>
+
+                    <strong>
+                      {organizationStats.departmentHeads}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div className="organization-item">
+
+                  <div className="organization-icon">
+                    👩‍💼
+                  </div>
+
+                  <div>
+
+                    <span>
+                      HR
+                    </span>
+
+                    <strong>
+                      {organizationStats.hr}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div className="organization-item">
+
+                  <div className="organization-icon">
+                    🏢
+                  </div>
+
+                  <div>
+
+                    <span>
+                      Departments
+                    </span>
+
+                    <strong>
+                      {organizationStats.departments}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
 
             {/* ===================================================
                 RECENT LEAVE REQUESTS
@@ -681,7 +958,8 @@ function AdminDashboard() {
                                   leave.status
                                 )}`}
                               >
-                                {leave.status || "Pending"}
+                                {leave.status ||
+                                  "Pending"}
                               </span>
 
                             </td>
@@ -700,9 +978,7 @@ function AdminDashboard() {
               </div>
 
             </div>
-
-
-            {/* ===================================================
+                        {/* ===================================================
                 LEAVE INSIGHTS
                 NEW UI SECTION
             =================================================== */}
@@ -722,6 +998,7 @@ function AdminDashboard() {
                   </p>
 
                 </div>
+
 
                 <div className="insight-total">
 
@@ -888,7 +1165,6 @@ function AdminDashboard() {
                   </span>
 
                   <strong>
-
                     {stats.totalRequests
                       ? Math.round(
                           (
@@ -898,7 +1174,6 @@ function AdminDashboard() {
                         )
                       : 0}
                     %
-
                   </strong>
 
                 </div>
@@ -935,11 +1210,14 @@ function AdminDashboard() {
 
 
           </div>
-                    {/* ===================================================
+
+
+          {/* ===================================================
               RIGHT COLUMN
           =================================================== */}
 
           <div className="admin-right-column">
+
 
             {/* ===================================================
                 MY PROFILE
@@ -948,82 +1226,190 @@ function AdminDashboard() {
             <div className="admin-panel admin-profile-panel">
 
               <div className="panel-header">
+
                 <div>
-                  <h2>My Profile</h2>
-                  <p>Administrator account details</p>
+
+                  <h2>
+                    My Profile
+                  </h2>
+
+                  <p>
+                    Administrator account details
+                  </p>
+
                 </div>
 
                 <span className="admin-profile-status-badge">
                   Active
                 </span>
+
               </div>
+
 
               <div className="admin-profile-card">
 
                 <div className="admin-profile-top">
+
                   <div className="admin-profile-avatar">
-                    {user?.profilePhoto && !photoError ? (
+
+                    {user?.profilePhoto &&
+                    !photoError ? (
+
                       <img
-                        src={getPhotoUrl(user.profilePhoto)}
-                        alt={user?.name || "Admin"}
+                        src={getPhotoUrl(
+                          user.profilePhoto
+                        )}
+                        alt={
+                          user?.name ||
+                          "Admin"
+                        }
                         className="admin-profile-img"
-                        onError={() => setPhotoError(true)}
+                        onError={() =>
+                          setPhotoError(true)
+                        }
                       />
+
                     ) : (
-                      getInitials(user?.name || "Admin")
+
+                      getInitials(
+                        user?.name ||
+                        "Admin"
+                      )
+
                     )}
+
                   </div>
+
 
                   <div className="admin-profile-meta">
-                    <h3>{user?.name || "Administrator"}</h3>
-                    <p>{user?.email || "admin@leave.com"}</p>
-                    <span className="admin-role-pill">Administrator</span>
+
+                    <h3>
+                      {user?.name ||
+                        "Administrator"}
+                    </h3>
+
+                    <p>
+                      {user?.email ||
+                        "admin@leave.com"}
+                    </p>
+
+                    <span className="admin-role-pill">
+                      Administrator
+                    </span>
+
                   </div>
+
                 </div>
+
 
                 <div className="admin-profile-stats-row">
-                  <div className="admin-profile-stat-box">
-                    <span className="admin-stat-num">{stats.employees}</span>
-                    <span className="admin-stat-lbl">Employees</span>
-                  </div>
 
                   <div className="admin-profile-stat-box">
-                    <span className="admin-stat-num">{stats.totalRequests}</span>
-                    <span className="admin-stat-lbl">Total Requests</span>
+
+                    <span className="admin-stat-num">
+                      {stats.employees}
+                    </span>
+
+                    <span className="admin-stat-lbl">
+                      Employees
+                    </span>
+
                   </div>
 
+
                   <div className="admin-profile-stat-box">
-                    <span className="admin-stat-num">{stats.pending}</span>
-                    <span className="admin-stat-lbl">Pending</span>
+
+                    <span className="admin-stat-num">
+                      {stats.totalRequests}
+                    </span>
+
+                    <span className="admin-stat-lbl">
+                      Total Requests
+                    </span>
+
                   </div>
+
+
+                  <div className="admin-profile-stat-box">
+
+                    <span className="admin-stat-num">
+                      {stats.pending}
+                    </span>
+
+                    <span className="admin-stat-lbl">
+                      Pending
+                    </span>
+
+                  </div>
+
                 </div>
+
 
                 <div className="admin-profile-info-list">
-                  <div className="admin-profile-info-item">
-                    <span>Role</span>
-                    <strong>Administrator</strong>
-                  </div>
 
                   <div className="admin-profile-info-item">
-                    <span>Employee ID</span>
-                    <strong>{user?.employeeId || "ADM-001"}</strong>
+
+                    <span>
+                      Role
+                    </span>
+
+                    <strong>
+                      Administrator
+                    </strong>
+
                   </div>
 
-                  <div className="admin-profile-info-item">
-                    <span>Department</span>
-                    <strong>{user?.department || "Administration"}</strong>
-                  </div>
 
                   <div className="admin-profile-info-item">
-                    <span>Gender</span>
-                    <strong>{user?.gender || "Not Specified"}</strong>
+
+                    <span>
+                      Employee ID
+                    </span>
+
+                    <strong>
+                      {user?.employeeId ||
+                        "ADM-001"}
+                    </strong>
+
                   </div>
+
+
+                  <div className="admin-profile-info-item">
+
+                    <span>
+                      Department
+                    </span>
+
+                    <strong>
+                      {user?.department ||
+                        "Administration"}
+                    </strong>
+
+                  </div>
+
+
+                  <div className="admin-profile-info-item">
+
+                    <span>
+                      Gender
+                    </span>
+
+                    <strong>
+                      {user?.gender ||
+                        "Not Specified"}
+                    </strong>
+
+                  </div>
+
                 </div>
+
 
                 <button
                   type="button"
                   className="admin-view-profile-btn"
-                  onClick={() => setShowProfileModal(true)}
+                  onClick={() =>
+                    setShowProfileModal(true)
+                  }
                 >
                   👁 View Full Profile
                 </button>
@@ -1031,8 +1417,7 @@ function AdminDashboard() {
               </div>
 
             </div>
-
-            {/* ===================================================
+                        {/* ===================================================
                 QUICK ACTIONS
             =================================================== */}
 
@@ -1105,6 +1490,28 @@ function AdminDashboard() {
                 <button
                   className="quick-action"
                   onClick={() =>
+                    navigate("/admin/managers")
+                  }
+                >
+
+                  <span className="quick-action-icon">
+                    👔
+                  </span>
+
+                  <span>
+                    Manage Managers
+                  </span>
+
+                  <b>
+                    →
+                  </b>
+
+                </button>
+
+
+                <button
+                  className="quick-action"
+                  onClick={() =>
                     navigate("/manage-leaves")
                   }
                 >
@@ -1145,6 +1552,75 @@ function AdminDashboard() {
 
                 </button>
 
+
+                <button
+                  className="quick-action"
+                  onClick={() =>
+                    navigate("/admin/managers")
+                  }
+                >
+
+                  <span className="quick-action-icon">
+                    👨‍💼
+                  </span>
+
+                  <span>
+                    Manage Managers
+                  </span>
+
+                  <b>
+                    →
+                  </b>
+
+                </button>
+
+
+                <button
+                  className="quick-action"
+                  onClick={() =>
+                    navigate(
+                      "/admin/department-heads"
+                    )
+                  }
+                >
+
+                  <span className="quick-action-icon">
+                    👨‍🏫
+                  </span>
+
+                  <span>
+                    Manage Department Heads
+                  </span>
+
+                  <b>
+                    →
+                  </b>
+
+                </button>
+
+
+                <button
+                  className="quick-action"
+                  onClick={() =>
+                    navigate("/admin/hr")
+                  }
+                >
+
+                  <span className="quick-action-icon">
+                    👩‍💼
+                  </span>
+
+                  <span>
+                    Manage HR
+                  </span>
+
+                  <b>
+                    →
+                  </b>
+
+                </button>
+
+
               </div>
 
             </div>
@@ -1174,7 +1650,9 @@ function AdminDashboard() {
                 <button
                   className="holiday-calendar-btn"
                   onClick={() =>
-                    navigate("/admin/holiday-calendar")
+                    navigate(
+                      "/admin/holiday-calendar"
+                    )
                   }
                 >
                   📅 Calendar
@@ -1201,8 +1679,9 @@ function AdminDashboard() {
 
                 ) : (
 
-                  holidays.slice(0, 4).map(
-                    (holiday) => {
+                  holidays
+                    .slice(0, 4)
+                    .map((holiday) => {
 
                       const holidayDate =
                         new Date(
@@ -1267,7 +1746,8 @@ function AdminDashboard() {
                                 .toLocaleDateString(
                                   "en-US",
                                   {
-                                    month: "short",
+                                    month:
+                                      "short",
                                   }
                                 )
                                 .toUpperCase()}
@@ -1319,8 +1799,7 @@ function AdminDashboard() {
 
                       );
 
-                    }
-                  )
+                    })
 
                 )}
 
@@ -1334,120 +1813,263 @@ function AdminDashboard() {
         </div>
 
       </div>
-
-      {/* ===================================================
+            {/* ===================================================
           PROFILE DETAILS MODAL
       =================================================== */}
+
       {showProfileModal && (
+
         <div
           className="admin-modal-overlay"
-          onClick={() => setShowProfileModal(false)}
+          onClick={() =>
+            setShowProfileModal(false)
+          }
         >
+
           <div
             className="admin-modal-card"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
+
             <div className="admin-modal-header">
+
               <div>
-                <span className="admin-modal-tag">ADMINISTRATOR PROFILE</span>
-                <h2>Account Information</h2>
-                <p>Complete profile details for your account</p>
+
+                <span className="admin-modal-tag">
+                  ADMINISTRATOR PROFILE
+                </span>
+
+                <h2>
+                  Account Information
+                </h2>
+
+                <p>
+                  Complete profile details for your account
+                </p>
+
               </div>
+
 
               <button
                 type="button"
                 className="admin-modal-close-btn"
-                onClick={() => setShowProfileModal(false)}
+                onClick={() =>
+                  setShowProfileModal(false)
+                }
               >
                 ✕
               </button>
+
             </div>
+
 
             <div className="admin-modal-body">
+
               <div className="admin-modal-user-summary">
+
                 <div className="admin-modal-avatar">
-                  {user?.profilePhoto && !photoError ? (
+
+                  {user?.profilePhoto &&
+                  !photoError ? (
+
                     <img
-                      src={getPhotoUrl(user.profilePhoto)}
-                      alt={user?.name || "Admin"}
+                      src={getPhotoUrl(
+                        user.profilePhoto
+                      )}
+                      alt={
+                        user?.name ||
+                        "Admin"
+                      }
                       className="admin-modal-img"
-                      onError={() => setPhotoError(true)}
+                      onError={() =>
+                        setPhotoError(true)
+                      }
                     />
+
                   ) : (
-                    getInitials(user?.name || "Admin")
+
+                    getInitials(
+                      user?.name ||
+                      "Admin"
+                    )
+
                   )}
+
                 </div>
+
 
                 <div className="admin-modal-user-titles">
-                  <h3>{user?.name || "Administrator"}</h3>
-                  <p>{user?.email || "admin@leave.com"}</p>
-                  <span className="admin-badge-role">System Administrator</span>
+
+                  <h3>
+                    {user?.name ||
+                      "Administrator"}
+                  </h3>
+
+                  <p>
+                    {user?.email ||
+                      "admin@leave.com"}
+                  </p>
+
+                  <span className="admin-badge-role">
+                    System Administrator
+                  </span>
+
                 </div>
+
               </div>
+
 
               <div className="admin-modal-details-grid">
-                <div className="admin-modal-field">
-                  <label>Full Name</label>
-                  <span>{user?.name || "-"}</span>
-                </div>
 
                 <div className="admin-modal-field">
-                  <label>Email Address</label>
-                  <span>{user?.email || "-"}</span>
-                </div>
 
-                <div className="admin-modal-field">
-                  <label>Role</label>
-                  <span>Administrator</span>
-                </div>
+                  <label>
+                    Full Name
+                  </label>
 
-                <div className="admin-modal-field">
-                  <label>Employee ID</label>
-                  <span>{user?.employeeId || "ADM-001"}</span>
-                </div>
-
-                <div className="admin-modal-field">
-                  <label>Department</label>
-                  <span>{user?.department || "Administration"}</span>
-                </div>
-
-                <div className="admin-modal-field">
-                  <label>Gender</label>
-                  <span>{user?.gender || "Not Specified"}</span>
-                </div>
-
-                <div className="admin-modal-field">
-                  <label>Account Status</label>
-                  <span className="admin-modal-status-active">Active</span>
-                </div>
-
-                <div className="admin-modal-field">
-                  <label>Member Since</label>
                   <span>
-                    {user?.createdAt
-                      ? new Date(user.createdAt).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
-                      : "System Administrator"}
+                    {user?.name || "-"}
                   </span>
+
                 </div>
+
+
+                <div className="admin-modal-field">
+
+                  <label>
+                    Email Address
+                  </label>
+
+                  <span>
+                    {user?.email || "-"}
+                  </span>
+
+                </div>
+
+
+                <div className="admin-modal-field">
+
+                  <label>
+                    Role
+                  </label>
+
+                  <span>
+                    Administrator
+                  </span>
+
+                </div>
+
+
+                <div className="admin-modal-field">
+
+                  <label>
+                    Employee ID
+                  </label>
+
+                  <span>
+                    {user?.employeeId ||
+                      "ADM-001"}
+                  </span>
+
+                </div>
+
+
+                <div className="admin-modal-field">
+
+                  <label>
+                    Department
+                  </label>
+
+                  <span>
+                    {user?.department ||
+                      "Administration"}
+                  </span>
+
+                </div>
+
+
+                <div className="admin-modal-field">
+
+                  <label>
+                    Gender
+                  </label>
+
+                  <span>
+                    {user?.gender ||
+                      "Not Specified"}
+                  </span>
+
+                </div>
+
+
+                <div className="admin-modal-field">
+
+                  <label>
+                    Account Status
+                  </label>
+
+                  <span className="admin-modal-status-active">
+                    Active
+                  </span>
+
+                </div>
+
+
+                <div className="admin-modal-field">
+
+                  <label>
+                    Member Since
+                  </label>
+
+                  <span>
+
+                    {user?.createdAt
+                      ? new Date(
+                          user.createdAt
+                        ).toLocaleDateString(
+                          "en-US",
+                          {
+                            year:
+                              "numeric",
+                            month:
+                              "long",
+                            day:
+                              "numeric",
+                          }
+                        )
+                      : "System Administrator"}
+
+                  </span>
+
+                </div>
+
               </div>
+
             </div>
 
+
             <div className="admin-modal-footer">
+
               <button
                 type="button"
                 className="admin-modal-done-btn"
-                onClick={() => setShowProfileModal(false)}
+                onClick={() =>
+                  setShowProfileModal(false)
+                }
               >
                 Close
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
+
 
     </div>
   );

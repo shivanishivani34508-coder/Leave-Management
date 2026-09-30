@@ -1,4 +1,4 @@
-const User = require("../models/User");
+const User = require("../models/UserTemp");
 const Leave = require("../models/Leave");
 
 /* ===========================================

@@ -108,10 +108,13 @@ const users = Array.isArray(response.data)
   Managers, Department Heads and HR accounts
   are handled separately.
 */
-
 const employeeUsers = users.filter(
-  (user) => user.role === "employee"
+  (user) =>
+    user.role === "employee" ||
+    user.role === "manager"
 );
+
+setEmployees(employeeUsers);
 
 setEmployees(employeeUsers);
 

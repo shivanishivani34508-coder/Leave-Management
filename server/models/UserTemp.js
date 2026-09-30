@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema(
     required: true,
     trim: true,
   },
+  profilePhoto: {
+  type: String,
+  default: "",
+},
 
   email: {
       type: String,
@@ -114,11 +118,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Male", "Female", "Other"],
       required: true,
-    },
-
-    profilePhoto: {
-      type: String,
-      default: "",
     },
 
     leaveBalances: {
