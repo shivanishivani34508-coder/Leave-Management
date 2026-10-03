@@ -10,10 +10,10 @@ function HRDetails() {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetchHRDetails();
-  }, [id]);
+useEffect(() => {
+  fetchHRDetails();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [id]);
 
   const fetchHRDetails = async () => {
     try {

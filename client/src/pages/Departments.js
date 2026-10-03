@@ -125,8 +125,8 @@ const totalManagers = managers.length;
     }
   };
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
+  // eslint-disable-next-line no-unused-vars
+  const handleDelete = async (id) => {    const confirmDelete = window.confirm(
       "Are you sure you want to delete this department?"
     );
 

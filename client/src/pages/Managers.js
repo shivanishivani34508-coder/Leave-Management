@@ -980,6 +980,13 @@ return (
 >
   ✏ Edit Profile
 </button>
+<button
+  type="button"
+  className="employees-edit-btn"
+  onClick={() => openEditBalance(employee)}
+>
+  ⚙ Edit Balance
+</button>
 
   <button
     type="button"
