@@ -40,7 +40,6 @@ function EmployeeDetails() {
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
-  const [photoError, setPhotoError] = useState(false);
 
   /* =========================================================
       AUTH CONFIG
@@ -71,7 +70,6 @@ function EmployeeDetails() {
       );
 
       setEmployee(response.data.user);
-      setPhotoError(false);
 
       setStatistics(
         response.data.statistics || {
@@ -293,29 +291,17 @@ function EmployeeDetails() {
 
             {/* Avatar */}
 
-            <div className="employee-avatar">
-              {employee.profilePhoto && !photoError ? (
-                <img
-                  src={
-                    employee.profilePhoto.startsWith("http")
-                      ? employee.profilePhoto
-                      : `${(
-                          process.env.REACT_APP_API_URL ||
-                          "http://localhost:5000/api"
-                        ).replace(/\/api\/?$/, "")}${
-                          employee.profilePhoto.startsWith("/")
-                            ? ""
-                            : "/"
-                        }${employee.profilePhoto}`
-                  }
-                  alt={employee.name}
-                  className="employee-profile-photo"
-                  onError={() => setPhotoError(true)}
-                />
-              ) : (
-                employeeInitials
-              )}
-            </div>
+           <div className="employee-avatar">
+            {employee?.profilePhoto ? (
+              <img
+                src={`http://localhost:5000${employee.profilePhoto}`}
+                alt={employee.name}
+                className="employee-profile-photo"
+              />
+            ) : (
+              employeeInitials
+            )}
+          </div>
 
             {/* Employee Details */}
 

@@ -593,6 +593,18 @@ const availableBalance = useMemo(() => {
       setLoading(true);
       setMessage("");
 
+      console.log("SUBMITTING LEAVE...");
+      console.log("LEAVE DATA:", {
+        leaveType,
+        startDate,
+        endDate: actualEndDate,
+        reason,
+        durationType,
+        halfDaySession,
+        totalDays: finalDuration,
+      });
+      console.log("AUTH CONFIG:", getAuthConfig());
+
         const response = await api.post(
           "/leaves",
           {

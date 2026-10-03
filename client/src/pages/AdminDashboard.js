@@ -502,7 +502,8 @@ function AdminDashboard() {
         =================================================== */}
 
         <div className="admin-main-grid">
-                    {/* REQUESTS BY STATUS */}
+
+          {/* REQUESTS BY STATUS */}
 
           <div className="admin-panel status-panel">
 
@@ -630,9 +631,7 @@ function AdminDashboard() {
             </div>
 
           </div>
-
-
-          {/* TOP LEAVE TYPES */}
+                    {/* TOP LEAVE TYPES */}
 
           <div className="admin-panel leave-types-panel">
 
@@ -1207,6 +1206,186 @@ function AdminDashboard() {
               </div>
 
             </div>
+                        {/* ===================================================
+                UPCOMING HOLIDAYS
+            =================================================== */}
+
+            <div className="admin-panel holidays-panel">
+
+              <div className="panel-header">
+
+                <div>
+
+                  <h2>
+                    Upcoming Holidays
+                  </h2>
+
+                  <p>
+                    Company holidays and events
+                  </p>
+
+                </div>
+
+
+                <button
+                  className="holiday-calendar-btn"
+                  onClick={() =>
+                    navigate(
+                      "/admin/holiday-calendar"
+                    )
+                  }
+                >
+                  📅 Calendar
+                </button>
+
+              </div>
+
+
+              <div className="holiday-list">
+
+                {holidays.length === 0 ? (
+
+                  <div className="no-holidays">
+
+                    <span>
+                      📅
+                    </span>
+
+                    <p>
+                      No upcoming holidays available.
+                    </p>
+
+                  </div>
+
+                ) : (
+
+                  holidays
+                    .slice(0, 4)
+                    .map((holiday) => {
+
+                      const holidayDate =
+                        new Date(
+                          holiday.holidayDate
+                        );
+
+                      const today =
+                        new Date();
+
+                      today.setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                      );
+
+                      holidayDate.setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                      );
+
+                      const daysRemaining =
+                        Math.ceil(
+                          (
+                            holidayDate -
+                            today
+                          ) /
+                          (
+                            1000 *
+                            60 *
+                            60 *
+                            24
+                          )
+                        );
+
+                      return (
+
+                        <div
+                          className="holiday-item"
+                          key={holiday._id}
+                        >
+
+                          <div className="holiday-date">
+
+                            <strong>
+
+                              {holidayDate
+                                .getDate()
+                                .toString()
+                                .padStart(
+                                  2,
+                                  "0"
+                                )}
+
+                            </strong>
+
+                            <span>
+
+                              {holidayDate
+                                .toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month:
+                                      "short",
+                                  }
+                                )
+                                .toUpperCase()}
+
+                            </span>
+
+                          </div>
+
+
+                          <div className="holiday-details">
+
+                            <h4>
+                              🎉{" "}
+                              {holiday.holidayName}
+                            </h4>
+
+                            <p>
+
+                              {holidayDate.toLocaleDateString(
+                                "en-IN",
+                                {
+                                  weekday:
+                                    "long",
+                                  day:
+                                    "2-digit",
+                                  month:
+                                    "long",
+                                  year:
+                                    "numeric",
+                                }
+                              )}
+
+                            </p>
+
+                          </div>
+
+
+                          <div className="holiday-days-left">
+
+                            {daysRemaining === 0
+                              ? "Today"
+                              : daysRemaining === 1
+                              ? "Tomorrow"
+                              : `${daysRemaining} days`}
+
+                          </div>
+
+                        </div>
+
+                      );
+
+                    })
+
+                )}
+
+              </div>
+
+            </div>
 
 
           </div>
@@ -1215,9 +1394,7 @@ function AdminDashboard() {
           {/* ===================================================
               RIGHT COLUMN
           =================================================== */}
-
           <div className="admin-right-column">
-
 
             {/* ===================================================
                 MY PROFILE
@@ -1417,7 +1594,9 @@ function AdminDashboard() {
               </div>
 
             </div>
-                        {/* ===================================================
+
+
+            {/* ===================================================
                 QUICK ACTIONS
             =================================================== */}
 
@@ -1485,29 +1664,6 @@ function AdminDashboard() {
                   </b>
 
                 </button>
-
-
-                <button
-                  className="quick-action"
-                  onClick={() =>
-                    navigate("/admin/managers")
-                  }
-                >
-
-                  <span className="quick-action-icon">
-                    👔
-                  </span>
-
-                  <span>
-                    Manage Managers
-                  </span>
-
-                  <b>
-                    →
-                  </b>
-
-                </button>
-
 
                 <button
                   className="quick-action"
@@ -1625,195 +1781,13 @@ function AdminDashboard() {
 
             </div>
 
-
-            {/* ===================================================
-                UPCOMING HOLIDAYS
-            =================================================== */}
-
-            <div className="admin-panel holidays-panel">
-
-              <div className="panel-header">
-
-                <div>
-
-                  <h2>
-                    Upcoming Holidays
-                  </h2>
-
-                  <p>
-                    Company holidays and events
-                  </p>
-
-                </div>
-
-
-                <button
-                  className="holiday-calendar-btn"
-                  onClick={() =>
-                    navigate(
-                      "/admin/holiday-calendar"
-                    )
-                  }
-                >
-                  📅 Calendar
-                </button>
-
-              </div>
-
-
-              <div className="holiday-list">
-
-                {holidays.length === 0 ? (
-
-                  <div className="no-holidays">
-
-                    <span>
-                      📅
-                    </span>
-
-                    <p>
-                      No upcoming holidays available.
-                    </p>
-
-                  </div>
-
-                ) : (
-
-                  holidays
-                    .slice(0, 4)
-                    .map((holiday) => {
-
-                      const holidayDate =
-                        new Date(
-                          holiday.holidayDate
-                        );
-
-                      const today =
-                        new Date();
-
-                      today.setHours(
-                        0,
-                        0,
-                        0,
-                        0
-                      );
-
-                      holidayDate.setHours(
-                        0,
-                        0,
-                        0,
-                        0
-                      );
-
-                      const daysRemaining =
-                        Math.ceil(
-                          (
-                            holidayDate -
-                            today
-                          ) /
-                          (
-                            1000 *
-                            60 *
-                            60 *
-                            24
-                          )
-                        );
-
-                      return (
-
-                        <div
-                          className="holiday-item"
-                          key={holiday._id}
-                        >
-
-                          <div className="holiday-date">
-
-                            <strong>
-
-                              {holidayDate
-                                .getDate()
-                                .toString()
-                                .padStart(
-                                  2,
-                                  "0"
-                                )}
-
-                            </strong>
-
-                            <span>
-
-                              {holidayDate
-                                .toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month:
-                                      "short",
-                                  }
-                                )
-                                .toUpperCase()}
-
-                            </span>
-
-                          </div>
-
-
-                          <div className="holiday-details">
-
-                            <h4>
-                              🎉{" "}
-                              {holiday.holidayName}
-                            </h4>
-
-                            <p>
-
-                              {holidayDate.toLocaleDateString(
-                                "en-IN",
-                                {
-                                  weekday:
-                                    "long",
-                                  day:
-                                    "2-digit",
-                                  month:
-                                    "long",
-                                  year:
-                                    "numeric",
-                                }
-                              )}
-
-                            </p>
-
-                          </div>
-
-
-                          <div className="holiday-days-left">
-
-                            {daysRemaining === 0
-                              ? "Today"
-                              : daysRemaining === 1
-                              ? "Tomorrow"
-                              : `${daysRemaining} days`}
-
-                          </div>
-
-                        </div>
-
-                      );
-
-                    })
-
-                )}
-
-              </div>
-
-            </div>
-
-
           </div>
 
         </div>
 
       </div>
-            {/* ===================================================
+
+      {/* ===================================================
           PROFILE DETAILS MODAL
       =================================================== */}
 

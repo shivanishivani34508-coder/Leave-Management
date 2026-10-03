@@ -451,7 +451,6 @@ const summary = useMemo(() => {
                               </small>
 
                             </div>
-
                           </div>
 
                         </td>
