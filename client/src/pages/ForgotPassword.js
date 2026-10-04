@@ -38,13 +38,15 @@ function ForgotPassword() {
       return;
     }
 
-    if (password.length < 6) {
-      setError(
-        "Password must be at least 6 characters."
-      );
-      return;
-    }
+   const passwordRegex =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
+if (!passwordRegex.test(password)) {
+  setError(
+    "Password must be at least 8 characters and contain uppercase, lowercase, number, and special character."
+  );
+  return;
+}
     /* =====================================================
        CONFIRM PASSWORD
     ===================================================== */

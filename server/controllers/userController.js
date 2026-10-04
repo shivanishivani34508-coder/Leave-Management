@@ -512,81 +512,108 @@ const createEmployee = async (req, res) => {
       `Yearly leave balance created for ${name} - ${currentYear}`
     );
 
-    /* =====================================================
-       CREATE NEXT YEAR BALANCE FOR NEW EMPLOYEE
-    ===================================================== */
+   /* =====================================================
+   CREATE NEXT YEAR BALANCE FOR NEW EMPLOYEE
+===================================================== */
 
-    const nextYear = currentYear + 1;
+const nextYear = currentYear + 1;
 
-    const existingNextYearBalance =
-      await YearlyLeaveBalance.findOne({
-        employee: employee._id,
-        year: nextYear,
-      });
+const existingNextYearBalance =
+  await YearlyLeaveBalance.findOne({
+    employee: employee._id,
+    year: nextYear,
+  });
 
-    if (!existingNextYearBalance) {
-      await YearlyLeaveBalance.create({
-        employee: employee._id,
-        year: nextYear,
+if (!existingNextYearBalance) {
+  const currentYearBalance =
+    await YearlyLeaveBalance.findOne({
+      employee: employee._id,
+      year: currentYear,
+    });
 
-        casual: {
-          annualAllocation: 12,
-          carryForward: 0,
-          totalAvailable: 12,
-          remaining: 12,
-        },
+  const casualCarryForward =
+    currentYearBalance?.casual?.remaining ?? 0;
 
-        sick: {
-          annualAllocation: 12,
-          carryForward: 0,
-          totalAvailable: 12,
-          remaining: 12,
-        },
+  const sickCarryForward =
+    currentYearBalance?.sick?.remaining ?? 0;
 
-        earned: {
-          annualAllocation: 18,
-          carryForward: 0,
-          totalAvailable: 18,
-          remaining: 18,
-        },
+  const earnedCarryForward =
+    currentYearBalance?.earned?.remaining ?? 0;
 
-        marriage: {
-          annualAllocation: 5,
-          carryForward: 0,
-          totalAvailable: 5,
-          remaining: 5,
-        },
+  const marriageCarryForward =
+    currentYearBalance?.marriage?.remaining ?? 0;
 
-        maternity: {
-          annualAllocation: 182,
-          carryForward: 0,
-          totalAvailable: 182,
-          remaining: 182,
-        },
+  const maternityCarryForward =
+    currentYearBalance?.maternity?.remaining ?? 0;
 
-        paternity: {
-          annualAllocation: 15,
-          carryForward: 0,
-          totalAvailable: 15,
-          remaining: 15,
-        },
+  const paternityCarryForward =
+    currentYearBalance?.paternity?.remaining ?? 0;
 
-        bereavement: {
-          annualAllocation: 5,
-          carryForward: 0,
-          totalAvailable: 5,
-          remaining: 5,
-        },
-      });
+  const bereavementCarryForward =
+    currentYearBalance?.bereavement?.remaining ?? 0;
 
-      console.log(
-        `Next year yearly leave balance created for ${name} - ${nextYear}`
-      );
-    } else {
-      console.log(
-        `Next year yearly leave balance already exists for ${name} - ${nextYear}`
-      );
-    }
+  await YearlyLeaveBalance.create({
+    employee: employee._id,
+    year: nextYear,
+
+    casual: {
+      annualAllocation: 12,
+      carryForward: casualCarryForward,
+      totalAvailable: 12 + casualCarryForward,
+      remaining: 12 + casualCarryForward,
+    },
+
+    sick: {
+      annualAllocation: 12,
+      carryForward: sickCarryForward,
+      totalAvailable: 12 + sickCarryForward,
+      remaining: 12 + sickCarryForward,
+    },
+
+    earned: {
+      annualAllocation: 18,
+      carryForward: earnedCarryForward,
+      totalAvailable: 18 + earnedCarryForward,
+      remaining: 18 + earnedCarryForward,
+    },
+
+    marriage: {
+      annualAllocation: 5,
+      carryForward: marriageCarryForward,
+      totalAvailable: 5 + marriageCarryForward,
+      remaining: 5 + marriageCarryForward,
+    },
+
+    maternity: {
+      annualAllocation: 182,
+      carryForward: maternityCarryForward,
+      totalAvailable: 182 + maternityCarryForward,
+      remaining: 182 + maternityCarryForward,
+    },
+
+    paternity: {
+      annualAllocation: 15,
+      carryForward: paternityCarryForward,
+      totalAvailable: 15 + paternityCarryForward,
+      remaining: 15 + paternityCarryForward,
+    },
+
+    bereavement: {
+      annualAllocation: 5,
+      carryForward: bereavementCarryForward,
+      totalAvailable: 5 + bereavementCarryForward,
+      remaining: 5 + bereavementCarryForward,
+    },
+  });
+
+  console.log(
+    `Next year yearly leave balance created for ${name} - ${nextYear}`
+  );
+} else {
+  console.log(
+    `Next year yearly leave balance already exists for ${name} - ${nextYear}`
+  );
+}
 
     const createdEmployee = await User.findById(
       employee._id

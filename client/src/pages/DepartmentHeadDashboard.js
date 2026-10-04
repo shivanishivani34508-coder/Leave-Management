@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
+
 import api from "../services/api";
+
 import "./DepartmentHeadDashboard.css";
 
 function DepartmentHeadDashboard() {
   const [leaves, setLeaves] = useState([]);
+
   const [refreshing, setRefreshing] = useState(false);
+
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     fetchLeaves();
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
   }, []);
 
   const fetchLeaves = async () => {
@@ -37,6 +46,39 @@ function DepartmentHeadDashboard() {
     }
   };
 
+  // =====================================================
+  // FETCH DEPARTMENT HEAD PROFILE
+  // =====================================================
+
+  const fetchProfile = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      if (!token) {
+        return;
+      }
+
+      const response = await api.get("/users/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const profile = response.data?.user || response.data;
+
+      console.log("Department Head Profile:", profile);
+
+      setUser(profile);
+
+      sessionStorage.setItem("user", JSON.stringify(profile));
+    } catch (error) {
+      console.error(
+        "Unable to load Department Head profile:",
+        error
+      );
+    }
+  };
+
   /* =====================================================
      STATUS CALCULATIONS
   ===================================================== */
@@ -58,26 +100,22 @@ function DepartmentHeadDashboard() {
   ===================================================== */
 
   const totalRequests = leaves.length;
-const totalRequestedDays = leaves.reduce((total, leave) => {
-  return total + Number(leave.totalDays || 0);
-}, 0);
+
+  const totalRequestedDays = leaves.reduce((total, leave) => {
+    return total + Number(leave.totalDays || 0);
+  }, 0);
 
   const getPercentage = (value) => {
     if (totalRequests === 0) return 0;
 
-    return Math.round(
-      (value / totalRequests) * 100
-    );
+    return Math.round((value / totalRequests) * 100);
   };
 
-  const pendingPercentage =
-    getPercentage(pendingLeaves);
+  const pendingPercentage = getPercentage(pendingLeaves);
 
-  const approvedPercentage =
-    getPercentage(approvedLeaves);
+  const approvedPercentage = getPercentage(approvedLeaves);
 
-  const rejectedPercentage =
-    getPercentage(rejectedLeaves);
+  const rejectedPercentage = getPercentage(rejectedLeaves);
 
   /* =====================================================
      TOP LEAVE TYPES
@@ -98,16 +136,12 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
     {}
   );
 
-  const topLeaveTypes = Object.entries(
-    leaveTypeCounts
-  )
+  const topLeaveTypes = Object.entries(leaveTypeCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4);
 
   const maxLeaveTypeCount =
-    topLeaveTypes.length > 0
-      ? topLeaveTypes[0][1]
-      : 1;
+    topLeaveTypes.length > 0 ? topLeaveTypes[0][1] : 1;
 
   /* =====================================================
      RECENT REQUESTS
@@ -124,7 +158,6 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
         ================================================= */}
 
         <section className="department-welcome-banner">
-
           <div className="department-welcome-content">
 
             <div className="department-welcome-icon">
@@ -156,8 +189,8 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
               ? "↻ Refreshing..."
               : "↻ Refresh"}
           </button>
-
         </section>
+
 
         {/* =================================================
             STATISTICS CARDS
@@ -191,6 +224,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
           </div>
 
+
           {/* PENDING */}
 
           <div className="department-stat-card department-pending-card">
@@ -216,6 +250,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
             </div>
 
           </div>
+
 
           {/* APPROVED */}
 
@@ -243,6 +278,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
           </div>
 
+
           {/* REJECTED */}
 
           <div className="department-stat-card department-rejected-card">
@@ -268,6 +304,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
             </div>
 
           </div>
+
 
           {/* REQUESTED DAYS */}
 
@@ -296,6 +333,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
           </div>
 
         </section>
+
 
         {/* =================================================
             DASHBOARD INSIGHTS
@@ -329,6 +367,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
             </div>
 
+
             <div className="department-progress-list">
 
               {/* PENDING */}
@@ -360,6 +399,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
               </div>
 
+
               {/* APPROVED */}
 
               <div className="department-progress-item">
@@ -388,6 +428,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
                 </div>
 
               </div>
+
 
               {/* REJECTED */}
 
@@ -422,6 +463,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
           </div>
 
+
           {/* =================================================
               REQUEST STATUS
           ================================================= */}
@@ -443,6 +485,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
               </div>
 
             </div>
+
 
             <div className="department-status-content">
 
@@ -481,6 +524,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
               </div>
 
+
               <div className="department-status-legend">
 
                 <div>
@@ -497,6 +541,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
                 </div>
 
+
                 <div>
 
                   <span className="legend-dot pending-dot"></span>
@@ -510,6 +555,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
                   </strong>
 
                 </div>
+
 
                 <div>
 
@@ -530,6 +576,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
             </div>
 
           </div>
+
 
           {/* =================================================
               TOP LEAVE TYPES
@@ -552,6 +599,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
               </div>
 
             </div>
+
 
             <div className="department-leave-types">
 
@@ -576,6 +624,7 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
                         </strong>
 
                       </div>
+
 
                       <div className="department-progress-track">
 
@@ -611,157 +660,338 @@ const totalRequestedDays = leaves.reduce((total, leave) => {
 
         </section>
 
+
         {/* =================================================
-            RECENT DEPARTMENT REQUESTS
+            RECENT REQUESTS + MY PROFILE
         ================================================= */}
 
-        <section className="department-recent-card">
+        <div className="department-bottom-grid">
 
-          <div className="department-section-heading">
+          {/* =================================================
+              RECENT DEPARTMENT REQUESTS
+          ================================================= */}
 
-            <div>
+          <section className="department-recent-card">
 
-              <h2>
-                Recent Department Requests
-              </h2>
+            <div className="department-section-heading">
 
-              <p>
-                Latest leave requests from your department
-              </p>
+              <div>
+
+                <h2>
+                  Recent Department Requests
+                </h2>
+
+                <p>
+                  Latest leave requests from your department
+                </p>
+
+              </div>
+
+              <button
+                type="button"
+                className="department-refresh-small"
+                onClick={fetchLeaves}
+                disabled={refreshing}
+              >
+                {refreshing
+                  ? "↻ Refreshing..."
+                  : "↻ Refresh"}
+              </button>
 
             </div>
 
-            <button
-              type="button"
-              className="department-refresh-small"
-              onClick={fetchLeaves}
-              disabled={refreshing}
-            >
-              {refreshing
-                ? "↻ Refreshing..."
-                : "↻ Refresh"}
-            </button>
 
-          </div>
+            <div className="department-table-wrapper">
 
-          <div className="department-table-wrapper">
+              <table className="department-table">
 
-            <table className="department-table">
-
-              <thead>
-
-                <tr>
-
-                  <th>
-                    Employee
-                  </th>
-
-                  <th>
-                    Leave Type
-                  </th>
-
-                  <th>
-                    Days
-                  </th>
-
-                  <th>
-                    Status
-                  </th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {recentLeaves.length > 0 ? (
-
-                  recentLeaves.map(
-                    (leave, index) => (
-
-                      <tr
-                        key={
-                          leave._id || index
-                        }
-                      >
-
-                        <td>
-
-                          <div className="department-employee-cell">
-
-                            <div className="department-avatar">
-
-                              {(
-                                leave.employee?.name ||
-                                leave.employeeName ||
-                                "E"
-                              )
-                                .charAt(0)
-                                .toUpperCase()}
-
-                            </div>
-
-                            <span>
-
-                              {leave.employee?.name ||
-                                leave.employeeName ||
-                                "Employee"}
-
-                            </span>
-
-                          </div>
-
-                        </td>
-
-                        <td>
-                          {leave.leaveType || "-"}
-                        </td>
-
-                        <td>
-                          {leave.days || 0}
-                        </td>
-
-                        <td>
-
-                          <span
-                            className={`department-status-badge ${(
-                              leave.departmentHeadStatus ||
-                              "Pending"
-                            ).toLowerCase()}`}
-                          >
-                            {leave.departmentHeadStatus ||
-                              "Pending"}
-                          </span>
-
-                        </td>
-
-                      </tr>
-
-                    )
-                  )
-
-                ) : (
+                <thead>
 
                   <tr>
 
-                    <td
-                      colSpan="4"
-                      className="department-no-data"
-                    >
-                      No leave requests found.
-                    </td>
+                    <th>
+                      Employee
+                    </th>
+
+                    <th>
+                      Leave Type
+                    </th>
+
+                    <th>
+                      Days
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
 
                   </tr>
 
-                )}
+                </thead>
 
-              </tbody>
 
-            </table>
+                <tbody>
 
-          </div>
+                  {recentLeaves.length > 0 ? (
 
-        </section>
+                    recentLeaves.map(
+                      (leave, index) => (
+
+                        <tr
+                          key={
+                            leave._id || index
+                          }
+                        >
+
+                          <td>
+
+                            <div className="department-employee-cell">
+
+                              <div className="department-avatar">
+
+                                {(
+                                  leave.employee?.name ||
+                                  leave.employeeName ||
+                                  "E"
+                                )
+                                  .charAt(0)
+                                  .toUpperCase()}
+
+                              </div>
+
+                              <span>
+
+                                {leave.employee?.name ||
+                                  leave.employeeName ||
+                                  "Employee"}
+
+                              </span>
+
+                            </div>
+
+                          </td>
+
+
+                          <td>
+                            {leave.leaveType || "-"}
+                          </td>
+
+
+                          <td>
+                            {leave.days || 0}
+                          </td>
+
+
+                          <td>
+
+                            <span
+                              className={`department-status-badge ${(
+                                leave.departmentHeadStatus ||
+                                "Pending"
+                              ).toLowerCase()}`}
+                            >
+
+                              {leave.departmentHeadStatus ||
+                                "Pending"}
+
+                            </span>
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )
+
+                  ) : (
+
+                    <tr>
+
+                      <td
+                        colSpan="4"
+                        className="department-no-data"
+                      >
+                        No leave requests found.
+                      </td>
+
+                    </tr>
+
+                  )}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </section>
+
+
+          {/* =================================================
+              MY PROFILE
+          ================================================= */}
+
+          <section className="department-my-profile-card">
+
+            <div className="department-my-profile-header">
+
+              <div>
+
+                <h2>
+                  My Profile
+                </h2>
+
+                <p>
+                  Logged-in department head details
+                </p>
+
+              </div>
+
+              <span className="department-my-profile-status">
+                Active
+              </span>
+
+            </div>
+
+
+            <div className="department-my-profile-main">
+
+              <div className="department-my-profile-avatar">
+
+                {user?.name
+                  ? user.name
+                      .split(" ")
+                      .map(
+                        (word) =>
+                          word.charAt(0)
+                      )
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()
+                  : "DH"}
+
+              </div>
+
+
+              <div className="department-my-profile-name">
+
+                <h3>
+                  {user?.name ||
+                    "Department Head"}
+                </h3>
+
+                <p>
+                  {user?.email ||
+                    "Email not available"}
+                </p>
+
+                <span>
+                  DEPARTMENT HEAD
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div className="department-my-profile-stats">
+
+              <div>
+
+                <strong>
+                  {totalRequests}
+                </strong>
+
+                <span>
+                  Requests
+                </span>
+
+              </div>
+
+
+              <div>
+
+                <strong>
+                  {approvedLeaves}
+                </strong>
+
+                <span>
+                  Approved
+                </span>
+
+              </div>
+
+
+              <div>
+
+                <strong>
+                  {pendingLeaves}
+                </strong>
+
+                <span>
+                  Pending
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div className="department-my-profile-details">
+
+              <div>
+
+                <span>
+                  Role
+                </span>
+
+                <strong>
+                  Department Head
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Department
+                </span>
+
+                <strong>
+                  {user?.department ||
+                    "Not Assigned"}
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  Gender
+                </span>
+
+                <strong>
+                  {user?.gender ||
+                    "Not Specified"}
+                </strong>
+
+              </div>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="department-view-profile-btn"
+            >
+              👁 View Full Profile
+            </button>
+
+          </section>
+
+        </div>
 
       </div>
     </div>

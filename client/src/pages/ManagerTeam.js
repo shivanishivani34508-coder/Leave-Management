@@ -230,15 +230,6 @@ function ManagerTeam() {
 
                 <div className="employee-top">
 
-                  <div className="employee-avatar">
-
-                    {employee.name
-                      ? employee.name.charAt(0).toUpperCase()
-                      : "E"}
-
-                  </div>
-
-
                   <div className="employee-name">
 
                     <h3>{employee.name}</h3>

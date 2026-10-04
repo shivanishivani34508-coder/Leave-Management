@@ -54,18 +54,26 @@ const normalizeDate = (dateValue) => {
 /* =========================================================
    CALCULATE LEAVE DAYS
 ========================================================= */
-
 const calculateLeaveDays = (startDate, endDate) => {
   const millisecondsPerDay =
     1000 * 60 * 60 * 24;
 
-  return (
-    Math.floor(
-      (endDate.getTime() -
-        startDate.getTime()) /
-        millisecondsPerDay
-    ) + 1
-  );
+  let totalDays = 0;
+
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    // Sunday = 0
+    if (currentDate.getUTCDay() !== 0) {
+      totalDays++;
+    }
+
+    currentDate.setUTCDate(
+      currentDate.getUTCDate() + 1
+    );
+  }
+
+  return totalDays;
 };
 
 /* =========================================================
@@ -867,31 +875,35 @@ adminStatus:
     /* =====================================================
        NOTIFY FIRST APPROVER
     ===================================================== */
+if (
+  firstApprover &&
+  firstApprover.toString() !==
+    user._id.toString()
+) {
+  notifyApprover({
+    approverId:
+      firstApprover,
 
-    if (
-      firstApprover &&
-      firstApprover.toString() !==
-        user._id.toString()
-    ) {
-      await notifyApprover({
-        approverId:
-          firstApprover,
+    employee:
+      user,
 
-        employee:
-          user,
+    leave,
 
-        leave,
+    title:
+      "New Leave Request",
 
-        title:
-          "New Leave Request",
+    message:
+      `${user.name} applied for ${leaveType} leave.`,
 
-        message:
-          `${user.name} applied for ${leaveType} leave.`,
-
-        emailSubject:
-          "New Leave Request Submitted",
-      });
-    }
+    emailSubject:
+      "New Leave Request Submitted",
+  }).catch((notificationError) => {
+    console.error(
+      "NOTIFICATION ERROR:",
+      notificationError
+    );
+  });
+}
 
     /* =====================================================
        RESPONSE
